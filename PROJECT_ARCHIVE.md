@@ -1,22 +1,25 @@
 # BMS 难度预测项目 —— 进度归档
 
 > 归档日期：2026-09-02 | 环境：Windows / Python 3.11 / PyTorch 2.11.0+cu128（RTX 4060）
+> 阶段状态：**Phase 1 已封存（2026-09-02）**，完整回顾见 `PHASE1.md`。
 
 ## 1. 项目定位
 
 研究问题：**BMS 谱面难度是否是单一标量？能否用数据驱动的方式学到比现有难度表更丰富的谱面技能需求表示？**
 
 当前路线：结构化统计特征（26 维）→ 已证明能解释 Satellite 难度约 87% 方差；
-下一步主线是验证"note sequence 的排列顺序是否携带统计特征之外的信息"。
+序列表示（delta_t）已让 CNN 追平统计特征（chart MAE ≈1.05）；下一阶段主线仍是
+验证"note sequence 的排列顺序是否携带统计特征之外的信息"。
 
 用户定位：学习型项目。用户亲手写模型（train_step、SequenceCNN），
 工程部分由 agent 完成。
 
 ## 2. 当前状态（一句话）
 
-数据管线成熟（48,619 谱面全量解析 + 审计 + 难度表匹配），
-结构化特征分析完成（R²≈0.88），sequence CNN 首轮为负结果（C ≫ B），
-正在等待核对用户实现的 CNN 结构后决定下一步。
+Phase 1 已封存：数据管线成熟（48,619 谱面），统计特征分析完成（R²≈0.88），
+delta_t 表示让序列 CNN 追平统计特征（2.62 → 1.05）；lane shuffle 显示
+当前模型信号几乎全部来自时间/density。最大未知：note 排列顺序中是否存在
+真实标签里额外可提取的信息（详见 PHASE1.md）。
 
 ## 3. 数据
 
@@ -185,6 +188,7 @@ MAE 1.0582（原始） vs 1.0524（shuffled）——打乱 lane 后性能不变�
 
 ## 7. 产物清单
 
+- 阶段回顾：`PHASE1.md`（问题→数据→假设→实验→结论→否定→未知）
 - `bms_ml/output/corpus/`：scan_summary / charts.txt / probe_report /
   manifest.jsonl（58.7MB）/ quarantine_report / dedupe_report / audit_report /
   corpus_report / sequences/*.npy（36,744 个干净谱面的 note sequence）
