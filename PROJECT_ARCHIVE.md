@@ -161,6 +161,18 @@ C 训练曲线 100 epoch 从 3.47 缓慢降到 2.86，仍在学习但平台期�
 （train 4,534→1,860）且每窗口覆盖约两倍时长；编码丢失 chord 内 note 数/时长细节。
 按约定不继续加复杂度。产物：analysis/chord_grouping/。
 
+### Phase 4d：Lane one-hot（完成，无差异）
+
+只把 lane 整数换成 8 位 one-hot（delta_t/type/duration 归一化统计与基线完全一致）：
+MAE 1.0505（整数） vs 1.0523（one-hot）——无实质差异。产物：analysis/lane_onehot/。
+
+### Phase 4e：Lane shuffle 破坏测试（完成，关键否定）
+
+整谱打乱 lane（保留 delta_t/type/duration 与 lane 频率，固定种子可复现）：
+MAE 1.0582（原始） vs 1.0524（shuffled）——打乱 lane 后性能不变，
+说明当前 CNN 的预测力几乎全部来自时间/density 结构，lane 排列没有贡献可提取信号。
+产物：analysis/lane_shuffle/。阶段封存见 PHASE1.md。
+
 ## 6. 关键决策记录
 
 1. 时间轴以 bms-js 参考实现为准（STOP /48、停前/停后双时间点、BPM 先于 STOP）。

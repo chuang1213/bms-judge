@@ -1,0 +1,45 @@
+{
+  "original": {
+    "train_seconds": 42.8,
+    "chart_mae": 1.0582,
+    "chart_rmse": 1.362,
+    "chart_r2": 0.8774,
+    "seed_maes": [
+      1.0712,
+      1.0589,
+      1.0446
+    ],
+    "bands": {
+      "sl0-2": 0.8396,
+      "sl3-5": 0.9046,
+      "sl6-8": 0.8474,
+      "sl9-12": 1.705
+    }
+  },
+  "lane_shuffled": {
+    "train_seconds": 41.0,
+    "chart_mae": 1.0524,
+    "chart_rmse": 1.4138,
+    "chart_r2": 0.8679,
+    "seed_maes": [
+      1.0565,
+      1.0615,
+      1.0392
+    ],
+    "bands": {
+      "sl0-2": 0.7975,
+      "sl3-5": 0.8887,
+      "sl6-8": 0.8443,
+      "sl9-12": 1.7647
+    }
+  },
+  "config": {
+    "window": 512,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "shuffle_seed_per_chart": "sha256[:8] % 2^31"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "A_integer_lane": {
+    "params": 31073,
+    "train_seconds": 52.8,
+    "chart_mae": 1.0505,
+    "chart_rmse": 1.3529,
+    "chart_r2": 0.879,
+    "seed_maes": [
+      1.0408,
+      1.0661,
+      1.0446
+    ],
+    "bands": {
+      "sl0-2": 0.8477,
+      "sl3-5": 0.9097,
+      "sl6-8": 0.846,
+      "sl9-12": 1.6559
+    }
+  },
+  "B_onehot_lane": {
+    "params": 31297,
+    "train_seconds": 50.0,
+    "chart_mae": 1.0523,
+    "chart_rmse": 1.3613,
+    "chart_r2": 0.8775,
+    "seed_maes": [
+      1.0413,
+      1.0555,
+      1.0602
+    ],
+    "bands": {
+      "sl0-2": 0.8185,
+      "sl3-5": 0.8755,
+      "sl6-8": 0.8411,
+      "sl9-12": 1.744
+    }
+  },
+  "config": {
+    "window": 512,
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  }
+}
