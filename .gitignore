@@ -13,6 +13,7 @@ bms_ml/output/corpus/sequences/
 bms_ml/output/sequences/
 bms_ml/output/corpus/manifest.jsonl
 bms_ml/output/tables/
+bms_ml/output/phase2a/
 
 # 运行时状态目录
 .agents/
