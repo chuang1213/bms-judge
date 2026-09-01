@@ -2,6 +2,12 @@
 
 > 归档日期：2026-09-02 | 环境：Windows / Python 3.11 / PyTorch 2.11.0+cu128（RTX 4060）
 
+> **Phase 2A 已启动（2026-09-02）**：目标从"预测 SL"转为"从谱面学习 temporal-spatial chart
+> representation"。设计 memo：`PHASE2A.md`；四轮小规模实验报告：
+> `PHASE2A_REPORT.md`（首轮表示 + T1/T2）、`PHASE2A_INTERVENTION_REPORT.md`（统计受控干预）、
+> `PHASE2A_TASK_COMPARISON_REPORT.md`（Task A 对比）、`PHASE2A_POOLED_ONLY_REPORT.md`（pooled-only）。
+> 代码：`bms_ml/phase2a/`。当前结论与下一步见文末新增 §11。
+
 ## 1. 项目定位
 
 研究问题：**BMS 谱面难度是否是单一标量？能否用数据驱动的方式学到比现有难度表更丰富的谱面技能需求表示？**
@@ -14,9 +20,11 @@
 
 ## 2. 当前状态（一句话）
 
-数据管线成熟（48,619 谱面全量解析 + 审计 + 难度表匹配），
-结构化特征分析完成（R²≈0.88），sequence CNN 首轮为负结果（C ≫ B），
-正在等待核对用户实现的 CNN 结构后决定下一步。
+Phase 1 已封存（本节以下内容为 Phase 1 归档记录）。
+Phase 2A 完成四轮小规模实验：4s×1/60s 网格表示可承载低阶统计之外的排列信息（受控 2-switch 下
+S0 恰为 50%、模型可读），但 T1 masked reconstruction 与 Task A（含 pooled-only 变体）的
+pretraining 均未让 pooled 表示获得超过 random-init 的结构增益（受控 2-switch probe：
+T1 84.6%、Task A per-cell 82.5%、pooled-only 64.6%、random-init 80.4%）。详见 §11。
 
 ## 3. 数据
 
@@ -220,7 +228,56 @@ cd "F:\Projects\bms judge"
 
 ## 10. 下一步候选（未定，按用户节奏）
 
+> 注：以下 Phase 1 遗留候选已被 Phase 2A 取代，见 §11。
+
 1. 核对/修正 SequenceCNN 结构（GAP 轴、transpose、感受野），重跑 C/D；
 2. 若结构无误，讨论最小设计改动（如把与前/后 event 的时间差加入每行输入，
    需用户同意修改数据定义）；
 3. 可解释性实验（用已保存的 cnn_checkpoint.pt）——但需等 C 先能匹配 B_window。
+
+---
+
+## 11. Phase 2A 进度（2026-09-02）
+
+### 研究问题
+
+能不能从谱面本身（不依赖人工 skill 维度、不把 SL 当目标）学习出比标量难度更丰富的
+temporal-spatial chart representation？核心工作假设：固定时长窗口内的 note 排列本身
+含有可学习、可复用的结构信息。
+
+### Representation v1
+
+- 4s 窗口 × 1/60s cell（T=240）× 8 lane（0-6 keys 有序 + scratch 平面），通道 = onset 计数 +
+  LN hold 标志；window-relative 时间；不含 BPM/STOP/SCROLL（side channel 预留）。
+- 代码：`bms_ml/phase2a/grid_data.py`；设计：`PHASE2A.md`。
+
+### 四轮实验与关键结果
+
+| 轮次 | 内容 | 关键结果 |
+|---|---|---|
+| R1 | 网格表示 + T1 masked reconstruction / T2 next-window + 成绩单 R1-R4 | T1 结构可学（onset F1 0.120 vs random 0.053）；T2 退化为预测空；SL 线性探针增益很小；R4 显示 pretrained 对局部 lane shuffle 的敏感度远高于 random-init（L2 1.40 vs 0.003） |
+| R2 | 统计受控 2-switch 干预 + audit + frozen probe | 理论统计最大差全部为 0（S0=50%）；排列确实改变（hamming 0.75）；pretrained 85.2% vs random 83.0% vs S1 80.1%——pretraining 增益仅 ~2pp |
+| R3 | Task A 几何关系 pretext（per-cell head） | 任务可学，但 frozen probe 无增益（81.0% ≈ random 81.3%）；**发现并修复上一轮 mask leak（遮挡掩码写反），干净 per-cell 结果 82.5% vs random 81.3%** |
+| R4 | Pooled-only Task A（head 只能读 pooled + 查询位置） | 可学（0.533 vs random 0.333）但低于 stats baseline（0.588）；受控 2-switch probe **64.6% < random 80.4%**——训练主动把 pooled 推向统计捷径，结构敏感度不升反降 |
+
+### 核心结论
+
+1. **输入表示本身承载排列信息**：网格 + 线性探针就能读出受控空间排列变化（random-init 已 80%+），
+   功劳主要在表示设计而非 pretraining。
+2. **"任务可学"不等于"表示变好"**：T1 与 Task A（per-cell 与 pooled-only 两种形态）都没有让
+   pooled 表示获得超过 random-init 的结构增益；pooled-only 反而显著下降。
+3. 已排除的路径：per-cell 任务头（encoder 偷懒）、pooled-only 几何预测（64 维过度压缩 + 统计捷径）、
+   简单变换判别（输入像素可读，不构成结构理解）。
+
+### 下一方向（未定，按用户节奏）
+
+- A. 换"窗口级、必须全局推理"的监督：head 只能用 pooled，target 为两段之间的相对顺序/相对变换，
+  使"统计捷径"没有落点；
+- B. 回到表示粒度问题（更长窗口 / 多尺度），64 维 pooled 对 per-note 几何确实太挤；
+- C. 接受"网格承载排列信息"，转向"哪些排列信息对 skill demand 有预测力"（需 replay/行为标签，Phase 2B）。
+
+### 实验纪律与教训
+
+- 每个 intervention 必须做统计 audit（理论不变量最大差 = 0）并带 statistics-only baseline；
+- mask 类任务必须有输入级 leak 断言（本轮借此抓到 build_task_data 掩码写反的 bug）；
+- frozen probe 必须同时对比 random-init 与 stats baseline，避免把"输入可读"误当"结构理解"。
