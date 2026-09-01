@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# 虚拟环境
+.venv/
+
+# 原始/可再生成数据（不提交）
+testbms/
+回放收集/
+玩家资料/
+bms_ml/output/corpus/sequences/
+bms_ml/output/sequences/
+bms_ml/output/corpus/manifest.jsonl
+bms_ml/output/tables/
+
+# 运行时状态目录
+.agents/
+.codex/
+
+# 独立 git 仓库（不嵌套提交）
+bms-skills/
+BmsReplayViewer/
+
+# 临时文件
+*.tmp

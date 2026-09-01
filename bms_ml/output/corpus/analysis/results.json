@@ -1,0 +1,300 @@
+{
+  "seed": 0,
+  "n_charts": 1845,
+  "n_excluded_flagged": 60,
+  "device": "cuda",
+  "mean_predictor": {
+    "train_mean": 5.061335563659668,
+    "val": {
+      "mae": 3.4199,
+      "rmse": 3.9646,
+      "r2": -0.0054
+    },
+    "test": {
+      "mae": 3.382,
+      "rmse": 3.8863,
+      "r2": -0.0003
+    }
+  },
+  "single_feature_top": [
+    [
+      "peak_nps_1s",
+      0.8695,
+      0.8376,
+      false
+    ],
+    [
+      "avg_nps",
+      0.832,
+      0.8158,
+      false
+    ],
+    [
+      "peak_measure_nps",
+      0.826,
+      0.2533,
+      true
+    ],
+    [
+      "total_notes",
+      0.7824,
+      0.7603,
+      false
+    ],
+    [
+      "lane6",
+      0.7768,
+      0.7533,
+      false
+    ],
+    [
+      "lane2",
+      0.7721,
+      0.749,
+      false
+    ],
+    [
+      "lane3",
+      0.7546,
+      0.733,
+      false
+    ],
+    [
+      "lane4",
+      0.7544,
+      0.7339,
+      false
+    ],
+    [
+      "lane7",
+      0.7497,
+      0.7327,
+      false
+    ],
+    [
+      "lane5",
+      0.7444,
+      0.7219,
+      false
+    ]
+  ],
+  "linear_regression": {
+    "val": {
+      "mae": 1.1283,
+      "rmse": 1.453,
+      "r2": 0.865
+    },
+    "test": {
+      "mae": 1.186,
+      "rmse": 1.508,
+      "r2": 0.8494
+    },
+    "coefficients": {
+      "total_notes": -599748.6535,
+      "ln_ratio": 0.1514,
+      "duration_sec": 0.3947,
+      "measures": 0.1143,
+      "initial_bpm": 0.0609,
+      "min_bpm": -0.1011,
+      "max_bpm": 0.1171,
+      "bpm_change_count": 0.0986,
+      "stop_count": 0.022,
+      "stop_total_sec": 0.0314,
+      "lane0_scratch": 56863.6458,
+      "lane1": 85023.011,
+      "lane2": 92047.2344,
+      "lane3": 90022.2618,
+      "lane4": 91477.215,
+      "lane5": 89428.0582,
+      "lane6": 89784.9933,
+      "lane7": 91776.0656,
+      "scratch_ratio": 0.0344,
+      "avg_nps": 1.9555,
+      "peak_nps_1s": 1.6934,
+      "peak_measure_nps": -0.0599,
+      "chord_count": 83823.3755,
+      "chord2_count": -61541.2999,
+      "chord3plus_count": -66582.9309,
+      "jack_count": 0.4753
+    },
+    "intercept": 5.1492
+  },
+  "mlp": {
+    "val": {
+      "mae": 0.9689,
+      "rmse": 1.3184,
+      "r2": 0.8888
+    },
+    "test": {
+      "mae": 1.018,
+      "rmse": 1.3498,
+      "r2": 0.8793
+    },
+    "epochs_used": 82,
+    "early_stopping_patience": 20
+  },
+  "linear_exact_level_accuracy": 0.2456,
+  "mlp_exact_level_accuracy": 0.3789,
+  "residual": {
+    "per_sl_mean_abs_error": {
+      "0": 0.475,
+      "1": 0.588,
+      "2": 0.695,
+      "3": 1.044,
+      "4": 1.004,
+      "5": 1.384,
+      "6": 1.66,
+      "7": 1.368,
+      "8": 1.173,
+      "9": 0.834,
+      "10": 1.374,
+      "11": 1.316,
+      "12": 1.455
+    },
+    "abs_resid_corr": {
+      "note_count": 0.274,
+      "avg_nps": 0.313,
+      "duration": -0.043,
+      "max_bpm": 0.096,
+      "ln_ratio": 0.042
+    }
+  },
+  "ablation_linear": {
+    "A_basic_scale": {
+      "features": [
+        "total_notes",
+        "duration_sec",
+        "measures",
+        "avg_nps"
+      ],
+      "val": {
+        "mae": 1.6665,
+        "rmse": 2.1298,
+        "r2": 0.7098
+      },
+      "test": {
+        "mae": 1.5899,
+        "rmse": 2.0048,
+        "r2": 0.7338
+      }
+    },
+    "B_bpm_timing": {
+      "features": [
+        "initial_bpm",
+        "min_bpm",
+        "max_bpm",
+        "bpm_change_count",
+        "stop_count",
+        "stop_total_sec"
+      ],
+      "val": {
+        "mae": 3.3194,
+        "rmse": 3.8451,
+        "r2": 0.0543
+      },
+      "test": {
+        "mae": 3.3283,
+        "rmse": 3.8485,
+        "r2": 0.019
+      }
+    },
+    "C_chord_density": {
+      "features": [
+        "peak_nps_1s",
+        "peak_measure_nps",
+        "chord_count",
+        "chord2_count",
+        "chord3plus_count",
+        "jack_count"
+      ],
+      "val": {
+        "mae": 1.3238,
+        "rmse": 1.6554,
+        "r2": 0.8247
+      },
+      "test": {
+        "mae": 1.3858,
+        "rmse": 1.8244,
+        "r2": 0.7795
+      }
+    },
+    "D_lane_distribution": {
+      "features": [
+        "lane0_scratch",
+        "lane1",
+        "lane2",
+        "lane3",
+        "lane4",
+        "lane5",
+        "lane6",
+        "lane7",
+        "scratch_ratio"
+      ],
+      "val": {
+        "mae": 1.8833,
+        "rmse": 2.3705,
+        "r2": 0.6405
+      },
+      "test": {
+        "mae": 1.877,
+        "rmse": 2.3941,
+        "r2": 0.6204
+      }
+    },
+    "E_ln": {
+      "features": [
+        "ln_ratio"
+      ],
+      "val": {
+        "mae": 3.3855,
+        "rmse": 3.9315,
+        "r2": 0.0112
+      },
+      "test": {
+        "mae": 3.3557,
+        "rmse": 3.8475,
+        "r2": 0.0195
+      }
+    },
+    "ALL": {
+      "features": [
+        "total_notes",
+        "ln_ratio",
+        "duration_sec",
+        "measures",
+        "initial_bpm",
+        "min_bpm",
+        "max_bpm",
+        "bpm_change_count",
+        "stop_count",
+        "stop_total_sec",
+        "lane0_scratch",
+        "lane1",
+        "lane2",
+        "lane3",
+        "lane4",
+        "lane5",
+        "lane6",
+        "lane7",
+        "scratch_ratio",
+        "avg_nps",
+        "peak_nps_1s",
+        "peak_measure_nps",
+        "chord_count",
+        "chord2_count",
+        "chord3plus_count",
+        "jack_count"
+      ],
+      "val": {
+        "mae": 1.1283,
+        "rmse": 1.453,
+        "r2": 0.865
+      },
+      "test": {
+        "mae": 1.186,
+        "rmse": 1.508,
+        "r2": 0.8494
+      }
+    }
+  }
+}

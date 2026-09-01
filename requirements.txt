@@ -1,0 +1,8 @@
+# BMS 难度研究项目 - Python 环境依赖
+# 安装方式（CUDA 版，RTX 4060 已验证）:
+#   .venv\Scripts\python.exe -m pip install -r requirements.txt
+#   若官方源慢，可加: --index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu128
+
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+numpy==2.4.6

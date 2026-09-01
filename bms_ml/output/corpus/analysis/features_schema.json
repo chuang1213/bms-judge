@@ -1,0 +1,68 @@
+{
+  "names": [
+    "total_notes",
+    "ln_ratio",
+    "duration_sec",
+    "measures",
+    "initial_bpm",
+    "min_bpm",
+    "max_bpm",
+    "bpm_change_count",
+    "stop_count",
+    "stop_total_sec",
+    "lane0_scratch",
+    "lane1",
+    "lane2",
+    "lane3",
+    "lane4",
+    "lane5",
+    "lane6",
+    "lane7",
+    "scratch_ratio",
+    "avg_nps",
+    "peak_nps_1s",
+    "peak_measure_nps",
+    "chord_count",
+    "chord2_count",
+    "chord3plus_count",
+    "jack_count"
+  ],
+  "groups": {
+    "A_basic_scale": [
+      "total_notes",
+      "duration_sec",
+      "measures",
+      "avg_nps"
+    ],
+    "B_bpm_timing": [
+      "initial_bpm",
+      "min_bpm",
+      "max_bpm",
+      "bpm_change_count",
+      "stop_count",
+      "stop_total_sec"
+    ],
+    "C_chord_density": [
+      "peak_nps_1s",
+      "peak_measure_nps",
+      "chord_count",
+      "chord2_count",
+      "chord3plus_count",
+      "jack_count"
+    ],
+    "D_lane_distribution": [
+      "lane0_scratch",
+      "lane1",
+      "lane2",
+      "lane3",
+      "lane4",
+      "lane5",
+      "lane6",
+      "lane7",
+      "scratch_ratio"
+    ],
+    "E_ln": [
+      "ln_ratio"
+    ]
+  }
+}

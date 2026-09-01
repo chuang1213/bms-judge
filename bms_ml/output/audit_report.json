@@ -1,0 +1,354 @@
+{
+  "total_charts": 305,
+  "clean_charts": 246,
+  "quarantined_charts": 59,
+  "songs": 92,
+  "clean_songs": 80,
+  "artists": 130,
+  "quarantine_by_reason": {
+    "no_notes": 2,
+    "not_single_play": 57
+  },
+  "warning_by_code": {},
+  "player_modes": {
+    "1P": 248,
+    "DP": 57
+  },
+  "tables": {
+    "Satellite": {
+      "n_charts": 6,
+      "n_levels": 6,
+      "levels": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "5": 1,
+        "10": 1,
+        "12": 1
+      }
+    },
+    "第三期Overjoy": {
+      "n_charts": 2,
+      "n_levels": 2,
+      "levels": {
+        "1": 1,
+        "3": 1
+      }
+    },
+    "通常難易度表": {
+      "n_charts": 3,
+      "n_levels": 3,
+      "levels": {
+        "7": 1,
+        "9": 1,
+        "13": 1
+      }
+    },
+    "発狂BMS難易度表": {
+      "n_charts": 12,
+      "n_levels": 10,
+      "levels": {
+        "2": 1,
+        "3": 1,
+        "5": 1,
+        "6": 1,
+        "8": 2,
+        "12": 1,
+        "15": 1,
+        "16": 1,
+        "20": 2,
+        "23": 1
+      }
+    },
+    "LN難易度": {
+      "n_charts": 3,
+      "n_levels": 3,
+      "levels": {
+        "5": 1,
+        "17": 1,
+        "23": 1
+      }
+    },
+    "Stella": {
+      "n_charts": 8,
+      "n_levels": 6,
+      "levels": {
+        "0": 2,
+        "1": 1,
+        "2": 1,
+        "4": 1,
+        "5": 1,
+        "7": 2
+      }
+    },
+    "NEW GENERATION 通常難易度表": {
+      "n_charts": 10,
+      "n_levels": 6,
+      "levels": {
+        "4": 1,
+        "5": 1,
+        "6": 2,
+        "7": 2,
+        "10": 3,
+        "12+": 1
+      }
+    },
+    "NEW GENERATION 発狂難易度表": {
+      "n_charts": 7,
+      "n_levels": 6,
+      "levels": {
+        "1": 1,
+        "4": 1,
+        "5": 1,
+        "7": 1,
+        "15": 2,
+        "16": 1
+      }
+    }
+  },
+  "distributions": {
+    "bpm_init": {
+      "min": 163.0,
+      "median": 180.0,
+      "max": 227.0
+    },
+    "bpm_max": {
+      "min": 163.0,
+      "median": 180.0,
+      "max": 99990360.0
+    },
+    "total_notes": {
+      "min": 181,
+      "median": 2414,
+      "max": 23324
+    },
+    "duration_sec": {
+      "min": 97.178,
+      "median": 145.333,
+      "max": 2544.083
+    },
+    "ln_ratio": {
+      "min": 0.0,
+      "median": 0.0,
+      "max": 0.9969
+    },
+    "scratch_ratio": {
+      "min": 0.0,
+      "median": 0.017817371937639197,
+      "max": 0.7881481481481482
+    }
+  },
+  "group_stats": {
+    "flagged_merges": [
+      {
+        "n_charts": 90,
+        "duration_min": 124.0,
+        "duration_max": 2544.1,
+        "notes_min": 181,
+        "notes_max": 8439,
+        "titles": [
+          "Air",
+          "Air (Another14)",
+          "Air (DP EX2008)",
+          "Air (DP EX2008†LEGGENDARIA)",
+          "Air (EX14)"
+        ],
+        "group_id": "t:shiki|air",
+        "dur_span": 19.52,
+        "note_ratio": 46.62
+      },
+      {
+        "n_charts": 35,
+        "duration_min": 145.9,
+        "duration_max": 145.9,
+        "notes_min": 0,
+        "notes_max": 4966,
+        "titles": [
+          "Chronomia",
+          "Chronomia  [VerA]",
+          "Chronomia -LAST BOSS-",
+          "Chronomia [40 DIMENSIONS]",
+          "Chronomia [ANOTHER7]"
+        ],
+        "group_id": "t:lime|chronomia",
+        "dur_span": 0.0,
+        "note_ratio": 4966000000.0
+      },
+      {
+        "n_charts": 51,
+        "duration_min": 97.2,
+        "duration_max": 1473.4,
+        "notes_min": 91,
+        "notes_max": 23324,
+        "titles": [
+          "Odin",
+          "Odin (o・∇・o)",
+          "Odin [ 7Key_clover ]",
+          "Odin [24分耐久Another]",
+          "Odin [7LN]"
+        ],
+        "group_id": "t:しらいし|odin",
+        "dur_span": 14.16,
+        "note_ratio": 256.31
+      },
+      {
+        "n_charts": 31,
+        "duration_min": 130.8,
+        "duration_max": 130.8,
+        "notes_min": 249,
+        "notes_max": 3608,
+        "titles": [
+          "Ophelia",
+          "Ophelia (14keys Basic)",
+          "Ophelia (14keys Hard)",
+          "Ophelia (14keys Maniac)",
+          "Ophelia [Another14]"
+        ],
+        "group_id": "t:lime|ophelia",
+        "dur_span": 0.0,
+        "note_ratio": 14.49
+      }
+    ],
+    "charts_per_song": {
+      "90": 1,
+      "1": 80,
+      "2": 7,
+      "35": 1,
+      "51": 1,
+      "4": 1,
+      "31": 1
+    }
+  },
+  "song_difficulty_range": {
+    "t:limeobjξ青龍ξ|ophelia | NEW GENERATION 発狂難易度表": {
+      "min": 7.0,
+      "max": 7.0,
+      "n": 1
+    },
+    "t:lime|chronomia | LN難易度": {
+      "min": 17.0,
+      "max": 17.0,
+      "n": 1
+    },
+    "t:lime|chronomia | NEW GENERATION 発狂難易度表": {
+      "min": 4.0,
+      "max": 15.0,
+      "n": 3
+    },
+    "t:lime|chronomia | NEW GENERATION 通常難易度表": {
+      "min": 4.0,
+      "max": 10.0,
+      "n": 3
+    },
+    "t:lime|chronomia | Satellite": {
+      "min": 2.0,
+      "max": 5.0,
+      "n": 2
+    },
+    "t:lime|chronomia | Stella": {
+      "min": 0.0,
+      "max": 7.0,
+      "n": 3
+    },
+    "t:lime|chronomia | 発狂BMS難易度表": {
+      "min": 23.0,
+      "max": 23.0,
+      "n": 1
+    },
+    "t:lime|chronomia | 通常難易度表": {
+      "min": 7.0,
+      "max": 7.0,
+      "n": 1
+    },
+    "t:lime|ophelia | NEW GENERATION 発狂難易度表": {
+      "min": 15.0,
+      "max": 16.0,
+      "n": 2
+    },
+    "t:lime|ophelia | NEW GENERATION 通常難易度表": {
+      "min": 5.0,
+      "max": 10.0,
+      "n": 3
+    },
+    "t:lime|ophelia | Satellite": {
+      "min": 10.0,
+      "max": 10.0,
+      "n": 1
+    },
+    "t:lime|ophelia | Stella": {
+      "min": 0.0,
+      "max": 7.0,
+      "n": 3
+    },
+    "t:lime|ophelia | 発狂BMS難易度表": {
+      "min": 8.0,
+      "max": 20.0,
+      "n": 3
+    },
+    "t:shiki|air | LN難易度": {
+      "min": 23.0,
+      "max": 23.0,
+      "n": 1
+    },
+    "t:shiki|air | NEW GENERATION 発狂難易度表": {
+      "min": 1.0,
+      "max": 1.0,
+      "n": 1
+    },
+    "t:shiki|air | NEW GENERATION 通常難易度表": {
+      "min": 7.0,
+      "max": 7.0,
+      "n": 1
+    },
+    "t:shiki|air | Satellite": {
+      "min": 1.0,
+      "max": 12.0,
+      "n": 3
+    },
+    "t:shiki|air | Stella": {
+      "min": 1.0,
+      "max": 2.0,
+      "n": 2
+    },
+    "t:shiki|air | 発狂BMS難易度表": {
+      "min": 2.0,
+      "max": 20.0,
+      "n": 6
+    },
+    "t:shiki|air | 通常難易度表": {
+      "min": 9.0,
+      "max": 9.0,
+      "n": 1
+    },
+    "t:shiki|air10 | 第三期Overjoy": {
+      "min": 3.0,
+      "max": 3.0,
+      "n": 1
+    },
+    "t:shiki|airairmagest | LN難易度": {
+      "min": 5.0,
+      "max": 5.0,
+      "n": 1
+    },
+    "t:しらいし|odin | NEW GENERATION 通常難易度表": {
+      "min": 6.0,
+      "max": 10.0,
+      "n": 2
+    },
+    "t:しらいし|odin | 発狂BMS難易度表": {
+      "min": 5.0,
+      "max": 15.0,
+      "n": 2
+    },
+    "t:しらいし|odin | 第三期Overjoy": {
+      "min": 1.0,
+      "max": 1.0,
+      "n": 1
+    },
+    "t:しらいし|odin | 通常難易度表": {
+      "min": 13.0,
+      "max": 13.0,
+      "n": 1
+    }
+  }
+}

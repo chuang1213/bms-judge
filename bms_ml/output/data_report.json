@@ -1,0 +1,66 @@
+{
+  "total_charts": 305,
+  "quarantined": 59,
+  "clean_charts": 246,
+  "quarantine_by_reason": {
+    "no_notes": 2,
+    "not_single_play": 57
+  },
+  "flag_by_reason": {
+    "extreme_bpm": 3,
+    "long_chart": 2,
+    "extreme_notes": 1
+  },
+  "labeled": {
+    "NEW GENERATION 発狂難易度表": 7,
+    "発狂BMS難易度表": 12,
+    "LN難易度": 3,
+    "NEW GENERATION 通常難易度表": 10,
+    "通常難易度表": 3,
+    "第三期Overjoy": 2,
+    "Satellite": 6,
+    "Stella": 8
+  },
+  "meta_stats": {
+    "total_notes": {
+      "min": 0,
+      "median": 2118,
+      "max": 23324
+    },
+    "duration_sec": {
+      "min": 97.178,
+      "median": 145.333,
+      "max": 2544.083
+    },
+    "avg_nps": {
+      "min": 0.0,
+      "median": 14.573,
+      "max": 36.193
+    },
+    "peak_nps_1s": {
+      "min": 0.0,
+      "median": 28,
+      "max": 69
+    },
+    "min_bpm": {
+      "min": 0.1,
+      "median": 180.0,
+      "max": 227.0
+    },
+    "max_bpm": {
+      "min": 163.0,
+      "median": 180.0,
+      "max": 99990360.0
+    },
+    "stop_count": {
+      "min": 0,
+      "median": 0,
+      "max": 3
+    },
+    "ln_count": {
+      "min": 0,
+      "median": 0,
+      "max": 2850
+    }
+  }
+}

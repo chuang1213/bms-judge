@@ -1,0 +1,2567 @@
+[
+  {
+    "sha256": "0ceb1c90a942d9245e946b23ec4a095a05419117ae1bd895ed60807bf0c79168",
+    "title": "FIRST PROMIZE[ANOTHER]",
+    "rel_path": "FIRST PROMIZE\\_another.bms",
+    "sl": 0.0,
+    "pred": 0.4359670877456665,
+    "residual": -0.4359670877456665,
+    "abs_residual": 0.4359670877456665
+  },
+  {
+    "sha256": "89a17fc54bfa76a7d697419088ff98c9806a4cb6f906474e78dd825e072274c5",
+    "title": "FIRST PROMIZE[INSANE]",
+    "rel_path": "FIRST PROMIZE\\＿insane.bms",
+    "sl": 4.0,
+    "pred": 2.910167694091797,
+    "residual": 1.0898323059082031,
+    "abs_residual": 1.0898323059082031
+  },
+  {
+    "sha256": "6da13c3214c07c7688a5cca18b8754d420316eb5d0c63429de64161694194ab0",
+    "title": "DANCING KIWI",
+    "rel_path": "DANCING KIWI\\_dancing_kiwi_wark.bms",
+    "sl": 11.0,
+    "pred": 11.11473560333252,
+    "residual": -0.11473560333251953,
+    "abs_residual": 0.11473560333251953
+  },
+  {
+    "sha256": "5717ef9f8b6e00c0197d318c9f9abdd06c2103a5bba0cb2bfc5c71fa227694c8",
+    "title": "明空リュウセイグン",
+    "rel_path": "明空リュウセイグン\\_Ryseigun.bms",
+    "sl": 1.0,
+    "pred": 0.5355086922645569,
+    "residual": 0.4644913077354431,
+    "abs_residual": 0.4644913077354431
+  },
+  {
+    "sha256": "b1cff55b1d0cf3e2175d3d226827779ca0b1831ae77b8cc80828dd60542bfffa",
+    "title": "明空リュウセイグン [Daybreak]",
+    "rel_path": "明空リュウセイグン\\_SPDaybreak.bms",
+    "sl": 4.0,
+    "pred": 3.8514955043792725,
+    "residual": 0.14850449562072754,
+    "abs_residual": 0.14850449562072754
+  },
+  {
+    "sha256": "c153cc5c4e0e1f7842ab4484e069c521d31e4e18e979d93763c9870c0b18dd69",
+    "title": "Candy & Baguette [HARDEST]",
+    "rel_path": "Candy & Baguette\\CandyBaquette-spHARDEST.bme",
+    "sl": 10.0,
+    "pred": 8.858657836914062,
+    "residual": 1.1413421630859375,
+    "abs_residual": 1.1413421630859375
+  },
+  {
+    "sha256": "4aabad623fae57ee639d4af360570661a630903519c07dccf68e992f4af18ea9",
+    "title": "宵桜回廊",
+    "rel_path": "宵桜回廊\\__another.bms",
+    "sl": 3.0,
+    "pred": 1.0161799192428589,
+    "residual": 1.9838200807571411,
+    "abs_residual": 1.9838200807571411
+  },
+  {
+    "sha256": "badb5e26812ab7652816f7c3963a4732418f9652d29cbc255d837fee4357ba4b",
+    "title": "SpellBound (Satellite Palace Remix)",
+    "rel_path": "SpellBound (2)\\yamajet_spellbound_remix_SPA.bms",
+    "sl": 0.0,
+    "pred": 0.44371646642684937,
+    "residual": -0.44371646642684937,
+    "abs_residual": 0.44371646642684937
+  },
+  {
+    "sha256": "dbf751acfed875a6ce2465e568b9e0528dc4476bcfb71775da02182276cfd864",
+    "title": "SpellBound[CHARM]",
+    "rel_path": "SpellBound\\spellbound_c.bms",
+    "sl": 0.0,
+    "pred": 0.21859167516231537,
+    "residual": -0.21859167516231537,
+    "abs_residual": 0.21859167516231537
+  },
+  {
+    "sha256": "c3f96e927a108d5971e98119afbf7b861fea686a61585bfcc995bb3a6df41570",
+    "title": "Hifumi Daisuki - ahaha remix",
+    "rel_path": "Hifumi Daisuki - ahaha remix\\hifumi_PHH.bms",
+    "sl": 2.0,
+    "pred": 1.9300798177719116,
+    "residual": 0.06992018222808838,
+    "abs_residual": 0.06992018222808838
+  },
+  {
+    "sha256": "bde4c91f99cbcb0968af128f51696d40e380063d976150a24d6f7438edb12ec8",
+    "title": "Bloody Scarlet Nightmare",
+    "rel_path": "Bloody Scarlet Nightmare\\Bloody Scarlet Nightmare_Lief.bms",
+    "sl": 11.0,
+    "pred": 7.273704528808594,
+    "residual": 3.7262954711914062,
+    "abs_residual": 3.7262954711914062
+  },
+  {
+    "sha256": "5f1c745fd8873519b9f5b93bee3c16f59002e94f99eb30fc14a4e7611e65c837",
+    "title": "Mana [Black Lotus]",
+    "rel_path": "Mana\\_06_mana_ins2.bms",
+    "sl": 12.0,
+    "pred": 9.783717155456543,
+    "residual": 2.216282844543457,
+    "abs_residual": 2.216282844543457
+  },
+  {
+    "sha256": "39cf74607cba0336f5f9294b68a04cf62e96184fdaa08d9600dac572492c343f",
+    "title": "GOODTEK",
+    "rel_path": "GOODTEK\\_GOODTEK_godland.bms",
+    "sl": 7.0,
+    "pred": 8.045109748840332,
+    "residual": -1.045109748840332,
+    "abs_residual": 1.045109748840332
+  },
+  {
+    "sha256": "2ef3507ce38407bd1d988c9ccd39f779da7be6dc0efe1165d355b8ba1ba2a830",
+    "title": "Midnight o'clock -DREAMING-",
+    "rel_path": "Midnight o'clock\\_Midnightoclock_BK_DREAMING.bms",
+    "sl": 2.0,
+    "pred": 1.1443350315093994,
+    "residual": 0.8556649684906006,
+    "abs_residual": 0.8556649684906006
+  },
+  {
+    "sha256": "1e3ada5c908bfe812faa3e6132821dc27f021d93c54c61a7fc2f92471bc4e972",
+    "title": "Pandora[ANOTHER]",
+    "rel_path": "Pandora\\_ANOTHER.bms",
+    "sl": 1.0,
+    "pred": 0.3348907232284546,
+    "residual": 0.6651092767715454,
+    "abs_residual": 0.6651092767715454
+  },
+  {
+    "sha256": "ff3e7af08ee176bfc3f1c2fc79ee4d6e3ba0a21c85c1f4d45a09aa851b2272f1",
+    "title": "Let's get wild![ANOTHER]",
+    "rel_path": "Let's get wild!\\_SPA.bms",
+    "sl": 0.0,
+    "pred": 0.4645262658596039,
+    "residual": -0.4645262658596039,
+    "abs_residual": 0.4645262658596039
+  },
+  {
+    "sha256": "5d1360acb060231ef688012746b628509d951b7435509a5e8814cf3ab4f7ea2f",
+    "title": "Σnergy -яevolution-[Steяrite]",
+    "rel_path": "Σnergy -яevolution-\\_6_Sterrite.bms",
+    "sl": 7.0,
+    "pred": 6.91114616394043,
+    "residual": 0.08885383605957031,
+    "abs_residual": 0.08885383605957031
+  },
+  {
+    "sha256": "3d8800ad6f253906091e0818f05524740e140e0543be8c84a0a0f1d48f64fd59",
+    "title": "Snow Black -Vendetta- [Finale]",
+    "rel_path": "Snow Black -Vendetta-\\Snow Black -Vendetta-_ff.bme",
+    "sl": 2.0,
+    "pred": 3.123669385910034,
+    "residual": -1.1236693859100342,
+    "abs_residual": 1.1236693859100342
+  },
+  {
+    "sha256": "1859550e55d8a9a238ff57ccc8611aa3645e37588c5e00d5295d286a43eed273",
+    "title": "mom",
+    "rel_path": "mom\\_mom_nanami01.bme",
+    "sl": 12.0,
+    "pred": 9.239856719970703,
+    "residual": 2.760143280029297,
+    "abs_residual": 2.760143280029297
+  },
+  {
+    "sha256": "641e7c6275a5eae0b5b89f0d1ff82b6ac4dbd407a5ca9f49daec1aefc0322b63",
+    "title": "mom",
+    "rel_path": "mom\\_mom_s4.bme",
+    "sl": 3.0,
+    "pred": 3.1066267490386963,
+    "residual": -0.10662674903869629,
+    "abs_residual": 0.10662674903869629
+  },
+  {
+    "sha256": "0730365fc39d27c260f29c41a47c88aa468126de04428449000b57c8dc890fca",
+    "title": "天空の城ヴェリエル [RUSH]",
+    "rel_path": "天空の城ヴェリエル\\veriel rush.bme",
+    "sl": 10.0,
+    "pred": 7.392893314361572,
+    "residual": 2.6071066856384277,
+    "abs_residual": 2.6071066856384277
+  },
+  {
+    "sha256": "30e1e352a4dd5b41da77e9cbf5b89df6b48fe5ef7a48256a8c66536a8854f02d",
+    "title": "Close the Lights (EX)",
+    "rel_path": "Close the Lights\\Close_the_Lights_EX.bms",
+    "sl": 9.0,
+    "pred": 8.732819557189941,
+    "residual": 0.2671804428100586,
+    "abs_residual": 0.2671804428100586
+  },
+  {
+    "sha256": "e4c0ac0fe045ed0bdb42bd9b0949239c0a0e23ea81f9c06ab559cbdafd05a89a",
+    "title": "ドSメスガキ幼女歯医者 でんたるちゃん -でぃすぺあ-",
+    "rel_path": "ドSメスガキ幼女歯医者 でんたるちゃん\\_00_nekomirin_dentalchan_nanami01.bms",
+    "sl": 11.0,
+    "pred": 12.261578559875488,
+    "residual": -1.2615785598754883,
+    "abs_residual": 1.2615785598754883
+  },
+  {
+    "sha256": "e7145cd9bfdd94d6f618886c92bf3bcfa058d356ec681cfd478bb971a991b52d",
+    "title": "Smudge",
+    "rel_path": "Smudge\\_nakaiankow_smudge_another.bms",
+    "sl": 0.0,
+    "pred": 0.27000534534454346,
+    "residual": -0.27000534534454346,
+    "abs_residual": 0.27000534534454346
+  },
+  {
+    "sha256": "69c571cfb5c6334215d3cf4966dc91aa1d885836d2aab50a63ac2fcbbb87a0a6",
+    "title": "Angel dust [FEATHER]",
+    "rel_path": "Angel dust\\angeldust7Feather.bms",
+    "sl": 4.0,
+    "pred": 6.137907028198242,
+    "residual": -2.137907028198242,
+    "abs_residual": 2.137907028198242
+  },
+  {
+    "sha256": "889e178d9b1bf4fefbb0c840173577b99853303f26d45fd99f69bebdf73c732d",
+    "title": "Angel dust",
+    "rel_path": "Angel dust\\angeldust7_83929.bms",
+    "sl": 10.0,
+    "pred": 10.571125984191895,
+    "residual": -0.5711259841918945,
+    "abs_residual": 0.5711259841918945
+  },
+  {
+    "sha256": "e7603a98a346ac66c5224067de70fa13746c74b2976295a18f02105406d811ff",
+    "title": "LWVIIX[ANOTHER]",
+    "rel_path": "LWVIIX\\_LWVIIX_05_ANOTHER.bms",
+    "sl": 8.0,
+    "pred": 6.026306629180908,
+    "residual": 1.9736933708190918,
+    "abs_residual": 1.9736933708190918
+  },
+  {
+    "sha256": "381856ceae0decb5f363332b6517e18331858d82eed8b4be3155c16f96c1d558",
+    "title": "To you [Affection]",
+    "rel_path": "To you\\_toyou_7love.bme",
+    "sl": 7.0,
+    "pred": 6.552506923675537,
+    "residual": 0.4474930763244629,
+    "abs_residual": 0.4474930763244629
+  },
+  {
+    "sha256": "f411d8d88a09e888d5f88bdae106d8e78863b46d733043067b744c561a1d33e3",
+    "title": "SAKIGAKE",
+    "rel_path": "SAKIGAKE\\SAKIGAKE_A.bms",
+    "sl": 0.0,
+    "pred": 0.18699249625205994,
+    "residual": -0.18699249625205994,
+    "abs_residual": 0.18699249625205994
+  },
+  {
+    "sha256": "f74e5f8f8053a4e9dbd7afb5809328243d01fae1f5b9acd8ab65836b2d790054",
+    "title": "Spherescense",
+    "rel_path": "Spherescense\\(133)Spherescense_triforce.bms",
+    "sl": 4.0,
+    "pred": 3.6458091735839844,
+    "residual": 0.3541908264160156,
+    "abs_residual": 0.3541908264160156
+  },
+  {
+    "sha256": "cfe8cb4cf02076c33c7c0aa898cea7a3d89a091ccdc16618cb6c2decefba8f4b",
+    "title": "RE:START [純]",
+    "rel_path": "RE：START\\restart純.bms",
+    "sl": 8.0,
+    "pred": 9.210259437561035,
+    "residual": -1.2102594375610352,
+    "abs_residual": 1.2102594375610352
+  },
+  {
+    "sha256": "e220d39da2c073b3c6c03973f8f99ddca702f95bd0bd5d4a3384358d0ae6f15e",
+    "title": "Frost Land",
+    "rel_path": "Frost Land\\_7a.bms",
+    "sl": 1.0,
+    "pred": 2.210787057876587,
+    "residual": -1.210787057876587,
+    "abs_residual": 1.210787057876587
+  },
+  {
+    "sha256": "666d82372e699289caf8419da4ff752666392abed767bc3e0da49425b9acbdb9",
+    "title": "Blooming!! [Insane]",
+    "rel_path": "Blooming!!\\【Insane】.bms",
+    "sl": 9.0,
+    "pred": 8.889853477478027,
+    "residual": 0.11014652252197266,
+    "abs_residual": 0.11014652252197266
+  },
+  {
+    "sha256": "f2d0b495b4357025c85d880f658fae6e82bc6441f9904752b1e0c02ae7ec4bc9",
+    "title": "桜華月 [7key sio]",
+    "rel_path": "桜華月\\sakura_7sio-another.bme",
+    "sl": 1.0,
+    "pred": 0.7973937392234802,
+    "residual": 0.20260626077651978,
+    "abs_residual": 0.20260626077651978
+  },
+  {
+    "sha256": "27e0e6687d0d3182f9aafbebcdc9ce1241bdf7a8f8448f559c182ad7bdb164c3",
+    "title": "Snowfairy -naughty-",
+    "rel_path": "Snowfairy\\_snowfairy_7naughty.bms",
+    "sl": 2.0,
+    "pred": 2.0622572898864746,
+    "residual": -0.06225728988647461,
+    "abs_residual": 0.06225728988647461
+  },
+  {
+    "sha256": "d665de78bda87f18fa628d8102661181ffc478067f376dade10e64b9c52f9d0b",
+    "title": "-Never ending journey-[BLACKANOTHER]",
+    "rel_path": "-Never ending journey-\\-Never_ending_journey-[BLACKANOTHER].bms",
+    "sl": 0.0,
+    "pred": 0.43648815155029297,
+    "residual": -0.43648815155029297,
+    "abs_residual": 0.43648815155029297
+  },
+  {
+    "sha256": "14a107b1dec6a39f4f10db5c3ebe737dfe2fed7887e38707ae6fdadffdd3875c",
+    "title": "Anarchist [Autonomism]",
+    "rel_path": "Anarchist\\_anarchist_Autonomism.bms",
+    "sl": 7.0,
+    "pred": 5.045201301574707,
+    "residual": 1.954798698425293,
+    "abs_residual": 1.954798698425293
+  },
+  {
+    "sha256": "bb443a6c00be20590f9b88873ddc7b9583868017cef0d3124d1dd16f80d91088",
+    "title": "αMe:TRiC",
+    "rel_path": "αMe：TRiC\\αMeTRiC_Another.bms",
+    "sl": 2.0,
+    "pred": 1.2795175313949585,
+    "residual": 0.7204824686050415,
+    "abs_residual": 0.7204824686050415
+  },
+  {
+    "sha256": "985ba794d20cb26f359e972dff427473005cd0ddc46594f3bdab0486cb3b19a3",
+    "title": "Cryonix[Another]",
+    "rel_path": "Cryonix\\_another.bms",
+    "sl": 2.0,
+    "pred": 2.3100712299346924,
+    "residual": -0.3100712299346924,
+    "abs_residual": 0.3100712299346924
+  },
+  {
+    "sha256": "6b0d1951027358e77bffd816dcd77ffd83cdddd6dee29ba5975f5a46eea25c8d",
+    "title": "Sunny",
+    "rel_path": "Sunny\\_00_mesudx-q.bms",
+    "sl": 12.0,
+    "pred": 11.061402320861816,
+    "residual": 0.9385976791381836,
+    "abs_residual": 0.9385976791381836
+  },
+  {
+    "sha256": "903df6911cc65545b64669016aff0f7e63e9a9f05ab318df50d8b58a32847cb5",
+    "title": "Sunny [Charmante]",
+    "rel_path": "Sunny\\_11_mesudx-ex_ch.bms",
+    "sl": 0.0,
+    "pred": 1.0033810138702393,
+    "residual": -1.0033810138702393,
+    "abs_residual": 1.0033810138702393
+  },
+  {
+    "sha256": "de800799a6dbdbe07245511d78972f6cf41b7ea82fa89d9ac66dbb7f3d4a279e",
+    "title": "A-chasing-Y",
+    "rel_path": "A-chasing-Y\\A_chasing_Y_Lv5.bms",
+    "sl": 2.0,
+    "pred": 2.7119109630584717,
+    "residual": -0.7119109630584717,
+    "abs_residual": 0.7119109630584717
+  },
+  {
+    "sha256": "947d7faddf73fa3e13c0c3d3c72f47f864dfada5a76959e84e68e4bcc25e3970",
+    "title": "A-chasing-Y",
+    "rel_path": "A-chasing-Y\\A_chasing_Y_Lv6.bms",
+    "sl": 6.0,
+    "pred": 6.7632551193237305,
+    "residual": -0.7632551193237305,
+    "abs_residual": 0.7632551193237305
+  },
+  {
+    "sha256": "0e4b071193923bff1523b84c7f4d3fb58b7ecea2573b232ce187b99f6f453a97",
+    "title": "A-chasing-Y",
+    "rel_path": "A-chasing-Y\\A_chasing_Y_Lv7.bms",
+    "sl": 10.0,
+    "pred": 10.328639030456543,
+    "residual": -0.32863903045654297,
+    "abs_residual": 0.32863903045654297
+  },
+  {
+    "sha256": "12d61b2d661f49e82c48c6fa3822c6535223c2ead10d2203c1958e1a86ab65b7",
+    "title": "Shiny☆Strike!!!",
+    "rel_path": "Shiny☆Strike!!!\\_SPANOTHER.bms",
+    "sl": 2.0,
+    "pred": 0.845613956451416,
+    "residual": 1.154386043548584,
+    "abs_residual": 1.154386043548584
+  },
+  {
+    "sha256": "46425aeaf5144991d3e66be69e5ec1d029843ecd7f6261a500c5c213a5b639c1",
+    "title": "Shiny☆Strike!!!",
+    "rel_path": "Shiny☆Strike!!!\\_SPINSANE.bms",
+    "sl": 5.0,
+    "pred": 3.2682907581329346,
+    "residual": 1.7317092418670654,
+    "abs_residual": 1.7317092418670654
+  },
+  {
+    "sha256": "3c7c5f4665fe3aec40263f6be140fc2131825cd6eb378109608d9e9d82037ace",
+    "title": "Ring Ring Ring ☆ Let's H! [M@STER]",
+    "rel_path": "Ring Ring Ring ☆ Let's H!\\H_MASTER_p.bme",
+    "sl": 1.0,
+    "pred": 1.8919177055358887,
+    "residual": -0.8919177055358887,
+    "abs_residual": 0.8919177055358887
+  },
+  {
+    "sha256": "5be4241ba30693fe3491a69645dcb574dd170b14b4628993817ad518ab9faeb6",
+    "title": "Panic! Pop'n! Picnic!",
+    "rel_path": "Panic! Pop'n! Picnic!\\_Panic! Pop'n! Picnic![a_w].bms",
+    "sl": 4.0,
+    "pred": 3.640996217727661,
+    "residual": 0.35900378227233887,
+    "abs_residual": 0.35900378227233887
+  },
+  {
+    "sha256": "80d07224dccb19933a8176e4205553c23a92a31f4d745988e620cfe41ba91514",
+    "title": "RAY -diffuse-",
+    "rel_path": "RAY\\wlbga_milk-ray-diffuse.bme",
+    "sl": 3.0,
+    "pred": 4.229728698730469,
+    "residual": -1.2297286987304688,
+    "abs_residual": 1.2297286987304688
+  },
+  {
+    "sha256": "7c35db4df2b745c135dfb7b6413cf76dc104985f6f01ef91bc817dcdeda905c7",
+    "title": "Nowhere",
+    "rel_path": "Nowhere\\nowhere_SPK.bme",
+    "sl": 2.0,
+    "pred": 2.635016918182373,
+    "residual": -0.635016918182373,
+    "abs_residual": 0.635016918182373
+  },
+  {
+    "sha256": "c4a7b8107a0a51ae5828a70c1b5bfea9193112213466f61a5e6171634db3ed9a",
+    "title": "SEKIDO",
+    "rel_path": "SEKIDO\\(115)SEKIDO_Triforce.bms",
+    "sl": 1.0,
+    "pred": 0.22058360278606415,
+    "residual": 0.7794163823127747,
+    "abs_residual": 0.7794163823127747
+  },
+  {
+    "sha256": "f47b504e78c8e90d24c14441d200d39249e296a3d604d30c2ed0ce880a230b3d",
+    "title": "SEKIDO",
+    "rel_path": "SEKIDO\\_SEKIDO_7DEAD.bms",
+    "sl": 2.0,
+    "pred": 3.16758131980896,
+    "residual": -1.16758131980896,
+    "abs_residual": 1.16758131980896
+  },
+  {
+    "sha256": "c0fc0b1f9534a7ba99b9677adc96b5b76ce74e92d9978d3ba4de819b2e69f147",
+    "title": "Ninja Castle [Slayer]",
+    "rel_path": "Ninja Castle\\_11_chorus-slayer.bms",
+    "sl": 7.0,
+    "pred": 7.183982849121094,
+    "residual": -0.18398284912109375,
+    "abs_residual": 0.18398284912109375
+  },
+  {
+    "sha256": "c0fc0b1f9534a7ba99b9677adc96b5b76ce74e92d9978d3ba4de819b2e69f147",
+    "title": "Ninja Castle [Slayer]",
+    "rel_path": "Ninja Castle\\_11_chorus-slayer.bms",
+    "sl": 7.0,
+    "pred": 7.183982849121094,
+    "residual": -0.18398284912109375,
+    "abs_residual": 0.18398284912109375
+  },
+  {
+    "sha256": "ffaf5a5b392b8b636882fe1f68fdf509c9944b8e2a8e7c1d5e153401f8ae5c6c",
+    "title": "WHIRLWIND",
+    "rel_path": "WHIRLWIND\\WW_ABNORMAL.bms",
+    "sl": 2.0,
+    "pred": 2.2770724296569824,
+    "residual": -0.2770724296569824,
+    "abs_residual": 0.2770724296569824
+  },
+  {
+    "sha256": "a8c664e28919904687b48443034744dfeab1b5bff96657db9415db0ef5a23f96",
+    "title": "WHIRLWIND",
+    "rel_path": "WHIRLWIND\\WW_m7.bms",
+    "sl": 7.0,
+    "pred": 8.270428657531738,
+    "residual": -1.2704286575317383,
+    "abs_residual": 1.2704286575317383
+  },
+  {
+    "sha256": "fcd3b136eea5edab2cab8f87b3bd70441083d7f81693c451d03f09b630327f09",
+    "title": "WHIRLWIND",
+    "rel_path": "WHIRLWIND\\WW_WRfix.bms",
+    "sl": 7.0,
+    "pred": 7.570878028869629,
+    "residual": -0.5708780288696289,
+    "abs_residual": 0.5708780288696289
+  },
+  {
+    "sha256": "59aff0c27d04f9419fd2aecf049ddfc3fc6d7e4eafc4a2d1817abbffdf1e3ddf",
+    "title": "Orfevre -Expert-",
+    "rel_path": "Orfevre\\orfevre(Expert).bme",
+    "sl": 8.0,
+    "pred": 7.130807876586914,
+    "residual": 0.8691921234130859,
+    "abs_residual": 0.8691921234130859
+  },
+  {
+    "sha256": "caa302b122e1afb592116604dee7d36f493a4babeae00317491fa56daa68d084",
+    "title": "reverieland",
+    "rel_path": "reverieland\\reverieland-m7+.bme",
+    "sl": 6.0,
+    "pred": 7.029748916625977,
+    "residual": -1.0297489166259766,
+    "abs_residual": 1.0297489166259766
+  },
+  {
+    "sha256": "86144af79d169473272a0a93bf94c5ce5cbe74e27d6310abe2572b06bb26cf40",
+    "title": "Elina (feat. Reislaufer)[HARDEST]",
+    "rel_path": "Elina (feat. Reislaufer)\\Elina-HARDEST.bms",
+    "sl": 6.0,
+    "pred": 7.605930328369141,
+    "residual": -1.6059303283691406,
+    "abs_residual": 1.6059303283691406
+  },
+  {
+    "sha256": "379df1a951ae1ca9aad2e9f4d9975c54987faf2c8a9e9783c250acc2a88ee618",
+    "title": "NIRVANA",
+    "rel_path": "NIRVANA\\NIRVANA_7i.bms",
+    "sl": 5.0,
+    "pred": 2.3507440090179443,
+    "residual": 2.6492559909820557,
+    "abs_residual": 2.6492559909820557
+  },
+  {
+    "sha256": "ac462dc591074df3d027e71cc6a688ed978008937091f6ae4e291fa43ca2c6bd",
+    "title": "5億円が欲しいRENAISSANCE",
+    "rel_path": "5億円が欲しいRENAISSANCE\\_5OR_zoi.bms",
+    "sl": 6.0,
+    "pred": 8.421332359313965,
+    "residual": -2.421332359313965,
+    "abs_residual": 2.421332359313965
+  },
+  {
+    "sha256": "e42677a102e4fae9804bced45f84cdeaa34c208e8f80ab26dee23d8f1c09215c",
+    "title": "Ruined field",
+    "rel_path": "Ruined field\\ruined_field-m7.bme",
+    "sl": 4.0,
+    "pred": 3.7464792728424072,
+    "residual": 0.2535207271575928,
+    "abs_residual": 0.2535207271575928
+  },
+  {
+    "sha256": "260a80b432138a02ea365ac3d7c1d506097f838dacbf0e6df91353ad8b21c7c4",
+    "title": "ナイト・オブ・ナイツ [HARDEST]",
+    "rel_path": "ナイト・オブ・ナイツ\\knights-HARDEST.bms",
+    "sl": 9.0,
+    "pred": 10.796896934509277,
+    "residual": -1.7968969345092773,
+    "abs_residual": 1.7968969345092773
+  },
+  {
+    "sha256": "0989dd41cd9b408b30205ae895c83fe8237064fbfc791b851f868e143bff394a",
+    "title": "5th Drop Shooter",
+    "rel_path": "5th Drop Shooter\\_5th_7A.bms",
+    "sl": 1.0,
+    "pred": 3.4410359859466553,
+    "residual": -2.4410359859466553,
+    "abs_residual": 2.4410359859466553
+  },
+  {
+    "sha256": "2cfa691b364797b68b6898e600808bdaf7c86204a9112b10825d06f05af06521",
+    "title": "永夜ノ蝶",
+    "rel_path": "永夜ノ蝶\\_Eiya_no_Cho_another7.bme",
+    "sl": 1.0,
+    "pred": 1.036799669265747,
+    "residual": -0.03679966926574707,
+    "abs_residual": 0.03679966926574707
+  },
+  {
+    "sha256": "b943a8052243e813d24eeb2672a74ebd1f9f9fad71245a2da229db111d9c6401",
+    "title": "Grayed Out -Antifront- [Luna]",
+    "rel_path": "Grayed Out -Antifront-\\Grayed_Out_luna.bme",
+    "sl": 10.0,
+    "pred": 10.450715065002441,
+    "residual": -0.4507150650024414,
+    "abs_residual": 0.4507150650024414
+  },
+  {
+    "sha256": "79deda3cbc6bfc21b12ae87de1115ba484c5a5c31e01213fb62240a4029a8f74",
+    "title": "白百合、夏風に揺れて",
+    "rel_path": "白百合、夏風に揺れて\\__insane.bms",
+    "sl": 1.0,
+    "pred": 0.7983827590942383,
+    "residual": 0.20161724090576172,
+    "abs_residual": 0.20161724090576172
+  },
+  {
+    "sha256": "b65189750b07009f0bf5c7be32267f8ec13a5e4fa6fe16157966f1fd96e67028",
+    "title": "DOLL [F]",
+    "rel_path": "DOLL\\dollFFFFF.bms",
+    "sl": 2.0,
+    "pred": 1.1996108293533325,
+    "residual": 0.8003891706466675,
+    "abs_residual": 0.8003891706466675
+  },
+  {
+    "sha256": "df98731dcc0ec1a610f51af0b8afa37f079c21d8984ccc46b3001b9bcd00b581",
+    "title": "Future MUSiC [rather]",
+    "rel_path": "Future MUSiC\\_rat_Future_MUSiC_a.bme",
+    "sl": 0.0,
+    "pred": 0.6586701273918152,
+    "residual": -0.6586701273918152,
+    "abs_residual": 0.6586701273918152
+  },
+  {
+    "sha256": "00f0c854739a987d18f1879f04815b2cc12f5b13a333c0864ab9555deacc7509",
+    "title": "Awaking Beat-From the next generation- [W]",
+    "rel_path": "Awaking Beat\\_W_fixed.bms",
+    "sl": 6.0,
+    "pred": 9.048041343688965,
+    "residual": -3.048041343688965,
+    "abs_residual": 3.048041343688965
+  },
+  {
+    "sha256": "b784a7ad7481e4e04553caf949cf4f1b8a92e9186ec1902044f5ac447e83e979",
+    "title": "Satanphobia [Another]",
+    "rel_path": "Satanphobia\\_Another.bms",
+    "sl": 6.0,
+    "pred": 7.527218818664551,
+    "residual": -1.5272188186645508,
+    "abs_residual": 1.5272188186645508
+  },
+  {
+    "sha256": "54202b6a0688d927603422cb386678f0960bb1867689f683c6c8393475c6288a",
+    "title": "Bluish mood",
+    "rel_path": "Bluish mood\\Bluish_mood_extra.bms",
+    "sl": 3.0,
+    "pred": 1.6550109386444092,
+    "residual": 1.3449890613555908,
+    "abs_residual": 1.3449890613555908
+  },
+  {
+    "sha256": "f205dea79aa2eebec2744f0bf978aa306dbdd504197aa4288a8f0b5809c1121a",
+    "title": "My Typical[ANOTHER]",
+    "rel_path": "My Typical\\_MT_4_ANOTHER.bml",
+    "sl": 1.0,
+    "pred": 0.9723750948905945,
+    "residual": 0.027624905109405518,
+    "abs_residual": 0.027624905109405518
+  },
+  {
+    "sha256": "76d17ec7655ada598fa9668887eb4e90d8adbd24bfab25ea81ad79255598343b",
+    "title": "My Typical[INSANE]",
+    "rel_path": "My Typical\\_MT_5_INSANE.bml",
+    "sl": 6.0,
+    "pred": 8.465089797973633,
+    "residual": -2.465089797973633,
+    "abs_residual": 2.465089797973633
+  },
+  {
+    "sha256": "eaf205850ccf3f76eb9d311056932d65dbe120d69e535cc77ec28c85b27f9f75",
+    "title": "gradation [EXTRA]",
+    "rel_path": "gradation\\02_gradation_sabunnn.bme",
+    "sl": 4.0,
+    "pred": 1.4925633668899536,
+    "residual": 2.507436752319336,
+    "abs_residual": 2.507436752319336
+  },
+  {
+    "sha256": "913dce0ef2fed214853b01346195dd14887e8423244c07e5758e25cbfd924d3f",
+    "title": "Ice Festival",
+    "rel_path": "Ice Festival\\_Ice_Festival_a.bms",
+    "sl": 3.0,
+    "pred": 5.145688056945801,
+    "residual": -2.145688056945801,
+    "abs_residual": 2.145688056945801
+  },
+  {
+    "sha256": "4555b527e49c010f47adc1004b2d782cfa335ff301bbea59e70e540ac4bbecc8",
+    "title": "Kreuz",
+    "rel_path": "Kreuz\\_kreuz_tkm.bms",
+    "sl": 2.0,
+    "pred": 1.4777501821517944,
+    "residual": 0.5222498178482056,
+    "abs_residual": 0.5222498178482056
+  },
+  {
+    "sha256": "37fe18145c225b6304e25830fd3c1edd3f25aac699a8846d56216f475f8be328",
+    "title": "Garefowl",
+    "rel_path": "Garefowl\\garefowl_lin.bms",
+    "sl": 12.0,
+    "pred": 12.771510124206543,
+    "residual": -0.771510124206543,
+    "abs_residual": 0.771510124206543
+  },
+  {
+    "sha256": "5496f75a38f57cb6589a32b2a3c792b93b7fdbc569b4b85a2edefe62f52bc445",
+    "title": "菖蒲日和",
+    "rel_path": "菖蒲日和\\_yw_shoubu_biyori_7a.bml",
+    "sl": 0.0,
+    "pred": 0.1206931620836258,
+    "residual": -0.1206931620836258,
+    "abs_residual": 0.1206931620836258
+  },
+  {
+    "sha256": "8f1f4bfdda672b47627eec6fd4e22619114bc898ce4394880d8234c405664cfe",
+    "title": "菖蒲日和",
+    "rel_path": "菖蒲日和\\_yw_shoubu_biyori_7i.bml",
+    "sl": 3.0,
+    "pred": 2.357130289077759,
+    "residual": 0.6428697109222412,
+    "abs_residual": 0.6428697109222412
+  },
+  {
+    "sha256": "e216b27d2228ce3c7ee1d40b4d04497424c7402a979aeca255eb257452041648",
+    "title": "蓄積×フラストレーション",
+    "rel_path": "蓄積×フラストレーション\\chikuseki_frustration_assertion.bme",
+    "sl": 5.0,
+    "pred": 3.396268606185913,
+    "residual": 1.603731393814087,
+    "abs_residual": 1.603731393814087
+  },
+  {
+    "sha256": "28f362b7911a774fc52d04ec59e76eaa8d916379b9a02dbf6bc56a5f2517ddcb",
+    "title": "アナログ横丁(mild+)",
+    "rel_path": "アナログ横丁\\gadgetNAIIDX.bme",
+    "sl": 7.0,
+    "pred": 9.988396644592285,
+    "residual": -2.988396644592285,
+    "abs_residual": 2.988396644592285
+  },
+  {
+    "sha256": "b401ba62259f119fdd6e0bfbadf9f4f16cd17e2e55c1d38184398acd09640b32",
+    "title": "アナログ横丁",
+    "rel_path": "アナログ横丁\\gadget[DELAY_ROKUSAI].bms",
+    "sl": 12.0,
+    "pred": 9.834683418273926,
+    "residual": 2.165316581726074,
+    "abs_residual": 2.165316581726074
+  },
+  {
+    "sha256": "5e574a5fe2a12e6bd658c61d784dbffb01c2c02512412c506dc60bfc31e4f07b",
+    "title": "Stand Up!! Stand Up!![ANOTHER]",
+    "rel_path": "Stand Up!! Stand Up!!\\_stst_4_ANOTHER.bms",
+    "sl": 0.0,
+    "pred": 0.1775294840335846,
+    "residual": -0.1775294840335846,
+    "abs_residual": 0.1775294840335846
+  },
+  {
+    "sha256": "293c46c08ad415149ffd525bc8d8c3bcc6b662afa6235606a4497478043fe853",
+    "title": "introspect",
+    "rel_path": "introspect\\_introspect_7a.bme",
+    "sl": 0.0,
+    "pred": 0.29767686128616333,
+    "residual": -0.29767686128616333,
+    "abs_residual": 0.29767686128616333
+  },
+  {
+    "sha256": "afcf091ec59c4a435c7fec51fb23a0b3fd4c352d14dbbd6e18a6c8d4dc37180d",
+    "title": "introspect",
+    "rel_path": "introspect\\_introspect_7l.bme",
+    "sl": 2.0,
+    "pred": 0.9532835483551025,
+    "residual": 1.0467164516448975,
+    "abs_residual": 1.0467164516448975
+  },
+  {
+    "sha256": "74b9f7286d1ba91698fc0c525c670af1270e969121afef19933ae1760ebe025b",
+    "title": "織姫(Independent from God, Everlasting love remix)[VEGA]",
+    "rel_path": "織姫(Independent from God, Everlasting love remix)\\orihime_rmx_VEGA.bms",
+    "sl": 12.0,
+    "pred": 11.024323463439941,
+    "residual": 0.9756765365600586,
+    "abs_residual": 0.9756765365600586
+  },
+  {
+    "sha256": "14670426527a1758e402afa37b2665c89d5a99df890a6e0265fb772d51884d0f",
+    "title": "織姫 -ANOTHER-",
+    "rel_path": "織姫\\orihime -ANOTHER-.bms",
+    "sl": 0.0,
+    "pred": 0.9319354295730591,
+    "residual": -0.9319354295730591,
+    "abs_residual": 0.9319354295730591
+  },
+  {
+    "sha256": "62711631085fed6065f0ae5e6a1f474473deb7ab33b988038feeaf54e0336604",
+    "title": "織姫 -EX-",
+    "rel_path": "織姫\\orihime-EX-.bms",
+    "sl": 12.0,
+    "pred": 13.487082481384277,
+    "residual": -1.4870824813842773,
+    "abs_residual": 1.4870824813842773
+  },
+  {
+    "sha256": "02e5016976aa9290f3853ee092c6bc1963976c5511d215045f96b61a3b4a5661",
+    "title": "ネクロファンタジア",
+    "rel_path": "ネクロファンタジア\\僱僋儘僼傽儞僞僕傾 (LUNATIC7).bme",
+    "sl": 11.0,
+    "pred": 10.082720756530762,
+    "residual": 0.9172792434692383,
+    "abs_residual": 0.9172792434692383
+  },
+  {
+    "sha256": "af7ffcd4d0647036d42d144d98552a638d2e2e8df1069909abb8d7212b789f32",
+    "title": "[line:theta] -Hopeless-",
+    "rel_path": "[line：theta]\\_line-theta_nanami01.bms",
+    "sl": 7.0,
+    "pred": 10.19010066986084,
+    "residual": -3.19010066986084,
+    "abs_residual": 3.19010066986084
+  },
+  {
+    "sha256": "79b60e1cd4f9c853753ce2ebc0f9e435cf7849cb07f475cb28438b6482ddf99b",
+    "title": "holy night celebration [White Christmas]",
+    "rel_path": "holy night celebration\\holy_night_celebration_[White Christmas].bme",
+    "sl": 1.0,
+    "pred": 0.9857904314994812,
+    "residual": 0.014209568500518799,
+    "abs_residual": 0.014209568500518799
+  },
+  {
+    "sha256": "08c286b1d25d627db650e38316842eab2a8749278db6d92ed05f87e00818c700",
+    "title": "The Shining*",
+    "rel_path": "The Shining＊\\_rare.bms",
+    "sl": 1.0,
+    "pred": 0.9169111847877502,
+    "residual": 0.08308881521224976,
+    "abs_residual": 0.08308881521224976
+  },
+  {
+    "sha256": "21a99cda4f49e65d6e4ddaae7e91e706ca15061cb713a69bb7abb7a83d6ffd37",
+    "title": "Babel [HARDEST]",
+    "rel_path": "Babel\\Babel-HARDEST.bme",
+    "sl": 7.0,
+    "pred": 4.794902801513672,
+    "residual": 2.205097198486328,
+    "abs_residual": 2.205097198486328
+  },
+  {
+    "sha256": "23425eec18c4260716cb553d5325f805201ab55871466023c02523b38ee6345a",
+    "title": "Babel [ANOTHER]",
+    "rel_path": "Babel\\_another.bme",
+    "sl": 0.0,
+    "pred": 1.5302860736846924,
+    "residual": -1.5302860736846924,
+    "abs_residual": 1.5302860736846924
+  },
+  {
+    "sha256": "299955373dd38d8c12ac317f3b2e890bbfecec7f8c90455fd0f6868bf8cc2320",
+    "title": "Babel [Infinity Sky]",
+    "rel_path": "Babel\\_babel_m7.bme",
+    "sl": 4.0,
+    "pred": 2.662790060043335,
+    "residual": 1.337209939956665,
+    "abs_residual": 1.337209939956665
+  },
+  {
+    "sha256": "e159048a56219921cfed097294af06e58e0eef11fdac6dedad66cd0141962def",
+    "title": "on the WAVE",
+    "rel_path": "on the WAVE\\_on the WAVE-nanami01.bms",
+    "sl": 0.0,
+    "pred": 0.1370970457792282,
+    "residual": -0.1370970457792282,
+    "abs_residual": 0.1370970457792282
+  },
+  {
+    "sha256": "4065d3f98e5bc506261608a653919c1ec0170c2b5603bd5e1ae18f45294425e5",
+    "title": "アジサイ",
+    "rel_path": "アジサイ\\litmus_azisai_Xe.bms",
+    "sl": 12.0,
+    "pred": 10.926994323730469,
+    "residual": 1.0730056762695312,
+    "abs_residual": 1.0730056762695312
+  },
+  {
+    "sha256": "dab29e3047677651ee68da1cff0b2036a9aed352f3a9a95a985450343c8bd9f7",
+    "title": "Comet (BMS Edit) [SP ANOTHER]",
+    "rel_path": "Comet (BMS Edit)\\Comet_13_SPA.bms",
+    "sl": 1.0,
+    "pred": 1.0063329935073853,
+    "residual": -0.006332993507385254,
+    "abs_residual": 0.006332993507385254
+  },
+  {
+    "sha256": "3c0d4ce18ee21eca76e56dc31b38cc99e7dab80aeeb8b4c24c24da2d22bcf05b",
+    "title": "リジットXXパラダイス",
+    "rel_path": "リジットXXパラダイス\\rizix_nanami01.bms",
+    "sl": 2.0,
+    "pred": 4.480958938598633,
+    "residual": -2.480958938598633,
+    "abs_residual": 2.480958938598633
+  },
+  {
+    "sha256": "50d00c656d64a3fff38443170c0cf3b38b1089e0627d529dc863bfe0cbb1c4f9",
+    "title": "Sweet Little Chocolate",
+    "rel_path": "Sweet Little Chocolate\\wafflev0v_SLC_BGA_m7.bms",
+    "sl": 8.0,
+    "pred": 10.069500923156738,
+    "residual": -2.0695009231567383,
+    "abs_residual": 2.0695009231567383
+  },
+  {
+    "sha256": "423e9dee0c5859618c7601aff0c0128b4aabe3c68028a015521fb795b9160b6d",
+    "title": "Daydreamer [EX]",
+    "rel_path": "Daydreamer\\_daydreamer_ssssshusei.bme",
+    "sl": 12.0,
+    "pred": 11.27404499053955,
+    "residual": 0.7259550094604492,
+    "abs_residual": 0.7259550094604492
+  },
+  {
+    "sha256": "02418effc370ed700870a32963c42f1421a8ee8c4e2377d40d7a537a53b2f4e8",
+    "title": "Curry -Hope-",
+    "rel_path": "Curry\\curry_nanami01.bme",
+    "sl": 0.0,
+    "pred": 0.8271583914756775,
+    "residual": -0.8271583914756775,
+    "abs_residual": 0.8271583914756775
+  },
+  {
+    "sha256": "c5131d6dbe89d0b3249810e447ebfb1fff6071c70dfd3b9026cf63667cb1be14",
+    "title": "プナイプナイせんそう -Luna-",
+    "rel_path": "プナイプナイせんそう\\_punaipunai2_Luna.bms",
+    "sl": 1.0,
+    "pred": 3.493023157119751,
+    "residual": -2.493023157119751,
+    "abs_residual": 2.493023157119751
+  },
+  {
+    "sha256": "9f6d5e0ab46fee00c076ed5033e5ef55e769dbac6ddb5967bfed64186879b647",
+    "title": "PANIC RACE!",
+    "rel_path": "PANIC RACE!\\panic-race-another.bms",
+    "sl": 1.0,
+    "pred": 2.4212446212768555,
+    "residual": -1.4212446212768555,
+    "abs_residual": 1.4212446212768555
+  },
+  {
+    "sha256": "0d04a09a67389140cc78b844061b21ea92e79bdd1027edd138474bbf0fcdcdb6",
+    "title": "Artemis　-SABOTHER-",
+    "rel_path": "Artemis\\_artemis_ssssssss.bms",
+    "sl": 9.0,
+    "pred": 7.908898830413818,
+    "residual": 1.0911011695861816,
+    "abs_residual": 1.0911011695861816
+  },
+  {
+    "sha256": "cb3b430bd113264944c73c2c528b9b103a924275d8855acd9f8dcbfe41849989",
+    "title": "Kakuriyo Dancehall",
+    "rel_path": "Kakuriyo Dancehall\\kakuriyo_dancehall_spi.bms",
+    "sl": 2.0,
+    "pred": 2.541781187057495,
+    "residual": -0.5417811870574951,
+    "abs_residual": 0.5417811870574951
+  },
+  {
+    "sha256": "5f33ac02fae551495f421ecd0d077be7bdfa855662e21751518aa6655a051d22",
+    "title": "アリス・マーガトロイドの破滅的愛情論",
+    "rel_path": "アリス・マーガトロイドの破滅的愛情論\\_Insane.bms",
+    "sl": 8.0,
+    "pred": 8.148392677307129,
+    "residual": -0.1483926773071289,
+    "abs_residual": 0.1483926773071289
+  },
+  {
+    "sha256": "cb4e858abc42d52f4cad14d72bac8ff1d680ec3303ad6acd5f8db313bf5c1755",
+    "title": "Shining Stage",
+    "rel_path": "Shining Stage\\_BA.bms",
+    "sl": 2.0,
+    "pred": 2.5272679328918457,
+    "residual": -0.5272679328918457,
+    "abs_residual": 0.5272679328918457
+  },
+  {
+    "sha256": "b926a93ecbfdc3346f02e96220c0faaee37cf9524d1e39abde83bed136eee9c6",
+    "title": "Qualia",
+    "rel_path": "Qualia\\qualia-quantia.bms",
+    "sl": 6.0,
+    "pred": 9.173653602600098,
+    "residual": -3.1736536026000977,
+    "abs_residual": 3.1736536026000977
+  },
+  {
+    "sha256": "71b78badc1c4ed7346fb3663f1a23dbb3817682063d125468c82365ae8d405f7",
+    "title": "星蝕セクエンス [fantasy]",
+    "rel_path": "星蝕セクエンス\\_sequence_7b.bme",
+    "sl": 4.0,
+    "pred": 4.3413190841674805,
+    "residual": -0.34131908416748047,
+    "abs_residual": 0.34131908416748047
+  },
+  {
+    "sha256": "c54bb07705e733f181c8e30bf088265d28db391d22221b22070e9070a985ba8b",
+    "title": "Ninja's betrayal [アイエエエ！？]",
+    "rel_path": "Ninja's betrayal\\Ninja's betrayal (aieeeMitto).bme",
+    "sl": 10.0,
+    "pred": 7.467598915100098,
+    "residual": 2.5324010848999023,
+    "abs_residual": 2.5324010848999023
+  },
+  {
+    "sha256": "b92ef241458894e09d19797877da2ab5bd9ce25804c3d9d9734067a1f0d8290e",
+    "title": "Assault TAXI",
+    "rel_path": "Assault TAXI\\assaultTAXI_ANO.bms",
+    "sl": 0.0,
+    "pred": 0.7118510007858276,
+    "residual": -0.7118510007858276,
+    "abs_residual": 0.7118510007858276
+  },
+  {
+    "sha256": "b586bf02899dc38f70c6aadf298dc12cac647328ba438eca6613418ed8c33c49",
+    "title": "Assault TAXI",
+    "rel_path": "Assault TAXI\\assaultTAXI_DZ.bms",
+    "sl": 9.0,
+    "pred": 11.406926155090332,
+    "residual": -2.406926155090332,
+    "abs_residual": 2.406926155090332
+  },
+  {
+    "sha256": "dfa740993404176984041b86e08541694759c406eec123bf74d6639b8c78811c",
+    "title": "ナツイノ [BITTER7]",
+    "rel_path": "ナツイノ\\Natsuino_7_l_bitter.bms",
+    "sl": 1.0,
+    "pred": 0.7653992772102356,
+    "residual": 0.2346007227897644,
+    "abs_residual": 0.2346007227897644
+  },
+  {
+    "sha256": "342907b2b4d7cb2e5c669601d8e5504975474018285709fef10fcf267f71981a",
+    "title": "ナツイノ",
+    "rel_path": "ナツイノ\\Natsuino_mf_sphere.bms",
+    "sl": 8.0,
+    "pred": 7.266120910644531,
+    "residual": 0.7338790893554688,
+    "abs_residual": 0.7338790893554688
+  },
+  {
+    "sha256": "a54b6a8eb9339951f60353ca56b4ab20614e43f74787e07d511c308f8eb7a6c5",
+    "title": "u gotta party",
+    "rel_path": "u gotta party\\amane_ugotta_sp99_viva.bms",
+    "sl": 5.0,
+    "pred": 5.6764984130859375,
+    "residual": -0.6764984130859375,
+    "abs_residual": 0.6764984130859375
+  },
+  {
+    "sha256": "b58119ad91065c53f292b8b6bb0cc2dbc0b889c40458d76094047af73c8bef32",
+    "title": "えがおをキミに　[EX]",
+    "rel_path": "えがおをキミに\\egao_[7-8_sssss].bme",
+    "sl": 2.0,
+    "pred": 3.9659721851348877,
+    "residual": -1.9659721851348877,
+    "abs_residual": 1.9659721851348877
+  },
+  {
+    "sha256": "c08c38cb6137d7030ba2b9522c3a740e833fcffe0dbdfa6ce1640c0ddda7b951",
+    "title": "JKillMe",
+    "rel_path": "JKillMe\\_JKillMe_SPMUYA2.bms",
+    "sl": 5.0,
+    "pred": 5.831029415130615,
+    "residual": -0.8310294151306152,
+    "abs_residual": 0.8310294151306152
+  },
+  {
+    "sha256": "8472345acfa7c9136683fab6fbd342b6b4550c5ec6a42ea934fd2205b3a663cf",
+    "title": "Cynic(THE hyper)",
+    "rel_path": "Cynic\\Cynics.bms",
+    "sl": 10.0,
+    "pred": 11.30993366241455,
+    "residual": -1.3099336624145508,
+    "abs_residual": 1.3099336624145508
+  },
+  {
+    "sha256": "f06b214fd60c26f1dd8191f980c7e21e3c222aee385f5c11c83fdce9c7083ddf",
+    "title": "Death Opera -Luna-",
+    "rel_path": "Death Opera\\_death_opera_Luna.bms",
+    "sl": 7.0,
+    "pred": 4.505396842956543,
+    "residual": 2.494603157043457,
+    "abs_residual": 2.494603157043457
+  },
+  {
+    "sha256": "3ea277c5c8bc56a5e22c711624f2c3df1d1c78088d7224e921b12d35beeb528c",
+    "title": "白と臙脂のオモチャバコ",
+    "rel_path": "白と臙脂のオモチャバコ\\__Dead.bme",
+    "sl": 11.0,
+    "pred": 9.046416282653809,
+    "residual": 1.9535837173461914,
+    "abs_residual": 1.9535837173461914
+  },
+  {
+    "sha256": "8665c771643d7c13c9d8fdb329c45cd02cfda208228da816f82dd52966b17efd",
+    "title": "F [F]",
+    "rel_path": "F\\FFFFF.bms",
+    "sl": 2.0,
+    "pred": 1.8801274299621582,
+    "residual": 0.1198725700378418,
+    "abs_residual": 0.1198725700378418
+  },
+  {
+    "sha256": "ba4fd9847a1f65d82b44f0aa1eb58f3be3d75c4da6b015365da8f5394675442e",
+    "title": "Guiding Star",
+    "rel_path": "Guiding Star\\Guiding_Star_m7.bms",
+    "sl": 1.0,
+    "pred": 1.3020747900009155,
+    "residual": -0.3020747900009155,
+    "abs_residual": 0.3020747900009155
+  },
+  {
+    "sha256": "07d3674eaec87bfbd4a1682d7515db009e49a957b6026636290b3776e9242cda",
+    "title": "The Warden of Ruins",
+    "rel_path": "The Warden of Ruins\\_38k_TWoR_075i.bme",
+    "sl": 3.0,
+    "pred": 4.147327899932861,
+    "residual": -1.1473278999328613,
+    "abs_residual": 1.1473278999328613
+  },
+  {
+    "sha256": "2ef0258096c32807eeee3ae68b4a622fc88c16ca1d3be1076f74537c526d5c32",
+    "title": "エーデルワイス",
+    "rel_path": "エーデルワイス\\Edelweiss[siro].bms",
+    "sl": 4.0,
+    "pred": 2.204529285430908,
+    "residual": 1.7954707145690918,
+    "abs_residual": 1.7954707145690918
+  },
+  {
+    "sha256": "8b493252e3b4c25021682b0da1c3cdec2c8565eb519829d804ccdbd0a3a42eee",
+    "title": "エーデルワイス[SP ANOTHER]",
+    "rel_path": "エーデルワイス\\Edelweiss[SPA].bml",
+    "sl": 1.0,
+    "pred": 2.415795087814331,
+    "residual": -1.415795087814331,
+    "abs_residual": 1.415795087814331
+  },
+  {
+    "sha256": "b4ac14cf09a5fa2889022fe9206e5a4eb756eecdd02ccfac7ecd1d3db97ecd2c",
+    "title": "エーデルワイス[Linther]",
+    "rel_path": "エーデルワイス\\Edelweiss[SPLinther].bml",
+    "sl": 7.0,
+    "pred": 7.940190315246582,
+    "residual": -0.940190315246582,
+    "abs_residual": 0.940190315246582
+  },
+  {
+    "sha256": "4716c6035e6891f9e718f43e26d6af869dd223700d8064a1ecbeff21231d3613",
+    "title": "Petit Generation [7840d,6h,20m]",
+    "rel_path": "Petit Generation\\petit_ 98to24_nbunnyuwu.bme",
+    "sl": 6.0,
+    "pred": 8.14290714263916,
+    "residual": -2.14290714263916,
+    "abs_residual": 2.14290714263916
+  },
+  {
+    "sha256": "36a7c3641364fd1181dbdaed42982ede600f7a67fffd49eb2255e3fbba954e02",
+    "title": "The island of albatross -8bit Style RMX-[EX]",
+    "rel_path": "The island of albatross -8bit Style RMX-\\_4The_island_of_albatrosssssssshusei.bms",
+    "sl": 12.0,
+    "pred": 10.393380165100098,
+    "residual": 1.6066198348999023,
+    "abs_residual": 1.6066198348999023
+  },
+  {
+    "sha256": "d16fc4573dc79594f1e67c63e516ef98b0d0a239e9608ae87d6c9685f59ff87b",
+    "title": "Natullary [Hi]",
+    "rel_path": "Natullary\\natullary_7keyHi.bms",
+    "sl": 2.0,
+    "pred": 2.4200284481048584,
+    "residual": -0.4200284481048584,
+    "abs_residual": 0.4200284481048584
+  },
+  {
+    "sha256": "7bdc67e4f33ebc380dfff31c73da836f7b5553f377cb6db38b2a856eff235814",
+    "title": "The Last Page",
+    "rel_path": "The Last Page\\TheLastPage_15_SPI.bms",
+    "sl": 2.0,
+    "pred": 1.9412785768508911,
+    "residual": 0.05872142314910889,
+    "abs_residual": 0.05872142314910889
+  },
+  {
+    "sha256": "e2afa4bd035a029dbed451622acadba55b94e8d6ffad311017b751e06a2b61d0",
+    "title": "The Last Page [Endgame]",
+    "rel_path": "The Last Page\\_TheLatPage_DK.bme",
+    "sl": 5.0,
+    "pred": 5.02360200881958,
+    "residual": -0.023602008819580078,
+    "abs_residual": 0.023602008819580078
+  },
+  {
+    "sha256": "7f6f8bdb9b880610d1b5c2b66959a53e7a0ddccba977239a0de75d6f734f917d",
+    "title": "Time shrinker",
+    "rel_path": "Time shrinker\\time_I.bms",
+    "sl": 8.0,
+    "pred": 7.459986686706543,
+    "residual": 0.540013313293457,
+    "abs_residual": 0.540013313293457
+  },
+  {
+    "sha256": "5ec53d7cc71eabe8424b2bdcabbbf439861d5df9bd5b1f76dff0f2721f5d9465",
+    "title": "Exploration the Giotto [COMET]",
+    "rel_path": "Exploration the Giotto\\_insane_f.bms",
+    "sl": 7.0,
+    "pred": 3.3302972316741943,
+    "residual": 3.6697027683258057,
+    "abs_residual": 3.6697027683258057
+  },
+  {
+    "sha256": "dfdb88f1035e27630598f31fc14f534efc619a19bb2f78a103128509c482cf6a",
+    "title": "Strawberry Mint Chocolate [ice cream]",
+    "rel_path": "Strawberry Mint Chocolate\\_11_smcn-ice.bms",
+    "sl": 1.0,
+    "pred": 2.060657501220703,
+    "residual": -1.0606575012207031,
+    "abs_residual": 1.0606575012207031
+  },
+  {
+    "sha256": "2f2c4da03e58b288baa58938e326d271392c1223ad5c7b87da193ddea509542c",
+    "title": "Strawberry Mint Chocolate [Mu]",
+    "rel_path": "Strawberry Mint Chocolate\\_32_smca-mu.bms",
+    "sl": 9.0,
+    "pred": 9.783196449279785,
+    "residual": -0.7831964492797852,
+    "abs_residual": 0.7831964492797852
+  },
+  {
+    "sha256": "02bcea57ead5bfa72dd44082400bc022c1d2109b7a524f0d58595d616e6d731c",
+    "title": "Strawberry Mint Chocolate",
+    "rel_path": "Strawberry Mint Chocolate\\_smcn-m7.bms",
+    "sl": 9.0,
+    "pred": 8.847694396972656,
+    "residual": 0.15230560302734375,
+    "abs_residual": 0.15230560302734375
+  },
+  {
+    "sha256": "ae38034252863fa9520e5ec66f897d031a9e96e9496081853d90d88c4bbd2f4e",
+    "title": "禁忌と緋色幻想 -The Primary Plasm- [rather]",
+    "rel_path": "禁忌と緋色幻想 -The Primary Plasm-\\The Primary Plasm [rather].bme",
+    "sl": 10.0,
+    "pred": 5.677812576293945,
+    "residual": 4.322187423706055,
+    "abs_residual": 4.322187423706055
+  },
+  {
+    "sha256": "159ce5afedb5019b15a790a45106c936a86c5829bad98a5c2ff99aab0b58648c",
+    "title": "lataia [Maniac7]",
+    "rel_path": "lataia\\lataia7_sabunnnnn.bme",
+    "sl": 0.0,
+    "pred": -0.013346359133720398,
+    "residual": 0.013346359133720398,
+    "abs_residual": 0.013346359133720398
+  },
+  {
+    "sha256": "4150102aeeaebfddc00089fe2bb88de602257e31feed54c94954b9c8b454360a",
+    "title": "LAST PROPOZE[ANOTHER]",
+    "rel_path": "LAST PROPOZE\\__another.bms",
+    "sl": 0.0,
+    "pred": 0.41459721326828003,
+    "residual": -0.41459721326828003,
+    "abs_residual": 0.41459721326828003
+  },
+  {
+    "sha256": "a9a2f0438a87cb2714b9911bf3a066eac92148f226ee24010d4a6898afc2b616",
+    "title": "LAST PROPOZE[INSANE]",
+    "rel_path": "LAST PROPOZE\\__insane.bms",
+    "sl": 5.0,
+    "pred": 5.117881774902344,
+    "residual": -0.11788177490234375,
+    "abs_residual": 0.11788177490234375
+  },
+  {
+    "sha256": "a98c1eeee652f32b58800d6b6a0c12ba8e97b4be3c752dc6e94df7f1191d9930",
+    "title": "プナイプナイげんそう～５人の並行世界から来たてるやまたちが世界を救う！？　プナイプナイinワンダーランド～",
+    "rel_path": "プナイプナイげんそう\\_punaipunai_genso_Fantasia.bms",
+    "sl": 2.0,
+    "pred": 1.528232455253601,
+    "residual": 0.4717675447463989,
+    "abs_residual": 0.4717675447463989
+  },
+  {
+    "sha256": "1bb3ec267335d2bf7e1c8bca7ed11a5954e726b66148ee35c169ffe736186e1d",
+    "title": "XIX",
+    "rel_path": "XIX\\_XIX(MM)_mst.bms",
+    "sl": 8.0,
+    "pred": 6.286508083343506,
+    "residual": 1.7134919166564941,
+    "abs_residual": 1.7134919166564941
+  },
+  {
+    "sha256": "f91ae9085224e2d8b6ac8acee522cfe43422cdfae5565313baec07dda4fc086e",
+    "title": "kindly breeze [ELITHER]",
+    "rel_path": "kindly breeze\\kindly breeze_E.bms",
+    "sl": 2.0,
+    "pred": 1.9618101119995117,
+    "residual": 0.03818988800048828,
+    "abs_residual": 0.03818988800048828
+  },
+  {
+    "sha256": "b05c4f18b3efd84fe0d9f854afb7bf55d1c9f4087a92902a50b34ffb0c7f4848",
+    "title": "Gun to Childhead",
+    "rel_path": "Gun to Childhead\\01-gun_to_childhead_nanami01_fix.bms",
+    "sl": 5.0,
+    "pred": 5.175639629364014,
+    "residual": -0.17563962936401367,
+    "abs_residual": 0.17563962936401367
+  },
+  {
+    "sha256": "e04b19399607b6e10a03842fe85ab3557dadb2404bf1f6d281a052fcde6395eb",
+    "title": "MANHATTAN  [SP BLACK ANOTHER]",
+    "rel_path": "MANHATTAN\\zz_MANHATTAN_[SP BLACK ANOTHER].bms",
+    "sl": 4.0,
+    "pred": 4.42967414855957,
+    "residual": -0.4296741485595703,
+    "abs_residual": 0.4296741485595703
+  },
+  {
+    "sha256": "700688495d4115c024fb750a59a718ac2e4dfdee5a0d963686c8895a6f97d153",
+    "title": "MANHATTAN [sweet Vermut]",
+    "rel_path": "MANHATTAN\\zz_MANHATTAN_[sweet Vermut].bms",
+    "sl": 1.0,
+    "pred": 0.7281630039215088,
+    "residual": 0.2718369960784912,
+    "abs_residual": 0.2718369960784912
+  },
+  {
+    "sha256": "5d2244e01f36971798f6d6b9f12518c6ec766ca73a60e8e12306b4e835ca6ffb",
+    "title": "Linkager",
+    "rel_path": "Linkager\\Linkager_7-E_Ex.bme",
+    "sl": 1.0,
+    "pred": 0.5992250442504883,
+    "residual": 0.4007749557495117,
+    "abs_residual": 0.4007749557495117
+  },
+  {
+    "sha256": "09d92a1006274237c97e26f648cce5c681ae26854197b6540beafe2448d8e9cc",
+    "title": "煉情ミスティフィリア",
+    "rel_path": "煉情ミスティフィリア\\mystifilia_7A.bms",
+    "sl": 2.0,
+    "pred": 2.5412240028381348,
+    "residual": -0.5412240028381348,
+    "abs_residual": 0.5412240028381348
+  },
+  {
+    "sha256": "319db32c2e65a1b1ee98a4180f0b728c141e73263e39a30bbc24cbf2fbe9373d",
+    "title": "煉情ミスティフィリア",
+    "rel_path": "煉情ミスティフィリア\\mystifilia_7P.bms",
+    "sl": 10.0,
+    "pred": 8.406570434570312,
+    "residual": 1.5934295654296875,
+    "abs_residual": 1.5934295654296875
+  },
+  {
+    "sha256": "7021a46da2a8ec9be98c3b5d4e0800705c1ab20a2346c1ceb77e949797e93269",
+    "title": "corneal",
+    "rel_path": "corneal\\[SP nanami01].bms",
+    "sl": 1.0,
+    "pred": 2.219968557357788,
+    "residual": -1.219968557357788,
+    "abs_residual": 1.219968557357788
+  },
+  {
+    "sha256": "5435607a4f3b0bd4c5d55187b2652ce759f8dcfc1a4ad09f2a75fdae768ebab2",
+    "title": "Last Travel [Flight 1970]",
+    "rel_path": "Last Travel\\last_travel_flight1970.bms",
+    "sl": 6.0,
+    "pred": 4.80215311050415,
+    "residual": 1.1978468894958496,
+    "abs_residual": 1.1978468894958496
+  },
+  {
+    "sha256": "7f90903a4fdc04c0d96780dc5bd627f0a6798376cc783422132f2755a4631d6d",
+    "title": "Rainy [Mood]",
+    "rel_path": "Rainy\\_03.1_rainy-mood.bms",
+    "sl": 0.0,
+    "pred": 0.2856408357620239,
+    "residual": -0.2856408357620239,
+    "abs_residual": 0.2856408357620239
+  },
+  {
+    "sha256": "5568cbddff520e8fd429894f81ca82544796a170360575796938e50b4569b0e5",
+    "title": "Rainy",
+    "rel_path": "Rainy\\_05_rainy-ame.bms",
+    "sl": 5.0,
+    "pred": 2.6104397773742676,
+    "residual": 2.3895602226257324,
+    "abs_residual": 2.3895602226257324
+  },
+  {
+    "sha256": "615a4d246a161e113bd04848bb64581ba800ff1265468e4b522c21a2ae92c34b",
+    "title": "じゃぱりぱー",
+    "rel_path": "じゃぱりぱー\\A.bms",
+    "sl": 0.0,
+    "pred": 0.030649974942207336,
+    "residual": -0.030649974942207336,
+    "abs_residual": 0.030649974942207336
+  },
+  {
+    "sha256": "79a6859168080151f73e0d0b6bd06ba16c906277129c9fe092b4450f155a9254",
+    "title": "じゃぱりぱー [sagINSANE]",
+    "rel_path": "じゃぱりぱー\\_sagI.bms",
+    "sl": 9.0,
+    "pred": 9.475707054138184,
+    "residual": -0.4757070541381836,
+    "abs_residual": 0.4757070541381836
+  },
+  {
+    "sha256": "a86f126855afcb83dfca3a8348d4eea250c739de7599c8a75011cb55abb82de3",
+    "title": "It's \"alice\" dream[Another]",
+    "rel_path": "It's ＂alice＂ dream\\alice_a.bms",
+    "sl": 0.0,
+    "pred": 0.35906699299812317,
+    "residual": -0.35906699299812317,
+    "abs_residual": 0.35906699299812317
+  },
+  {
+    "sha256": "7f0224a6b0022dfc9998f30f22d4065d784b04c9b482219db14a91bf730363f7",
+    "title": "It's \"alice\" dream[HARDEST]",
+    "rel_path": "It's ＂alice＂ dream\\alice_AK-HARDEST.bms",
+    "sl": 11.0,
+    "pred": 10.019122123718262,
+    "residual": 0.9808778762817383,
+    "abs_residual": 0.9808778762817383
+  },
+  {
+    "sha256": "e7a496d10003dc2bb3bac8ddba5819667b6e82b46c006a97cd6e7284abe9073a",
+    "title": "YAKUSOKU \"kanon Tr_10 speed remix\" [Max]",
+    "rel_path": "YAKUSOKU\\_YAKUSOKU ''kanon_Tr10 speed remix''[MAX].bms",
+    "sl": 1.0,
+    "pred": 0.6167817115783691,
+    "residual": 0.38321828842163086,
+    "abs_residual": 0.38321828842163086
+  },
+  {
+    "sha256": "14a734beda5999a2b7d9b35e0936bc0fe4fa9fb028dd965af6b5ccbc3503b1fb",
+    "title": "FREAKOUT [7KEYS ANOTHER]",
+    "rel_path": "FREAKOUT\\7keys_another.bms",
+    "sl": 4.0,
+    "pred": 5.760404586791992,
+    "residual": -1.7604045867919922,
+    "abs_residual": 1.7604045867919922
+  },
+  {
+    "sha256": "a28713cc0cfa847c772c05cf23886dd3f9b4c989a82748f7a18349a3cab57306",
+    "title": "Orbital Drive",
+    "rel_path": "Orbital Drive\\_Orbital_Drive_L.bms",
+    "sl": 2.0,
+    "pred": 1.8015495538711548,
+    "residual": 0.19845044612884521,
+    "abs_residual": 0.19845044612884521
+  },
+  {
+    "sha256": "7651284dbfe4aae436b315f9ad9fbe788f48701d607371f16d39847d123ca740",
+    "title": "7 colors*",
+    "rel_path": "7 colors＊\\7_colors_nanami01.bme",
+    "sl": 11.0,
+    "pred": 10.263373374938965,
+    "residual": 0.7366266250610352,
+    "abs_residual": 0.7366266250610352
+  },
+  {
+    "sha256": "b48758192c0fcdb7303c7b17368da1cfea3e9842c9c48e9fccfeb0d8614f2d20",
+    "title": "JUGGLE -SPINNER-",
+    "rel_path": "JUGGLE\\JUGGLE_spspin.bms",
+    "sl": 2.0,
+    "pred": 2.3233540058135986,
+    "residual": -0.32335400581359863,
+    "abs_residual": 0.32335400581359863
+  },
+  {
+    "sha256": "9b548c0fcced40efd0ba95f29b86446f16fef83a77ba681b6f53972a232977bc",
+    "title": "Bird Sprite -Awakening of Light-[HARDEST]",
+    "rel_path": "Bird Sprite -Awakening of Light-\\birdsprite_r_HARDEST.bme",
+    "sl": 11.0,
+    "pred": 11.34748363494873,
+    "residual": -0.34748363494873047,
+    "abs_residual": 0.34748363494873047
+  },
+  {
+    "sha256": "e099f437263fb2e91675e8b8800f8e18b7fdc948d09856dffbb68321299c2da6",
+    "title": "Fly up to : the Sky [Insane]",
+    "rel_path": "Fly up to：the Sky\\_11_flyup-ins.bms",
+    "sl": 4.0,
+    "pred": 5.856218338012695,
+    "residual": -1.8562183380126953,
+    "abs_residual": 1.8562183380126953
+  },
+  {
+    "sha256": "7717ea8e919af8589e198d63cb24d9922aa3315788aecf6e2390b74aa665e628",
+    "title": "Lepontinia -THE LAST PLANET-",
+    "rel_path": "Lepontinia\\_lepontinia_7k_tlp.bms",
+    "sl": 9.0,
+    "pred": 9.803160667419434,
+    "residual": -0.8031606674194336,
+    "abs_residual": 0.8031606674194336
+  },
+  {
+    "sha256": "f5ee4fac3926d0a14c3e3b011db2c6259e992fccae52af935363ef07bac8c865",
+    "title": "Banhotta [未来差分研究所]",
+    "rel_path": "Banhotta\\_Banhotta_I.bms",
+    "sl": 8.0,
+    "pred": 9.682307243347168,
+    "residual": -1.682307243347168,
+    "abs_residual": 1.682307243347168
+  },
+  {
+    "sha256": "ef99f69de333b78c8147123eba203b88f417f8bdb43309f946df0d5a753e7d5d",
+    "title": "Postliminium",
+    "rel_path": "Postliminium\\_Postliminium_ARForest_15_SPI.bms",
+    "sl": 2.0,
+    "pred": 1.928791880607605,
+    "residual": 0.07120811939239502,
+    "abs_residual": 0.07120811939239502
+  },
+  {
+    "sha256": "5e3d040cfd763edfc7d3f46dccabaf28bcbddadc29d363dc762122d3154248e7",
+    "title": "貴女と秘密の… [Lilie]",
+    "rel_path": "貴女と秘密の…\\_ss_Lilie_C.bms",
+    "sl": 5.0,
+    "pred": 8.7423734664917,
+    "residual": -3.742373466491699,
+    "abs_residual": 3.742373466491699
+  },
+  {
+    "sha256": "c48101836126ce9296a0ed018563979cd949e9ee967a591019bdc6ceb7dfd103",
+    "title": "Luca [ABNORMAL]",
+    "rel_path": "Luca\\15_luca_spabn.bms",
+    "sl": 3.0,
+    "pred": 4.074838638305664,
+    "residual": -1.074838638305664,
+    "abs_residual": 1.074838638305664
+  },
+  {
+    "sha256": "35e96db9330d76f1f4a7cac0bd9fec93e22158a8e1f6d4e79739b35cb62c91db",
+    "title": "ψ華オヴスキュリテ",
+    "rel_path": "ψ華オヴスキュリテ\\____Original.bms",
+    "sl": 3.0,
+    "pred": 3.2699005603790283,
+    "residual": -0.2699005603790283,
+    "abs_residual": 0.2699005603790283
+  },
+  {
+    "sha256": "ea4cacf7cdc9ad6fa9af10db60bc1314778f1e610154621d61c2303b581a0116",
+    "title": "Luminaria",
+    "rel_path": "Luminaria\\_luminaria_another7.bme",
+    "sl": 2.0,
+    "pred": 2.19877552986145,
+    "residual": -0.1987755298614502,
+    "abs_residual": 0.1987755298614502
+  },
+  {
+    "sha256": "b65aa912d844b2c5f2753ccd966c1ef38d963e2bb20d8d4c9311f17b361ed5ce",
+    "title": "Luminaria",
+    "rel_path": "Luminaria\\_luminaria_insane7.bme",
+    "sl": 10.0,
+    "pred": 10.39258098602295,
+    "residual": -0.3925809860229492,
+    "abs_residual": 0.3925809860229492
+  },
+  {
+    "sha256": "1c0bab826e19a95f159e57d020a3e8062bac09cee5daa2fcb31e9724986c5b07",
+    "title": "Pangaea[SABOTHER]",
+    "rel_path": "Pangaea\\03_pangaea[ssssssss].bme",
+    "sl": 7.0,
+    "pred": 9.13801383972168,
+    "residual": -2.1380138397216797,
+    "abs_residual": 2.1380138397216797
+  },
+  {
+    "sha256": "b0dcc21c98f16dea37e1d04847004fe17e03ea1db350fa71a9c0daf6ce92f5da",
+    "title": "Final examination -Luna-",
+    "rel_path": "Final examination\\#Final examination_luna.bms",
+    "sl": 12.0,
+    "pred": 10.921514511108398,
+    "residual": 1.0784854888916016,
+    "abs_residual": 1.0784854888916016
+  },
+  {
+    "sha256": "7cf84099975653d02857496e4e0197b68976ca638e415a5f9c895e7d6b45fb41",
+    "title": "Trick or Treat? [Extra]",
+    "rel_path": "Trick or Treat？\\_trickortreat_7extra.bms",
+    "sl": 6.0,
+    "pred": 5.753599166870117,
+    "residual": 0.2464008331298828,
+    "abs_residual": 0.2464008331298828
+  },
+  {
+    "sha256": "26f2701aa5331141f2fce3c0956c386caaebeadb36e5c378331b2a98855c0cb4",
+    "title": "My Little Sweet Kitty[Cookies]",
+    "rel_path": "My Little Sweet Kitty\\_06_notnya-ex.bms",
+    "sl": 2.0,
+    "pred": 1.947472333908081,
+    "residual": 0.052527666091918945,
+    "abs_residual": 0.052527666091918945
+  },
+  {
+    "sha256": "ac4b09a60e0eb5c2fc9ef53cf4aba58b8ccce57a37e9e60f5b25ec60fc4acd3d",
+    "title": "My Little Sweet Kitty [Append]",
+    "rel_path": "My Little Sweet Kitty\\_07_notnya_az_append.bms",
+    "sl": 5.0,
+    "pred": 7.538436412811279,
+    "residual": -2.5384364128112793,
+    "abs_residual": 2.5384364128112793
+  },
+  {
+    "sha256": "1cf81cfa980540fbfb411ed3092447e633d544bdf607199ad8f5b32e9c245afc",
+    "title": "My Little Sweet Kitty [Append+]",
+    "rel_path": "My Little Sweet Kitty\\_08_notnya_az_append+.bms",
+    "sl": 12.0,
+    "pred": 11.250597953796387,
+    "residual": 0.7494020462036133,
+    "abs_residual": 0.7494020462036133
+  },
+  {
+    "sha256": "4a9619d5c4ddf913c4dc15a180e85002afc85f7a15ba7761d54673c02b0b55de",
+    "title": "Rocketropolis",
+    "rel_path": "Rocketropolis\\rocketropolis_Marysue.bme",
+    "sl": 11.0,
+    "pred": 8.800870895385742,
+    "residual": 2.199129104614258,
+    "abs_residual": 2.199129104614258
+  },
+  {
+    "sha256": "3d12660f82e5d2896bb68b76c587336e6398230a1d8c45dd2eb818c7824546d4",
+    "title": "煉獄-Priestess",
+    "rel_path": "煉獄-Priestess\\_rengoku_Priestess_nanami01 .bme",
+    "sl": 12.0,
+    "pred": 9.696310043334961,
+    "residual": 2.303689956665039,
+    "abs_residual": 2.303689956665039
+  },
+  {
+    "sha256": "3659471bf5deeec239a1154ced6d2fceccf8bfa813f819c54d832efcdf565503",
+    "title": "arosonik'A",
+    "rel_path": "arosonik'A\\_arosonik'A_zoi.bms",
+    "sl": 5.0,
+    "pred": 6.598311424255371,
+    "residual": -1.598311424255371,
+    "abs_residual": 1.598311424255371
+  },
+  {
+    "sha256": "e5ccc1136ec28466e98407e53e4bc5b8ad20241eed281e609b05b47ca8f3bcfa",
+    "title": "ozma",
+    "rel_path": "ozma\\G3_ozma_World-atom-o-sphere.bme",
+    "sl": 11.0,
+    "pred": 10.730308532714844,
+    "residual": 0.26969146728515625,
+    "abs_residual": 0.26969146728515625
+  },
+  {
+    "sha256": "55eb91bb840fc0be2e8805cdb219dc31f8f1af4256e115ee956db788c5fec4bb",
+    "title": "Kurofune",
+    "rel_path": "Kurofune\\00Kurofune[SP another].bms",
+    "sl": 0.0,
+    "pred": 0.6801087856292725,
+    "residual": -0.6801087856292725,
+    "abs_residual": 0.6801087856292725
+  },
+  {
+    "sha256": "9c7d6b9a25650a9ef6e02c15dbc68d5318a63db9fccba5227302636b1b96ee39",
+    "title": "白黒高速大回転 [皿高速大回転]",
+    "rel_path": "白黒高速大回転\\sirokuro_7_31_daikaiten.bms",
+    "sl": 2.0,
+    "pred": 0.9739996790885925,
+    "residual": 1.0260002613067627,
+    "abs_residual": 1.0260002613067627
+  },
+  {
+    "sha256": "5ab0848c6881e9280e8e383dbab42af763d2b357d2b07ad743f464cb614f50ba",
+    "title": "deep blue sunrise (pw-Another+)",
+    "rel_path": "deep blue sunrise\\deepblue_7_another-pw-a+.bme",
+    "sl": 3.0,
+    "pred": 2.1943905353546143,
+    "residual": 0.8056094646453857,
+    "abs_residual": 0.8056094646453857
+  },
+  {
+    "sha256": "94db4fea80d34166ef7693f77dfa61cccdc93e7e3b71c64cd236debcbc74c95d",
+    "title": "Hypnos Metropolis",
+    "rel_path": "Hypnos Metropolis\\hm_3.bme",
+    "sl": 2.0,
+    "pred": 1.8083679676055908,
+    "residual": 0.19163203239440918,
+    "abs_residual": 0.19163203239440918
+  },
+  {
+    "sha256": "5e0c12c382993e12fd63f830ecf9c09986dfb1f1de7723912f856a4a44de0bba",
+    "title": "モリオンの姫 [sagANOTHER]",
+    "rel_path": "モリオンの姫\\_morion_7sag.bme",
+    "sl": 2.0,
+    "pred": 1.1881521940231323,
+    "residual": 0.8118478059768677,
+    "abs_residual": 0.8118478059768677
+  },
+  {
+    "sha256": "c588bbe80131f37a64a868b0a119fd9fa08afda8f856ade79b5f668f3056677e",
+    "title": "モリオンの姫[HARDEST]",
+    "rel_path": "モリオンの姫\\_morion_HARDESTf.bme",
+    "sl": 9.0,
+    "pred": 8.577048301696777,
+    "residual": 0.42295169830322266,
+    "abs_residual": 0.42295169830322266
+  },
+  {
+    "sha256": "b8d5396745eb451be7fa3bea4181260c042564da3853e9aed19f1806a52543ac",
+    "title": "JULIAN",
+    "rel_path": "JULIAN ＂for B.O.F. 2009＂\\_15 [ SP-RX INSANE 7 ] JULIAN.bme",
+    "sl": 1.0,
+    "pred": 0.7669146656990051,
+    "residual": 0.23308533430099487,
+    "abs_residual": 0.23308533430099487
+  },
+  {
+    "sha256": "780f78ef4d6b9ddd1d6247156b0563a316476f469470e5725d3d2862485f0e40",
+    "title": "Fakeover[SP ANOTHER]",
+    "rel_path": "Fakeover\\fakeover_SPA.bms",
+    "sl": 2.0,
+    "pred": 5.005672931671143,
+    "residual": -3.0056729316711426,
+    "abs_residual": 3.0056729316711426
+  },
+  {
+    "sha256": "825b2e87b1d79c40632246e2132bd0aeb26cdf50314ddc731136e0837e56db89",
+    "title": "Fakeover [yumether]",
+    "rel_path": "Fakeover\\_fakeover_yume.bms",
+    "sl": 10.0,
+    "pred": 9.868792533874512,
+    "residual": 0.13120746612548828,
+    "abs_residual": 0.13120746612548828
+  },
+  {
+    "sha256": "a6abed17b086a2cf3a8cafde95a06062d6412025a6b6651d04c283217fa54e08",
+    "title": "アトロポスと最果の探求者",
+    "rel_path": "アトロポスと最果の探求者\\atropos_another.bms",
+    "sl": 0.0,
+    "pred": 0.1500912755727768,
+    "residual": -0.1500912755727768,
+    "abs_residual": 0.1500912755727768
+  },
+  {
+    "sha256": "37bb2975846fe8fcf006e804ba352b4edec335b639c57c65f9170b975625c34a",
+    "title": "アトロポスと最果の探求者",
+    "rel_path": "アトロポスと最果の探求者\\atropos_dilaceration.bms",
+    "sl": 7.0,
+    "pred": 7.426399230957031,
+    "residual": -0.42639923095703125,
+    "abs_residual": 0.42639923095703125
+  },
+  {
+    "sha256": "a7ac1611707df66ed9ffcbdece2589690f07f89906250211675d4771173de516",
+    "title": "SupersonicdiverS",
+    "rel_path": "SupersonicdiverS\\SupersonicdiverS_7Xe.bme",
+    "sl": 10.0,
+    "pred": 10.528817176818848,
+    "residual": -0.5288171768188477,
+    "abs_residual": 0.5288171768188477
+  },
+  {
+    "sha256": "ee768646508ee0520e21fcd3458f7bad66c46feb2f0f837ef72441d3c61b0963",
+    "title": "Speed of Light [Another]",
+    "rel_path": "Speed of Light\\_04_speedoflight-a.bms",
+    "sl": 1.0,
+    "pred": 0.6441366672515869,
+    "residual": 0.3558633327484131,
+    "abs_residual": 0.3558633327484131
+  },
+  {
+    "sha256": "41ba92c3adb52efdcbe78e1a066390e15bf5edbe95825194daa4a201c89177fe",
+    "title": "Speed of Light [Absolute]",
+    "rel_path": "Speed of Light\\_11_speedoflight-abs.bms",
+    "sl": 10.0,
+    "pred": 8.612715721130371,
+    "residual": 1.387284278869629,
+    "abs_residual": 1.387284278869629
+  },
+  {
+    "sha256": "64097c2e270502de4ce0a894a5819bf51170e7c454e66aa209943c5028091f4c",
+    "title": "Reimei",
+    "rel_path": "Reimei\\Reimei_futaba.bms",
+    "sl": 2.0,
+    "pred": 2.050076961517334,
+    "residual": -0.050076961517333984,
+    "abs_residual": 0.050076961517333984
+  },
+  {
+    "sha256": "d81ae9b2c88ddae570af8a3c676b0cddf80c89a7f7e97f62c10c65479ddbbc66",
+    "title": "Rainy Season -ex7-",
+    "rel_path": "Rainy Season\\rainyseasone7.bme",
+    "sl": 1.0,
+    "pred": 1.6419975757598877,
+    "residual": -0.6419975757598877,
+    "abs_residual": 0.6419975757598877
+  },
+  {
+    "sha256": "5225baa0e28c4afa31b06b132aa99128e2afc92b92f65cca28a8be5b84fbd18d",
+    "title": "Re:Sound Sing Step -Another-",
+    "rel_path": "Re：Sound Sing Step\\_A.bms",
+    "sl": 0.0,
+    "pred": 1.3765817880630493,
+    "residual": -1.3765817880630493,
+    "abs_residual": 1.3765817880630493
+  },
+  {
+    "sha256": "e947d856d262867909d68638c0e7f038fe031c61ff38f479086131654e726110",
+    "title": "Dark Sky",
+    "rel_path": "Dark Sky\\darksky_maniak.bms",
+    "sl": 9.0,
+    "pred": 9.236432075500488,
+    "residual": -0.23643207550048828,
+    "abs_residual": 0.23643207550048828
+  },
+  {
+    "sha256": "750eb20891e2cdbd1093793a5136a26764af449b4d1ef7445a4e22e73ed99ce5",
+    "title": "Psychedelic Ritual",
+    "rel_path": "Psychedelic Ritual\\_Psychedelic_Ritual_nanami01.bms",
+    "sl": 12.0,
+    "pred": 11.782535552978516,
+    "residual": 0.21746444702148438,
+    "abs_residual": 0.21746444702148438
+  },
+  {
+    "sha256": "2fbd4e17b87c99c645e370e0a9a1b43aac08ac2175a2d226ce7a6691eb6d6c44",
+    "title": "More Selfish",
+    "rel_path": "More Selfish\\More_Selfish_7Social.bme",
+    "sl": 11.0,
+    "pred": 10.336400032043457,
+    "residual": 0.663599967956543,
+    "abs_residual": 0.663599967956543
+  },
+  {
+    "sha256": "c315097dec2e129d8a6003df2b6f89e5ab9394da2caabd897c7d8f9cb0c84e06",
+    "title": "Rin-Rin",
+    "rel_path": "Rin-Rin\\_rinrin_7k_w.bms",
+    "sl": 5.0,
+    "pred": 2.786604166030884,
+    "residual": 2.213395833969116,
+    "abs_residual": 2.213395833969116
+  },
+  {
+    "sha256": "b296f093f760053089131e7f2ca0754a00d90066aa98f4ce6ff3685171c86448",
+    "title": "Legend of Seeker[HARD]",
+    "rel_path": "Legend of Seeker\\Legend-of-Seeker_HARDf.bme",
+    "sl": 7.0,
+    "pred": 6.492417812347412,
+    "residual": 0.5075821876525879,
+    "abs_residual": 0.5075821876525879
+  },
+  {
+    "sha256": "daa4464e534afde2e48504fc23bfd801fabbff4d548e5507ac7388b4cbcc3ca8",
+    "title": "人里に下ったアタイがいつの間にか社畜になっていた件[HARD]",
+    "rel_path": "人里に下ったアタイがいつの間にか社畜になっていた件\\Japanese_company_slave_HARD.bme",
+    "sl": 4.0,
+    "pred": 3.616583824157715,
+    "residual": 0.38341617584228516,
+    "abs_residual": 0.38341617584228516
+  },
+  {
+    "sha256": "58d7971f3f0a4c86e9efd3fc8348bc45cb701b9bd657ad7e30ae8dd442fb41a4",
+    "title": "Last Fireworks",
+    "rel_path": "Last Fireworks\\_Last_Fireworks_spanotherplus.bms",
+    "sl": 2.0,
+    "pred": 1.9565151929855347,
+    "residual": 0.04348480701446533,
+    "abs_residual": 0.04348480701446533
+  },
+  {
+    "sha256": "d7bc08190694c70047a25d884aa1c9c95f00198dca1686ca4940c84ae0b12328",
+    "title": "Pixel Princess",
+    "rel_path": "Pixel Princess\\_pixel_princess_DK.bme",
+    "sl": 6.0,
+    "pred": 4.741999626159668,
+    "residual": 1.258000373840332,
+    "abs_residual": 1.258000373840332
+  },
+  {
+    "sha256": "31206442571ad34d6c5ded69bc8f701771a5d56456a61766ddbc760eb582ba6e",
+    "title": "EMOJISM",
+    "rel_path": "EMOJISM\\_emojism_A7.bml",
+    "sl": 1.0,
+    "pred": 0.5967715978622437,
+    "residual": 0.40322840213775635,
+    "abs_residual": 0.40322840213775635
+  },
+  {
+    "sha256": "91e4862166313fe6d3764cbbee6056b1c382b527c93bfd48256154a50aaefd5e",
+    "title": "Sea blue, sky blue",
+    "rel_path": "Sea blue, sky blue\\_summervacation.bms",
+    "sl": 10.0,
+    "pred": 10.542235374450684,
+    "residual": -0.5422353744506836,
+    "abs_residual": 0.5422353744506836
+  },
+  {
+    "sha256": "d2281ecafb865482b325814253566c8652ee31a6de54f667e0fb2f3f4cdfd1d0",
+    "title": "恋の2-4-11(BMS Edit) -改二-",
+    "rel_path": "恋の2-4-11(BMS Edit)\\koi_no_2411_U2.bme",
+    "sl": 8.0,
+    "pred": 7.460063457489014,
+    "residual": 0.5399365425109863,
+    "abs_residual": 0.5399365425109863
+  },
+  {
+    "sha256": "b139dace57fdc6ea540e9f39775f6b532d443611d226891a69199fad72dec334",
+    "title": "Anger Control [ANOTHER]",
+    "rel_path": "Anger Control\\anger_control_ANOTHER.bms",
+    "sl": 0.0,
+    "pred": 0.1618761271238327,
+    "residual": -0.1618761271238327,
+    "abs_residual": 0.1618761271238327
+  },
+  {
+    "sha256": "978a6201d2aa5c34f4f68e4455289e40969d296ab48707475b2089111f4b4586",
+    "title": "運命論",
+    "rel_path": "運命論\\05_unmei_atropos.bme",
+    "sl": 10.0,
+    "pred": 7.802108287811279,
+    "residual": 2.1978917121887207,
+    "abs_residual": 2.1978917121887207
+  },
+  {
+    "sha256": "14b73457c01d1f862aad67db660fb87ad05e3b9ad60ffd36212573e106fa1666",
+    "title": "H∀TE [ANOTHER]",
+    "rel_path": "H∀TE\\HATE_A.bms",
+    "sl": 0.0,
+    "pred": 0.2405281662940979,
+    "residual": -0.2405281662940979,
+    "abs_residual": 0.2405281662940979
+  },
+  {
+    "sha256": "6975921890e844ed4d5137f63cf39dc1f60144396ff78ea68f7d798ba48c4dbc",
+    "title": "H∀TE [ANOTHER 2000Notes]",
+    "rel_path": "H∀TE\\HATE_A2000.bms",
+    "sl": 3.0,
+    "pred": 5.981855392456055,
+    "residual": -2.9818553924560547,
+    "abs_residual": 2.9818553924560547
+  },
+  {
+    "sha256": "7c80c38336c0b3a01a250d0404e5d2ccab28cab48e6a10cd3f9a6326166d1944",
+    "title": "Red -reduction division- [EXTRA+]",
+    "rel_path": "Red -reduction division-\\Red_m7-2.bms",
+    "sl": 4.0,
+    "pred": 4.964796543121338,
+    "residual": -0.9647965431213379,
+    "abs_residual": 0.9647965431213379
+  },
+  {
+    "sha256": "90e4276c5df8ab6cb324fcafe4a7cb0dc86e1fe456bf5924ae318938265987e1",
+    "title": "real words",
+    "rel_path": "real words\\_real_add_01_rsnb.bms",
+    "sl": 2.0,
+    "pred": 1.5240920782089233,
+    "residual": 0.47590792179107666,
+    "abs_residual": 0.47590792179107666
+  },
+  {
+    "sha256": "07d787c15e3e5c2ebf7f0e0db9e6401f4f47e1b15ccd26552c532d5582100482",
+    "title": "風時夏",
+    "rel_path": "風時夏\\_kazeharuka_harumiuta.bms",
+    "sl": 10.0,
+    "pred": 8.30994701385498,
+    "residual": 1.6900529861450195,
+    "abs_residual": 1.6900529861450195
+  },
+  {
+    "sha256": "3be030a3965e94ea0fc4186aef6cb038065556e37ace4aede5818492c37a7c88",
+    "title": "風時夏",
+    "rel_path": "風時夏\\_kazeharuka_SPI.bms",
+    "sl": 1.0,
+    "pred": 0.6020775437355042,
+    "residual": 0.39792245626449585,
+    "abs_residual": 0.39792245626449585
+  },
+  {
+    "sha256": "6c11e06aa961cb3fb63479f21148e1e6fd4eb3081002a727a3bfd859ab285918",
+    "title": "Holy Lightbringer [7KEYS ANOTHER]",
+    "rel_path": "Holy Lightbringer\\_04.bms",
+    "sl": 2.0,
+    "pred": 5.131217956542969,
+    "residual": -3.1312179565429688,
+    "abs_residual": 3.1312179565429688
+  },
+  {
+    "sha256": "c43b82243080e602f95c70b2b603fcf28652f0f8eeb2dc193e976dd4deb08da5",
+    "title": "Scaffold",
+    "rel_path": "Scaffold\\_execution.bme",
+    "sl": 3.0,
+    "pred": 2.8432118892669678,
+    "residual": 0.15678811073303223,
+    "abs_residual": 0.15678811073303223
+  },
+  {
+    "sha256": "28b1cdea61c2df2c8eeebd0db599573b41a8967dc01ece3f4bb87d8717db635a",
+    "title": "HARDCORE UNDERSTAND",
+    "rel_path": "HARDCORE UNDERSTAND\\HU_A.bms",
+    "sl": 3.0,
+    "pred": 2.0390658378601074,
+    "residual": 0.9609341621398926,
+    "abs_residual": 0.9609341621398926
+  },
+  {
+    "sha256": "2a74d09aff3381c6270b7063c35eeed82af77c2d0bde4777555aeee9c1a9d8ac",
+    "title": "Burning Beat",
+    "rel_path": "Burning Beat\\BBB-Fight_K.bms",
+    "sl": 1.0,
+    "pred": 1.010270118713379,
+    "residual": -0.010270118713378906,
+    "abs_residual": 0.010270118713378906
+  },
+  {
+    "sha256": "93c1f11c8017e46eba89ff4db25b2e47e1d979ef046dae00975e662cb292aa52",
+    "title": "溶けたアイス、キミの声",
+    "rel_path": "溶けたアイス、キミの声\\@azuki.bms",
+    "sl": 4.0,
+    "pred": 1.8914686441421509,
+    "residual": 2.1085314750671387,
+    "abs_residual": 2.1085314750671387
+  },
+  {
+    "sha256": "1d62ac02a51a2546f00f9707f75a2cc387b9b137a1df7c70a77a39af3d47bbaa",
+    "title": "溶けたアイス、キミの声",
+    "rel_path": "溶けたアイス、キミの声\\@MELTY.bms",
+    "sl": 12.0,
+    "pred": 9.871694564819336,
+    "residual": 2.128305435180664,
+    "abs_residual": 2.128305435180664
+  },
+  {
+    "sha256": "e1709c4f83fa619beb38c2a44a22a69f572890ca17000bb187d472d60ed30e16",
+    "title": "図書室のエルザ (litmus* Remix) [Middle]",
+    "rel_path": "図書室のエルザ (litmus＊ Remix)\\litmus_nmkelsa_7m.bme",
+    "sl": 9.0,
+    "pred": 7.542010307312012,
+    "residual": 1.4579896926879883,
+    "abs_residual": 1.4579896926879883
+  },
+  {
+    "sha256": "478f795e51bc31d6b65b099340a92a5bd37630910ea9c0c80ab93a292c282737",
+    "title": "図書室のエルザ[HARDEST]",
+    "rel_path": "図書室のエルザ\\elsa-HARDEST.bms",
+    "sl": 5.0,
+    "pred": 4.441226005554199,
+    "residual": 0.5587739944458008,
+    "abs_residual": 0.5587739944458008
+  },
+  {
+    "sha256": "f05580f31b0d35b62d6afb03c56eb041b83e39df04cc65563edfcbd23721a61d",
+    "title": "図書室のエルザ [FOX]",
+    "rel_path": "図書室のエルザ\\_F_Remake.bms",
+    "sl": 12.0,
+    "pred": 9.17552661895752,
+    "residual": 2.8244733810424805,
+    "abs_residual": 2.8244733810424805
+  },
+  {
+    "sha256": "182d2577f92fe469d462031c912d8832a1b68d53252a9aa3336dd176a924ed26",
+    "title": "図書室のエルザ [Fairytale]",
+    "rel_path": "図書室のエルザ\\_w__.bms",
+    "sl": 8.0,
+    "pred": 6.574288368225098,
+    "residual": 1.4257116317749023,
+    "abs_residual": 1.4257116317749023
+  },
+  {
+    "sha256": "ca0d207b35f0e3081adced017deb5f954dd3f207f98414a7791bb39ae32356a5",
+    "title": "あい☆こんぷりーと -Hope-",
+    "rel_path": "あい☆こんぷりーと\\_aiko_nanami01.bme",
+    "sl": 4.0,
+    "pred": 4.571915626525879,
+    "residual": -0.5719156265258789,
+    "abs_residual": 0.5719156265258789
+  },
+  {
+    "sha256": "c73909853a7847bd76f65ec6f1ac91a9542ad0474cf4770a9797ceb0f91b2ed9",
+    "title": "CO5M1C R4ILR0AD",
+    "rel_path": "CO5M1C R4ILR0AD\\CR_K7A.bms",
+    "sl": 1.0,
+    "pred": 0.7075328230857849,
+    "residual": 0.2924671769142151,
+    "abs_residual": 0.2924671769142151
+  },
+  {
+    "sha256": "25d9d442e226ce6b8fd7c061c7427371cbd2e7300109f2cd5687cfbf5dd61146",
+    "title": "CO5M1C R4ILR0AD [ON3 M0RE 3XTR4]",
+    "rel_path": "CO5M1C R4ILR0AD\\_CR_extra.bms",
+    "sl": 5.0,
+    "pred": 6.087283134460449,
+    "residual": -1.0872831344604492,
+    "abs_residual": 1.0872831344604492
+  },
+  {
+    "sha256": "86bc0c9ccfda049f9c4ab180489bf4bd92d7ace3a868924734e2023db2519bbf",
+    "title": "In The Wind -うままう-",
+    "rel_path": "In The Wind\\windMk2.bme",
+    "sl": 7.0,
+    "pred": 10.051676750183105,
+    "residual": -3.0516767501831055,
+    "abs_residual": 3.0516767501831055
+  },
+  {
+    "sha256": "77e9bc056b40963a38b198d933532335df2920aa1cb3e7c9fd09a4cce29f895b",
+    "title": "TEN [Ryether]",
+    "rel_path": "TEN\\77_SPRyether_bw3.bme",
+    "sl": 4.0,
+    "pred": 3.9027788639068604,
+    "residual": 0.09722113609313965,
+    "abs_residual": 0.09722113609313965
+  },
+  {
+    "sha256": "2a6a789211401736b8b056804a12b9aed8346c73612ec84be2c2f6ffb5074b42",
+    "title": "feelin' my new world (EXTREME)",
+    "rel_path": "feelin' my new world\\feeling_extreme.bme",
+    "sl": 2.0,
+    "pred": 2.941470146179199,
+    "residual": -0.9414701461791992,
+    "abs_residual": 0.9414701461791992
+  },
+  {
+    "sha256": "eabd8b674453a9737c2ce8974c0a3fe43b46fcbbf086788c67e303d86ce7f79e",
+    "title": "Fancy-Sky Trip",
+    "rel_path": "Fancy-Sky Trip\\_Fancy-Sky Trip(SPE).bms",
+    "sl": 2.0,
+    "pred": 1.477507472038269,
+    "residual": 0.522492527961731,
+    "abs_residual": 0.522492527961731
+  },
+  {
+    "sha256": "e06f1c776bf6bb56cfd55583d58e418333d9cb3b62f01829b50c62b714a4914e",
+    "title": "片翼のライカ -BMS Remaster-",
+    "rel_path": "片翼のライカ\\_raikaexceeder.bml",
+    "sl": 12.0,
+    "pred": 14.080398559570312,
+    "residual": -2.0803985595703125,
+    "abs_residual": 2.0803985595703125
+  },
+  {
+    "sha256": "ea9f0fe32de47b214cd02d953e2a36f71cabfee3fef9d06422e76274f962a185",
+    "title": "Memory of Paradise[INSANE]",
+    "rel_path": "Memory of Paradise\\_MoP_5_INSANE.bms",
+    "sl": 0.0,
+    "pred": 1.1443803310394287,
+    "residual": -1.1443803310394287,
+    "abs_residual": 1.1443803310394287
+  },
+  {
+    "sha256": "e93c83f8ad933eea8e9e098f6c675e635ea2b652667004f9bb79d4fa2609fd40",
+    "title": "Disco Balls",
+    "rel_path": "Disco Balls\\roop_discoballs_Eclipse.bme",
+    "sl": 10.0,
+    "pred": 8.672568321228027,
+    "residual": 1.3274316787719727,
+    "abs_residual": 1.3274316787719727
+  },
+  {
+    "sha256": "0c4c0b7a587b7bd65e99f6c35bb857d470bb2e806b4228f40de2afee5faf9f71",
+    "title": "Disco Balls",
+    "rel_path": "Disco Balls\\roop_discoballs_Luna.bme",
+    "sl": 4.0,
+    "pred": 4.859723091125488,
+    "residual": -0.8597230911254883,
+    "abs_residual": 0.8597230911254883
+  },
+  {
+    "sha256": "1e132fe495bd00df6d8d488b8feea7099c975f8b85e4ff595035ac94f7d1928a",
+    "title": "Disco Balls",
+    "rel_path": "Disco Balls\\roop_discoballs_twilight.bme",
+    "sl": 0.0,
+    "pred": 0.4449131488800049,
+    "residual": -0.4449131488800049,
+    "abs_residual": 0.4449131488800049
+  },
+  {
+    "sha256": "91dc865c62b9e41c3482d85085e4d3a8b4ea6c4b30b90db9ecad5a4c5fc3103c",
+    "title": "HOPE",
+    "rel_path": "HOPE\\_hope_nanami01.bms",
+    "sl": 6.0,
+    "pred": 5.679268836975098,
+    "residual": 0.32073116302490234,
+    "abs_residual": 0.32073116302490234
+  },
+  {
+    "sha256": "208ef96c0efbcf174b5c4819e6da54f2c7e934a0d819a82103ec82cd208febaf",
+    "title": "REWD \"B159 mix\" [Rising]",
+    "rel_path": "REWD ＂B159 mix＂\\_rewd_rising_hexa.bme",
+    "sl": 12.0,
+    "pred": 11.250840187072754,
+    "residual": 0.7491598129272461,
+    "abs_residual": 0.7491598129272461
+  },
+  {
+    "sha256": "1b54b65a5bbccc603d76eee8e4a6ff78d8b7bb77688079a24e6bc8774288ecd2",
+    "title": "仕事終了後超光速前進？？目標☆中華料理店！",
+    "rel_path": "仕事終了後超光速前進？？目標☆中華料理店!\\_SPmaaboudoufu.bms",
+    "sl": 7.0,
+    "pred": 7.9402265548706055,
+    "residual": -0.9402265548706055,
+    "abs_residual": 0.9402265548706055
+  },
+  {
+    "sha256": "629393926a83860f36bc9b65258d22d3d93cac7112207dc975f014a400ce223a",
+    "title": "HEXPERUS [SP INSANE]",
+    "rel_path": "HEXPERUS\\_HEXPERUS_I.bms",
+    "sl": 6.0,
+    "pred": 8.51315689086914,
+    "residual": -2.5131568908691406,
+    "abs_residual": 2.5131568908691406
+  },
+  {
+    "sha256": "de0c6f707a53fad4660c6f8897b80363c82bd58fca54b5c5f9f84bb6dba739e7",
+    "title": "Crush Alcohol [SP ANOTHER]",
+    "rel_path": "Crush Alcohol\\crush_alcohol_bms_a.bms",
+    "sl": 1.0,
+    "pred": 0.6425550580024719,
+    "residual": 0.3574449419975281,
+    "abs_residual": 0.3574449419975281
+  },
+  {
+    "sha256": "305ec6d79d6250d184dd41e132d0e5258fec3759415ea52ff6d676e75b8228ba",
+    "title": "5.1.1(ReMix)[73Another]",
+    "rel_path": "5.1.1(ReMix)\\73_511.bms",
+    "sl": 4.0,
+    "pred": 2.061244487762451,
+    "residual": 1.9387555122375488,
+    "abs_residual": 1.9387555122375488
+  },
+  {
+    "sha256": "97c589de275422f01a10a0b60e7d29c6003432c7856653c61aadead7bbae22c1",
+    "title": "Astar",
+    "rel_path": "Astar\\7A_w.bms",
+    "sl": 4.0,
+    "pred": 3.433180570602417,
+    "residual": 0.566819429397583,
+    "abs_residual": 0.566819429397583
+  },
+  {
+    "sha256": "0393ec50ab04c8237855c8177ed319d9eaff3d0cf562d1fcad6217fb1216be03",
+    "title": "踊る水飛沫 [KF7]",
+    "rel_path": "踊る水飛沫\\_odoru-spKF.bme",
+    "sl": 10.0,
+    "pred": 9.698502540588379,
+    "residual": 0.3014974594116211,
+    "abs_residual": 0.3014974594116211
+  },
+  {
+    "sha256": "039a032ff08025a7d3279d8a1b57f062c68f3f8c175acab2677d7e210d5e9b7a",
+    "title": "NEW ANACHRONISM -もう、主人公になれない-(dream side)",
+    "rel_path": "NEW ANACHRONISM -もう、主人公になれない-\\11_asagi_omote_a+.bme",
+    "sl": 0.0,
+    "pred": 0.5156064629554749,
+    "residual": -0.5156064629554749,
+    "abs_residual": 0.5156064629554749
+  },
+  {
+    "sha256": "089c220a2428410bc16f2047d7d96626360801bc4021512be082e9a39b48be03",
+    "title": "NS20 [7key CHAOSDEATH]",
+    "rel_path": "NS20\\__ns20_07_05_CHAOSDEATH.bml",
+    "sl": 10.0,
+    "pred": 7.578640460968018,
+    "residual": 2.4213595390319824,
+    "abs_residual": 2.4213595390319824
+  },
+  {
+    "sha256": "faa7405f94ffd55381c79fbe11335cc9a556a3927a43ada9fd912fe7e8401650",
+    "title": "Dear Glint",
+    "rel_path": "Dear Glint\\DGAnother.bms",
+    "sl": 0.0,
+    "pred": 0.25610512495040894,
+    "residual": -0.25610512495040894,
+    "abs_residual": 0.25610512495040894
+  },
+  {
+    "sha256": "054f051328b3dfea724f92f0427e74efa4b4980baa0f9175dd52656b1cdf3fb8",
+    "title": "AMOLTAMISS",
+    "rel_path": "AMOLTAMISS\\amo_mary_sue.bms",
+    "sl": 7.0,
+    "pred": 6.189000606536865,
+    "residual": 0.8109993934631348,
+    "abs_residual": 0.8109993934631348
+  },
+  {
+    "sha256": "28ac1457b0a2e6c6a741113f549deac583e93fe544629669c514091e41c1690e",
+    "title": "eth剣",
+    "rel_path": "eth剣\\ethken_0738_etude.bme",
+    "sl": 12.0,
+    "pred": 11.023557662963867,
+    "residual": 0.9764423370361328,
+    "abs_residual": 0.9764423370361328
+  },
+  {
+    "sha256": "76e0393ea9c76e037c950c5dbed8882dca054d2b5bab1afe2aa1a7e54d90d202",
+    "title": "転生ディザイア",
+    "rel_path": "転生ディザイア\\hexagram.bms",
+    "sl": 12.0,
+    "pred": 9.019742012023926,
+    "residual": 2.980257987976074,
+    "abs_residual": 2.980257987976074
+  },
+  {
+    "sha256": "d9eeaf4e33f3e514f06ec6c7361b93c3778b2be4c2425c4cc0b5c231f9cd8eb2",
+    "title": "BOUNCE THE TECH [SP ANOTHER]",
+    "rel_path": "BOUNCE THE TECH\\_sp_iriss_btt_04_spa.bme",
+    "sl": 1.0,
+    "pred": 0.8571145534515381,
+    "residual": 0.14288544654846191,
+    "abs_residual": 0.14288544654846191
+  },
+  {
+    "sha256": "c3017128c7c0e06e2d3506d6b749071cea520c4901bb40eebc0bf528c387e34f",
+    "title": "BOUNCE THE TECH",
+    "rel_path": "BOUNCE THE TECH\\_sp_iriss_btt_09_noise.bme",
+    "sl": 5.0,
+    "pred": 6.774181365966797,
+    "residual": -1.7741813659667969,
+    "abs_residual": 1.7741813659667969
+  },
+  {
+    "sha256": "096f255b86ac305540d5ef74d7a46c4ce27e7742b34e86b1bfc2ce4a1667179f",
+    "title": "Re:End of a Dream",
+    "rel_path": "Re：End of a Dream\\7H.bms",
+    "sl": 1.0,
+    "pred": 0.6669784188270569,
+    "residual": 0.3330215811729431,
+    "abs_residual": 0.3330215811729431
+  },
+  {
+    "sha256": "800cf0025d4cf9387c5ecd0ca6db5cf45137cd7626119c60639c9130494ed7a9",
+    "title": "Re:End of a Dream",
+    "rel_path": "Re：End of a Dream\\_7Anfang_ratBAECON.bms",
+    "sl": 3.0,
+    "pred": 3.2054200172424316,
+    "residual": -0.20542001724243164,
+    "abs_residual": 0.20542001724243164
+  },
+  {
+    "sha256": "be673bd52a406619c6b5b48ac1f9fb0ca9a0d22cf2913457758a16a5469c7963",
+    "title": "Re:End of a Dream",
+    "rel_path": "Re：End of a Dream\\_re_lapither.bms",
+    "sl": 6.0,
+    "pred": 8.187289237976074,
+    "residual": -2.187289237976074,
+    "abs_residual": 2.187289237976074
+  },
+  {
+    "sha256": "9be795adc6ae907f854e15a39833c5bbd9d88280b9a6e5562ed3a17d813bf597",
+    "title": "the lost dedicated (another)",
+    "rel_path": "the lost dedicated\\tld_another7.bme",
+    "sl": 0.0,
+    "pred": 0.22808508574962616,
+    "residual": -0.22808508574962616,
+    "abs_residual": 0.22808508574962616
+  },
+  {
+    "sha256": "a5730e6721f225ba9affa664cdfe87f09da918eeacffa571795ef47b7423c7a3",
+    "title": "the lost dedicated (extra)",
+    "rel_path": "the lost dedicated\\tld_extra7.bme",
+    "sl": 3.0,
+    "pred": 2.401641607284546,
+    "residual": 0.5983583927154541,
+    "abs_residual": 0.5983583927154541
+  },
+  {
+    "sha256": "2daaee6943a823c92696055bc6ed879207639313f4b653a98fb0ed2079c9fdf1",
+    "title": "the lost dedicated [memory]",
+    "rel_path": "the lost dedicated\\tld_memory.bme",
+    "sl": 12.0,
+    "pred": 11.114919662475586,
+    "residual": 0.8850803375244141,
+    "abs_residual": 0.8850803375244141
+  },
+  {
+    "sha256": "7c55b1bdd37c70d62660396a69faa0d840a2423c9b597e9f6726b1178eb017d8",
+    "title": "the lost dedicated [nostalgia]",
+    "rel_path": "the lost dedicated\\tld_sabunnnnnnnnnn.bme",
+    "sl": 7.0,
+    "pred": 6.9961090087890625,
+    "residual": 0.0038909912109375,
+    "abs_residual": 0.0038909912109375
+  },
+  {
+    "sha256": "68af0a534e89d31fefe94ef3ecb91f73fce5d1ced88323e91842a87bfe9039cd",
+    "title": "新 漢江水打令 (The New Han River Anthem)",
+    "rel_path": "新 漢江水打令\\__HanRiver_14_SPA.bme",
+    "sl": 0.0,
+    "pred": 0.8000953197479248,
+    "residual": -0.8000953197479248,
+    "abs_residual": 0.8000953197479248
+  },
+  {
+    "sha256": "2277ad88f6f66ad3ea12766d7006c0773480fd69da6418e18e2a1cf5ac4ce971",
+    "title": "新 漢江水打令 (The New Han River Anthem)",
+    "rel_path": "新 漢江水打令\\__HanRiver_15_SPL.bme",
+    "sl": 4.0,
+    "pred": 3.894174337387085,
+    "residual": 0.10582566261291504,
+    "abs_residual": 0.10582566261291504
+  },
+  {
+    "sha256": "2a76e7941f4e0f38b091a316fdccc5d7f264aefb57046d8f5b2690099027f31a",
+    "title": "オトゲラヴ！ [男の娘ラヴ！]",
+    "rel_path": "オトゲラヴ!\\_00_otogelove_BKLAPIS.bme",
+    "sl": 6.0,
+    "pred": 7.894420623779297,
+    "residual": -1.8944206237792969,
+    "abs_residual": 1.8944206237792969
+  },
+  {
+    "sha256": "4db002099cdf389df64e85e80ea280767ab48b44408cc5a8f58138fa4219df87",
+    "title": "ドキッ！けふぃーとひ・み・つｖのサッカータイム☆☆ニャホニャホしても、いいんですよ･･･？　～KEFIFAワールドカップ編 We love 汚滝健太郎～",
+    "rel_path": "ドキッ!けふぃーとひ・み・つvのサッカータイム☆☆ニャホニャホしても、いいんですよ・・・？ ～KEFIFAワールドカップ編 We love 汚滝健\\_otaki_A.bms",
+    "sl": 12.0,
+    "pred": 12.386248588562012,
+    "residual": -0.3862485885620117,
+    "abs_residual": 0.3862485885620117
+  },
+  {
+    "sha256": "f9a959ce5e200deb13faa1e44b6618e291ae77d859e36b2c5a88e39b542fb814",
+    "title": "楓 [SP INSANE]",
+    "rel_path": "楓\\Kaede_SPI.bms",
+    "sl": 11.0,
+    "pred": 8.374712944030762,
+    "residual": 2.6252870559692383,
+    "abs_residual": 2.6252870559692383
+  },
+  {
+    "sha256": "530c660fc51b6e6f1a85aa60b81e387feaf6dd9077bdcfb2500fed8479baaf02",
+    "title": "yksinaisyys [F]",
+    "rel_path": "yksinaisyys\\Fen.bms",
+    "sl": 7.0,
+    "pred": 5.676295280456543,
+    "residual": 1.323704719543457,
+    "abs_residual": 1.323704719543457
+  },
+  {
+    "sha256": "1d94968918081f903fd80a1caeea89a659c7e90d4546a7deadf064671dd0bee3",
+    "title": "flashBack[ANOTHER]",
+    "rel_path": "flashBack\\[A]flashback.bms",
+    "sl": 0.0,
+    "pred": 0.19706550240516663,
+    "residual": -0.19706550240516663,
+    "abs_residual": 0.19706550240516663
+  },
+  {
+    "sha256": "20cc5348c31b9552a459c0dd3913aeb790b388b3aa6e63a9adbde8d23981474d",
+    "title": "どうか私を殺して下さい [INFERNO]",
+    "rel_path": "どうか私を殺して下さい\\korosite-INFERNOf.bme",
+    "sl": 12.0,
+    "pred": 10.609031677246094,
+    "residual": 1.3909683227539062,
+    "abs_residual": 1.3909683227539062
+  },
+  {
+    "sha256": "20909bd59e1119230761e6b0b4b5746d5ef6d32faccbc363d7bcb0dd1c150d97",
+    "title": "どうか私を殺して下さい (latesnow)",
+    "rel_path": "どうか私を殺して下さい\\korosite_latesnow.bme",
+    "sl": 2.0,
+    "pred": 2.3969476222991943,
+    "residual": -0.39694762229919434,
+    "abs_residual": 0.39694762229919434
+  },
+  {
+    "sha256": "1c4e0b082c381fcfc694a93ad722df5a69b184d334792f8b2b65c4b2b53c3462",
+    "title": "One Way Street [Monotone]",
+    "rel_path": "One Way Street\\One_Way_Street[Monotone]_mpg対応版.bms",
+    "sl": 2.0,
+    "pred": 0.9028162956237793,
+    "residual": 1.0971837043762207,
+    "abs_residual": 1.0971837043762207
+  },
+  {
+    "sha256": "c082d9dd8f782cd1ceb3b914cdbf2499ba035da52dd3d3c33e49e79d3e0f6c68",
+    "title": "Jemdet -Luna-",
+    "rel_path": "Jemdet\\_Jemdet_luna.bms",
+    "sl": 7.0,
+    "pred": 7.5022077560424805,
+    "residual": -0.5022077560424805,
+    "abs_residual": 0.5022077560424805
+  },
+  {
+    "sha256": "ec8ae4bd9211f7fc50d7ed648b5fc98ac5088104307997d89a45fa4b7dfed314",
+    "title": "Dstorv [Another+]",
+    "rel_path": "Dstorv\\Dstorv[Another+].bme",
+    "sl": 4.0,
+    "pred": 4.944368362426758,
+    "residual": -0.9443683624267578,
+    "abs_residual": 0.9443683624267578
+  },
+  {
+    "sha256": "e55a8fa7734be21c24907e3b49864f3e35fb64be83d3f7b69190d462801a8442",
+    "title": "マジョリテの祝福とミノリテの憧憬[Insane]",
+    "rel_path": "マジョリテの祝福とミノリテの憧憬\\_majominoRe_SPAA.bme",
+    "sl": 5.0,
+    "pred": 6.010587692260742,
+    "residual": -1.0105876922607422,
+    "abs_residual": 1.0105876922607422
+  },
+  {
+    "sha256": "8f84b798299540e34742ab89cc965ca38bcc0770eb882d41eaaf6e205a9a4992",
+    "title": "EVERLASTING HAPPiNESS↑",
+    "rel_path": "EVERLASTING HAPPiNESS↑\\hapiness_a7.bme",
+    "sl": 2.0,
+    "pred": 1.9566434621810913,
+    "residual": 0.04335653781890869,
+    "abs_residual": 0.04335653781890869
+  },
+  {
+    "sha256": "22408ecad83a3dda54e70ad36d61108cb67b7a602db6e161afee8d871791684a",
+    "title": "EVERLASTING HAPPiNESS↑",
+    "rel_path": "EVERLASTING HAPPiNESS↑\\hapiness_i7.bms",
+    "sl": 10.0,
+    "pred": 8.302634239196777,
+    "residual": 1.6973657608032227,
+    "abs_residual": 1.6973657608032227
+  },
+  {
+    "sha256": "256e41ca27680baaba9b01f31d17c57789a8a9a8c5aa77206efce9d2ee11552e",
+    "title": "EVERLASTING HAPPiNESS↑",
+    "rel_path": "EVERLASTING HAPPiNESS↑\\_hapiness_zoi.bme",
+    "sl": 5.0,
+    "pred": 4.818533420562744,
+    "residual": 0.18146657943725586,
+    "abs_residual": 0.18146657943725586
+  },
+  {
+    "sha256": "a6ee2831d4dbab654a0b02559cb95845eadd73526ce882d45beea70afe851851",
+    "title": "Sacrificio [INSANE]",
+    "rel_path": "Sacrificio\\4_Sacrificio_I.bms",
+    "sl": 6.0,
+    "pred": 5.570374488830566,
+    "residual": 0.4296255111694336,
+    "abs_residual": 0.4296255111694336
+  },
+  {
+    "sha256": "4fff39d3631bcaa6f2bffbf567f87ece515127dfe8125ff766b1c7ca3070e4eb",
+    "title": "Kirby in Luminous Land(short ver.)",
+    "rel_path": "Kirby in Luminous Land\\_poyomi_short_zoi.bms",
+    "sl": 7.0,
+    "pred": 5.097862720489502,
+    "residual": 1.902137279510498,
+    "abs_residual": 1.902137279510498
+  },
+  {
+    "sha256": "ba181b3b8f6762e410294415810a2e820bf1de66f0a63d0c6d5f7ded8577ba1f",
+    "title": "Barely Barely",
+    "rel_path": "Barely Barely\\Barely Barely_INSANE.bms",
+    "sl": 4.0,
+    "pred": 5.1789326667785645,
+    "residual": -1.1789326667785645,
+    "abs_residual": 1.1789326667785645
+  }
+]

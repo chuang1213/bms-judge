@@ -1,0 +1,54 @@
+{
+  "config": {
+    "window": 512,
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  },
+  "repA": {
+    "difficulty_chart_mae": 2.6206,
+    "difficulty_chart_r2": 0.3248,
+    "difficulty_window_mae": 2.7181,
+    "seed_maes": [
+      2.6604,
+      2.6196,
+      2.5818
+    ],
+    "bands": {
+      "sl0-2": 3.2119,
+      "sl3-5": 1.5318,
+      "sl6-8": 1.4027,
+      "sl9-12": 3.5119
+    },
+    "aux_duration_mae": 5.4786,
+    "aux_duration_r2": 0.3927,
+    "duration_stats": {
+      "mean": 31.86,
+      "std": 9.55
+    }
+  },
+  "repB": {
+    "difficulty_chart_mae": 1.0882,
+    "difficulty_chart_r2": 0.8655,
+    "difficulty_window_mae": 1.5683,
+    "seed_maes": [
+      1.1094,
+      1.0694,
+      1.0857
+    ],
+    "bands": {
+      "sl0-2": 0.8988,
+      "sl3-5": 0.8754,
+      "sl6-8": 0.829,
+      "sl9-12": 1.7745
+    },
+    "aux_duration_mae": 0.101,
+    "aux_duration_r2": 0.9988,
+    "duration_stats": {
+      "mean": 31.86,
+      "std": 9.55
+    }
+  }
+}

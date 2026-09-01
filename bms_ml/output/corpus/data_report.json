@@ -1,0 +1,21 @@
+{
+  "total_charts": 48619,
+  "quarantine_by_reason": {
+    "not_single_play": 10999,
+    "control_flow": 252,
+    "no_notes": 374,
+    "not_7k": 845,
+    "pms_9k_not_7k": 484,
+    "bmson_unsupported": 5,
+    "mgq_ln": 22
+  },
+  "flag_by_reason": {
+    "extreme_bpm": 1218,
+    "extreme_stops": 206,
+    "slow_parse": 30,
+    "extreme_ln": 166,
+    "long_chart": 520,
+    "negative_bpm": 15,
+    "extreme_notes": 113
+  }
+}

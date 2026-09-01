@@ -1,0 +1,75 @@
+{
+  "config": {
+    "window": 512,
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  },
+  "models": {
+    "A_2xk3": {
+      "receptive_field": 5,
+      "params": 18785,
+      "train_seconds": 41.5,
+      "peak_gpu_mb": 407.0,
+      "chart_mae": 1.0761,
+      "chart_rmse": 1.4199,
+      "chart_r2": 0.8668,
+      "window_mae": 1.561,
+      "seed_maes": [
+        1.0512,
+        1.0915,
+        1.0857
+      ],
+      "bands": {
+        "sl0-2": 0.8586,
+        "sl3-5": 0.8752,
+        "sl6-8": 0.8349,
+        "sl9-12": 1.7846
+      }
+    },
+    "B_4xk3": {
+      "receptive_field": 9,
+      "params": 43489,
+      "train_seconds": 68.5,
+      "peak_gpu_mb": 407.5,
+      "chart_mae": 1.0883,
+      "chart_rmse": 1.4036,
+      "chart_r2": 0.8699,
+      "window_mae": 1.573,
+      "seed_maes": [
+        1.0738,
+        1.094,
+        1.097
+      ],
+      "bands": {
+        "sl0-2": 0.8811,
+        "sl3-5": 0.9366,
+        "sl6-8": 0.8881,
+        "sl9-12": 1.7065
+      }
+    },
+    "C_2xk5": {
+      "receptive_field": 9,
+      "params": 31073,
+      "train_seconds": 45.3,
+      "peak_gpu_mb": 407.3,
+      "chart_mae": 1.0232,
+      "chart_rmse": 1.3321,
+      "chart_r2": 0.8828,
+      "window_mae": 1.5471,
+      "seed_maes": [
+        1.0069,
+        1.0094,
+        1.0532
+      ],
+      "bands": {
+        "sl0-2": 0.7776,
+        "sl3-5": 0.9296,
+        "sl6-8": 0.8327,
+        "sl9-12": 1.6472
+      }
+    }
+  }
+}

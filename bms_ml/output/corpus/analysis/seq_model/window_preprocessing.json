@@ -1,0 +1,47 @@
+{
+  "window_len": 512,
+  "stride": 512,
+  "normalization": {
+    "mean": [
+      63.850223541259766,
+      3.825200080871582,
+      0.0026040230877697468,
+      0.0016509622801095247
+    ],
+    "std": [
+      34.92201614379883,
+      2.075129508972168,
+      0.05089796707034111,
+      0.051005084067583084
+    ]
+  },
+  "split_stats": {
+    "train": {
+      "charts": 1288,
+      "windows": 4534,
+      "windows_per_chart": {
+        "min": 1,
+        "max": 8,
+        "median": 3.0
+      }
+    },
+    "val": {
+      "charts": 272,
+      "windows": 966,
+      "windows_per_chart": {
+        "min": 1,
+        "max": 6,
+        "median": 4.0
+      }
+    },
+    "test": {
+      "charts": 285,
+      "windows": 990,
+      "windows_per_chart": {
+        "min": 1,
+        "max": 6,
+        "median": 3.0
+      }
+    }
+  }
+}

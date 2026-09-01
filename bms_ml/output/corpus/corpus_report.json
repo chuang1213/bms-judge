@@ -1,0 +1,730 @@
+{
+  "A_valid_7k_charts": 36744,
+  "B_distinct_songs_clean": 8315,
+  "C_labeled_7k_charts_any_table": 20739,
+  "C_labeled_by_table": {
+    "発狂難易度データベース（仮）": 17883,
+    "発狂BMS難易度表": 1048,
+    "NEW GENERATION 発狂難易度表": 1386,
+    "Satellite": 1905,
+    "LN難易度": 383,
+    "NEW GENERATION 通常難易度表": 2618,
+    "Stella": 1692,
+    "第三期Overjoy": 402,
+    "通常難易度表": 638
+  },
+  "D_satellite_coverage": {
+    "0": 222,
+    "1": 216,
+    "2": 213,
+    "3": 156,
+    "4": 155,
+    "5": 138,
+    "6": 115,
+    "7": 114,
+    "8": 112,
+    "9": 97,
+    "10": 96,
+    "11": 134,
+    "12": 137
+  },
+  "E_split_estimate": {
+    "val_ratio": 0.15,
+    "test_ratio": 0.15,
+    "train": 25440,
+    "val": 5733,
+    "test": 5571
+  },
+  "folder_fallback_groups": 12,
+  "folder_fallback_charts": 66,
+  "raw_charts": 48619,
+  "clean_charts": 36744,
+  "quarantined_charts": 11875,
+  "quarantine_union_reasons": {
+    "not_single_play": 10999,
+    "control_flow": 252,
+    "no_notes": 374,
+    "not_7k": 845,
+    "pms_9k_not_7k": 484,
+    "bmson_unsupported": 5,
+    "mgq_ln": 22
+  },
+  "charts_per_song_hist": {
+    "2": 537,
+    "3": 374,
+    "1": 4339,
+    "10": 160,
+    "19": 36,
+    "9": 173,
+    "5": 480,
+    "7": 291,
+    "11": 137,
+    "17": 38,
+    "13": 80,
+    "15": 50,
+    "4": 479,
+    "8": 218,
+    "23": 23,
+    "14": 72,
+    "6": 395,
+    "43": 4,
+    "26": 12,
+    "32": 7,
+    "16": 50,
+    "20": 25,
+    "31": 7,
+    "21": 26,
+    "24": 17,
+    "30": 8,
+    "38": 5,
+    "29": 14,
+    "18": 50,
+    "44": 3,
+    "35": 3,
+    "37": 2,
+    "12": 82,
+    "28": 9,
+    "27": 18,
+    "25": 18,
+    "34": 4,
+    "41": 2,
+    "36": 6,
+    "56": 2,
+    "22": 17,
+    "33": 7,
+    "42": 4,
+    "61": 2,
+    "54": 2,
+    "57": 3,
+    "46": 3,
+    "58": 1,
+    "49": 4,
+    "52": 2,
+    "40": 2,
+    "48": 2,
+    "45": 1,
+    "107": 1,
+    "51": 2,
+    "69": 1,
+    "55": 2,
+    "39": 1,
+    "81": 1,
+    "78": 1
+  },
+  "artists_count": 13040,
+  "charts_per_artist_hist": {
+    "68": 1,
+    "1": 8113,
+    "2": 1873,
+    "21": 20,
+    "18": 19,
+    "3": 812,
+    "32": 1,
+    "25": 14,
+    "6": 266,
+    "206": 2,
+    "45": 3,
+    "14": 40,
+    "4": 591,
+    "5": 363,
+    "9": 102,
+    "10": 90,
+    "7": 184,
+    "55": 2,
+    "56": 1,
+    "8": 137,
+    "33": 4,
+    "17": 30,
+    "13": 40,
+    "31": 7,
+    "11": 61,
+    "16": 18,
+    "15": 35,
+    "105": 1,
+    "72": 2,
+    "90": 1,
+    "70": 2,
+    "143": 1,
+    "46": 3,
+    "38": 4,
+    "24": 5,
+    "20": 18,
+    "42": 4,
+    "94": 1,
+    "12": 51,
+    "39": 4,
+    "22": 10,
+    "60": 1,
+    "19": 12,
+    "40": 5,
+    "27": 12,
+    "101": 1,
+    "41": 3,
+    "37": 6,
+    "28": 6,
+    "80": 1,
+    "23": 10,
+    "30": 5,
+    "49": 1,
+    "119": 1,
+    "92": 1,
+    "53": 2,
+    "126": 1,
+    "82": 1,
+    "50": 1,
+    "36": 3,
+    "137": 1,
+    "52": 1,
+    "57": 1,
+    "26": 3,
+    "78": 2,
+    "29": 3,
+    "35": 4,
+    "58": 1,
+    "65": 2,
+    "87": 1,
+    "69": 1,
+    "62": 1,
+    "189": 1,
+    "44": 1,
+    "109": 1,
+    "89": 1,
+    "34": 2,
+    "43": 2,
+    "47": 1,
+    "64": 1
+  },
+  "top_song_groups": [
+    {
+      "group_id": "t:freedomdive",
+      "n_charts": 107,
+      "titles": [
+        "FREEDOM DIVE[ブランクウェイン]",
+        "FREEDOM DiVE",
+        "FREEDOM DiVE (carnival)",
+        "FREEDOM DiVE -",
+        "FREEDOM DiVE - ANOTHER - [J.M]",
+        "FREEDOM DiVE [1/4 DIMENSIONS]"
+      ],
+      "artists": [
+        "xi",
+        "xi / BEACON",
+        "xi / SG_SAKURA"
+      ],
+      "satellite_levels": []
+    },
+    {
+      "group_id": "t:angeldust",
+      "n_charts": 81,
+      "titles": [
+        "Angel dust",
+        "Angel dust (for yadorigi)",
+        "Angel dust -Clover-",
+        "Angel dust -GOD-",
+        "Angel dust [2-1]",
+        "Angel dust [29Another]"
+      ],
+      "artists": [
+        "LV.4",
+        "LV.4 (obj.com)",
+        "LV.4 (obj.hama)"
+      ],
+      "satellite_levels": [
+        "10",
+        "4"
+      ]
+    },
+    {
+      "group_id": "t:air",
+      "n_charts": 78,
+      "titles": [
+        "Air",
+        "Air (LNother)",
+        "Air (Universe)",
+        "Air -AFOTHER-",
+        "Air -AFOTHER- [EX HARD]",
+        "Air -ANOTHER-"
+      ],
+      "artists": [
+        "SHIKI",
+        "SHIKI (ANOTHER NOTES SETTING BY T.K.)",
+        "SHIKI (obj:Samegiri)"
+      ],
+      "satellite_levels": [
+        "1",
+        "12",
+        "3"
+      ]
+    },
+    {
+      "group_id": "t:electricbutterfly",
+      "n_charts": 69,
+      "titles": [
+        "electric butterfly",
+        "electric butterfly [(U)&(i)]",
+        "electric butterfly [14g]",
+        "electric butterfly [193]",
+        "electric butterfly [28g]",
+        "electric butterfly [7&i]"
+      ],
+      "artists": [
+        "t+pazolite",
+        "t+pazolite / obj : Esh",
+        "t+pazolite / obj:tdk"
+      ],
+      "satellite_levels": []
+    },
+    {
+      "group_id": "t:littlehearts",
+      "n_charts": 61,
+      "titles": [
+        "LittlE HearTs(AFOTHER)",
+        "LittlE HearTs(tora no ana)",
+        "★LittlE HearTs★",
+        "★LittlE HearTs★ (GOGH)",
+        "★LittlE HearTs★ (★TrilL HearTs★)",
+        "★LittlE HearTs★ -SP ANOTHER-"
+      ],
+      "artists": [
+        "Nekomimi mahou tsukai/ obj: black train",
+        "nekomimi mahoutsukai / obj: black train",
+        "white chocolate max"
+      ],
+      "satellite_levels": [
+        "3"
+      ]
+    },
+    {
+      "group_id": "t:endtime",
+      "n_charts": 61,
+      "titles": [
+        "End Time",
+        "End Time (Stair)",
+        "End Time [7CURTAIN]",
+        "End Time [ALITHER]",
+        "End Time [BEGINNER]",
+        "End Time [Deified]"
+      ],
+      "artists": [
+        "Cres",
+        "Cres (obj:260)",
+        "Cres / *8284* / Symphonian"
+      ],
+      "satellite_levels": []
+    },
+    {
+      "group_id": "t:ray",
+      "n_charts": 58,
+      "titles": [
+        "RAY",
+        "RAY (7KEY)",
+        "RAY (7R)",
+        "RAY (ANOTHER7)",
+        "RAY (BEGINNER7)",
+        "RAY (BITTER7)"
+      ],
+      "artists": [
+        "MILK",
+        "MILK / LIGHTER",
+        "MILK / obj DJふるる"
+      ],
+      "satellite_levels": [
+        "2"
+      ]
+    },
+    {
+      "group_id": "t:squartatrice",
+      "n_charts": 57,
+      "titles": [
+        "squartatrice",
+        "squartatrice (7GENERAL)",
+        "squartatrice -GOD-",
+        "squartatrice [F]",
+        "squartatrice [Grief seed]",
+        "squartatrice [LN INSANE]"
+      ],
+      "artists": [
+        "gmtn vs. kozato (fw. ルゼP)",
+        "美樹さやか vs. 美樹さやか  (fw. 美樹さやか) / obj.siokaze",
+        "美樹さやか vs. 美樹さやか (fw. 美樹さやか)"
+      ],
+      "satellite_levels": [
+        "1",
+        "5"
+      ]
+    },
+    {
+      "group_id": "t:plasticmind",
+      "n_charts": 57,
+      "titles": [
+        "Plastic Mind",
+        "Plastic Mind [73ANOTHER]",
+        "Plastic Mind [AFOTHER]",
+        "Plastic Mind [ALITHER]",
+        "Plastic Mind [ALITHER] [EX HARD]",
+        "Plastic Mind [ANOTHER+-]"
+      ],
+      "artists": [
+        "ZUN / arr.みょん / iimode-do / かげきち / SHOT-U",
+        "ZUN/arr.みょん / iimode-do / obj ; Frenzy",
+        "ZUN/arr.みょん / iimode-do / かげきち"
+      ],
+      "satellite_levels": []
+    },
+    {
+      "group_id": "t:halcyon",
+      "n_charts": 57,
+      "titles": [
+        "Halcyon",
+        "Halcyon  [ Variable ]",
+        "Halcyon [7Key_Clover]",
+        "Halcyon [CALM]",
+        "Halcyon [CULMINATION: REMASTERED]",
+        "Halcyon [CULMINATION]"
+      ],
+      "artists": [
+        "Remixed by BACO feat.えみゅう (Original : xi)",
+        "xi",
+        "xi / obj : J.M"
+      ],
+      "satellite_levels": [
+        "4"
+      ]
+    }
+  ],
+  "extremes": {
+    "longest": [
+      [
+        "G e n g a o z o\\gengaozo_god999.bme",
+        137920.0,
+        "t:gengaozogj"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god500.bme",
+        69038.431,
+        "t:gengaozogj500"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god300.bme",
+        41430.588,
+        "t:gengaozogj300"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god100.bme",
+        13822.745,
+        "t:gengaozogj100"
+      ],
+      [
+        "All Is Done\\aid_x7.bme",
+        13150.685,
+        "t:allisdone"
+      ],
+      [
+        "G e n g a o z o\\gengaozo1Hour.bme",
+        12538.039,
+        "t:1時間耐久gengaozoa"
+      ],
+      [
+        "tinnitus\\[120min].bms",
+        7264.615,
+        "t:tinnitus"
+      ],
+      [
+        "Fairy tale\\_ft_7a.bme",
+        6270.655,
+        "t:fairytale"
+      ],
+      [
+        "Fairy tale\\_ft_7e.bme",
+        6270.655,
+        "t:fairytale"
+      ],
+      [
+        "Fairy tale\\_ft_7f.bme",
+        6270.655,
+        "t:fairytale"
+      ]
+    ],
+    "most_notes": [
+      [
+        "G e n g a o z o\\gengaozo_god999.bme",
+        3626654,
+        "t:gengaozogj"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god500.bme",
+        1815284,
+        "t:gengaozogj500"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god300.bme",
+        1089284,
+        "t:gengaozogj300"
+      ],
+      [
+        "G e n g a o z o\\gengaozo_god100.bme",
+        363284,
+        "t:gengaozogj100"
+      ],
+      [
+        "L.D.2013\\InfLD.bms",
+        327455,
+        "t:ld"
+      ],
+      [
+        "戦歌「オルグラリヤ」\\37_deathcore_77cc.bme",
+        207108,
+        "t:超戦戦戦歌十倍オルグラリヤ"
+      ],
+      [
+        "omega iii - beyond the flare\\omega_159744.bms",
+        159744,
+        "t:omegaivixviiivivbiyontothekusofumen"
+      ],
+      [
+        "tinnitus\\[120min].bms",
+        137556,
+        "t:tinnitus"
+      ],
+      [
+        "volcanic\\04_vol_yurufuwa.bms",
+        83254,
+        "t:bombernicゆるふわ"
+      ],
+      [
+        "Unleashed World\\Unleashed World_error.bms",
+        76026,
+        "t:unleashedworlderror"
+      ]
+    ],
+    "highest_bpm": [
+      [
+        "Engine\\engine_XYZ.bms",
+        1740000348.0,
+        "t:engine"
+      ],
+      [
+        "パブロペトリの泡影\\pavlopetri_gimmick.bms",
+        1200000120.0,
+        "t:パブロペトリの泡影"
+      ],
+      [
+        "悲伽羅香「水蓮」～花弁～\\_suiren1_7c.bms",
+        999999999.0,
+        "t:悲伽羅香水蓮花弁光"
+      ],
+      [
+        "deg w∧v chu doc\\_sp_suikai73.bme",
+        999900163.0,
+        "t:degwvchudoc"
+      ],
+      [
+        "XENTRIC LOGICER\\xentriclogicer_73.bms",
+        737300200.0,
+        "t:xentriclogicer"
+      ],
+      [
+        "【Freak《Show】Down》\\_SPAG.bms",
+        480000480.0,
+        "t:freakshowdown"
+      ],
+      [
+        "Finixe\\0C.bme",
+        444444444.0,
+        "t:finixe"
+      ],
+      [
+        "Finixe\\0CX.bme",
+        444444444.0,
+        "t:天上古代兵器finixe"
+      ],
+      [
+        "EOS\\eos_XYZ.bme",
+        280000200.0,
+        "t:eos"
+      ],
+      [
+        "【Freak《Show】Down》\\_cartoonworks_73.bms",
+        240000240.0,
+        "t:freakshowdown"
+      ]
+    ],
+    "highest_nps": [
+      [
+        "L.D.2013\\InfLD.bms",
+        2824.364,
+        "t:ld"
+      ],
+      [
+        "戦歌「オルグラリヤ」\\37_deathcore_77cc.bme",
+        2143.975,
+        "t:超戦戦戦歌十倍オルグラリヤ"
+      ],
+      [
+        "omega iii - beyond the flare\\omega_159744.bms",
+        1638.19,
+        "t:omegaivixviiivivbiyontothekusofumen"
+      ],
+      [
+        "volcanic\\04_vol_yurufuwa.bms",
+        613.484,
+        "t:bombernicゆるふわ"
+      ],
+      [
+        "Unleashed World\\Unleashed World_error.bms",
+        556.361,
+        "t:unleashedworlderror"
+      ],
+      [
+        "DISCHARGE RUSH\\DISCHARGE RUSH 7psychosis.bms",
+        517.463,
+        "t:dischargerush"
+      ],
+      [
+        "L9\\kuso9_7.bme",
+        417.533,
+        "t:l999999999999999999999999"
+      ],
+      [
+        "L9\\L9999999999999^99999999999.bme",
+        417.533,
+        "t:l999999999999999999999999"
+      ],
+      [
+        "L9\\コピー (3) ～ コピー ～ kuso9_7_EXH.bme",
+        417.533,
+        "t:l999999999999999999999999"
+      ],
+      [
+        "L9\\コピー (9) ～ コピー ～ kuso9_7.bme",
+        417.533,
+        "t:long999999999999999999999999"
+      ]
+    ],
+    "most_stops": [
+      [
+        "GLITCH SWITCH\\_glitch_switch_gimmick.bme",
+        47022,
+        "t:glitchswitch"
+      ],
+      [
+        "Alcubierre Drive\\_another_warp.bms",
+        26656,
+        "t:alcubierredrive"
+      ],
+      [
+        "Alcubierre Drive\\_beginner_warp.bms",
+        26656,
+        "t:alcubierredrive"
+      ],
+      [
+        "Alcubierre Drive\\_hyper_warp.bms",
+        26656,
+        "t:alcubierredrive"
+      ],
+      [
+        "Alcubierre Drive\\_insane_warp.bms",
+        26656,
+        "t:alcubierredrive"
+      ],
+      [
+        "Alcubierre Drive\\_normal_warp.bms",
+        26656,
+        "t:alcubierredrive"
+      ],
+      [
+        "アリスの空虚で愉快な人形劇\\fantoccini_SHD_reka22_製品版-2.bml",
+        20061,
+        "t:アリスの空虚で愉快な人形劇"
+      ],
+      [
+        "TwoPhace\\__rather.bms",
+        13918,
+        "t:twophace"
+      ],
+      [
+        "Lots Of Spices\\778_LOSmineds.bml",
+        12613,
+        "t:lotsofspices"
+      ],
+      [
+        "Wavetapper\\_HtoL.bme",
+        9061,
+        "t:wavetapper"
+      ]
+    ],
+    "most_ln": [
+      [
+        "HEXPERUS\\_HEXPERUS_Impossiblebms.bms",
+        37928,
+        "t:hexperus"
+      ],
+      [
+        "L9\\コピー (9) ～ コピー ～ kuso9_7.bme",
+        22275,
+        "t:long999999999999999999999999"
+      ],
+      [
+        "戦歌「オルグラリヤ」\\37_deathcore_7d_bga_10per.bme",
+        6096,
+        "t:長戦歌オルグラリヤ"
+      ],
+      [
+        "FREEDOM DiVE\\dive_air04FD_穴抜き.bme",
+        4157,
+        "t:freedomdive"
+      ],
+      [
+        "Alastor\\Alastor_wasshugyo.bml",
+        3045,
+        "t:alastor"
+      ],
+      [
+        "夏影-summer lights- [HI-Speed Edition]\\natu[HI-S] 7LN+.bme",
+        3027,
+        "t:長影summerlights"
+      ],
+      [
+        "Air\\air7extreme_穴抜き.bml",
+        2850,
+        "t:airextreme穴抜き"
+      ],
+      [
+        "Little ＂Sister＂ Bitch\\_little_sister_bitch_7afo_bga_穴抜き.bml",
+        2647,
+        "t:littlesisterbitch7afo穴抜き"
+      ],
+      [
+        "戦歌「オルグラリヤ」\\03_deathcore_7yabaikarayametoketteeeeeeeeeeeeee.bml",
+        2607,
+        "t:戦歌オrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+      ],
+      [
+        "iterated\\litmus_iterated_7INF_穴抜き.bme",
+        2597,
+        "t:iterated"
+      ]
+    ]
+  },
+  "flag_counts": {
+    "extreme_bpm": 1218,
+    "extreme_stops": 206,
+    "slow_parse": 30,
+    "extreme_ln": 166,
+    "long_chart": 520,
+    "negative_bpm": 15,
+    "extreme_notes": 113
+  },
+  "F_parser_bugs_found_this_round": [
+    "#BPM 0 导致时间轴除零（已修复+回归测试）"
+  ],
+  "G_unexpected_formats": {
+    "pms_9k": 484,
+    "bmson": 5,
+    "mgq_ln": 22,
+    "control_flow": 252,
+    "not_7k_but_had_notes": 845,
+    "no_notes": 374,
+    "dp_play": 10999
+  }
+}

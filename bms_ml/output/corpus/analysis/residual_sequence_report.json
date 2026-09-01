@@ -1,0 +1,284 @@
+{
+  "candidates": [
+    "density_change_mean",
+    "scratch_chord_frac",
+    "tiny_gap_frac",
+    "rhythm_repeat_frac",
+    "density_change_max"
+  ],
+  "contrast": [
+    {
+      "name": "density_std",
+      "rho_sl": 0.763,
+      "rho_absres": 0.27,
+      "partial_rho_absres_given_sl": -0.042
+    },
+    {
+      "name": "high_density_frac",
+      "rho_sl": 0.927,
+      "rho_absres": 0.355,
+      "partial_rho_absres_given_sl": -0.01
+    },
+    {
+      "name": "density_change_mean",
+      "rho_sl": 0.473,
+      "rho_absres": 0.298,
+      "partial_rho_absres_given_sl": 0.141
+    },
+    {
+      "name": "density_change_max",
+      "rho_sl": 0.649,
+      "rho_absres": 0.299,
+      "partial_rho_absres_given_sl": 0.068
+    },
+    {
+      "name": "gap_mean",
+      "rho_sl": -0.447,
+      "rho_absres": -0.185,
+      "partial_rho_absres_given_sl": -0.015
+    },
+    {
+      "name": "gap_std",
+      "rho_sl": -0.126,
+      "rho_absres": -0.048,
+      "partial_rho_absres_given_sl": 0.001
+    },
+    {
+      "name": "gap_cv",
+      "rho_sl": 0.047,
+      "rho_absres": 0.05,
+      "partial_rho_absres_given_sl": 0.034
+    },
+    {
+      "name": "tiny_gap_frac",
+      "rho_sl": 0.081,
+      "rho_absres": 0.107,
+      "partial_rho_absres_given_sl": 0.082
+    },
+    {
+      "name": "rhythm_repeat_frac",
+      "rho_sl": 0.36,
+      "rho_absres": 0.07,
+      "partial_rho_absres_given_sl": -0.081
+    },
+    {
+      "name": "lane_move_mean",
+      "rho_sl": -0.363,
+      "rho_absres": -0.149,
+      "partial_rho_absres_given_sl": -0.01
+    },
+    {
+      "name": "lane_move_std",
+      "rho_sl": -0.054,
+      "rho_absres": 0.014,
+      "partial_rho_absres_given_sl": 0.038
+    },
+    {
+      "name": "large_move_frac",
+      "rho_sl": -0.356,
+      "rho_absres": -0.181,
+      "partial_rho_absres_given_sl": -0.051
+    },
+    {
+      "name": "max_same_lane_run",
+      "rho_sl": -0.038,
+      "rho_absres": 0.02,
+      "partial_rho_absres_given_sl": 0.038
+    },
+    {
+      "name": "chord_size_mean",
+      "rho_sl": 0.522,
+      "rho_absres": 0.241,
+      "partial_rho_absres_given_sl": 0.05
+    },
+    {
+      "name": "chord_span_mean",
+      "rho_sl": 0.245,
+      "rho_absres": 0.151,
+      "partial_rho_absres_given_sl": 0.063
+    },
+    {
+      "name": "scratch_chord_frac",
+      "rho_sl": -0.212,
+      "rho_absres": 0.009,
+      "partial_rho_absres_given_sl": 0.1
+    },
+    {
+      "name": "chord_centroid_move",
+      "rho_sl": -0.052,
+      "rho_absres": -0.012,
+      "partial_rho_absres_given_sl": 0.008
+    }
+  ],
+  "existing_feature_absres_corr": [
+    [
+      "total_notes",
+      0.318,
+      0.819
+    ],
+    [
+      "ln_ratio",
+      0.059,
+      -0.097
+    ],
+    [
+      "duration_sec",
+      -0.048,
+      -0.008
+    ],
+    [
+      "measures",
+      0.036,
+      0.144
+    ],
+    [
+      "initial_bpm",
+      0.068,
+      0.171
+    ],
+    [
+      "min_bpm",
+      0.091,
+      0.147
+    ],
+    [
+      "max_bpm",
+      0.07,
+      0.17
+    ],
+    [
+      "bpm_change_count",
+      0.012,
+      0.068
+    ],
+    [
+      "stop_count",
+      0.032,
+      0.077
+    ],
+    [
+      "stop_total_sec",
+      0.032,
+      0.077
+    ],
+    [
+      "lane0_scratch",
+      0.096,
+      0.011
+    ],
+    [
+      "lane1",
+      0.227,
+      0.62
+    ],
+    [
+      "lane2",
+      0.272,
+      0.789
+    ],
+    [
+      "lane3",
+      0.3,
+      0.788
+    ],
+    [
+      "lane4",
+      0.282,
+      0.791
+    ],
+    [
+      "lane5",
+      0.302,
+      0.79
+    ],
+    [
+      "lane6",
+      0.309,
+      0.819
+    ],
+    [
+      "lane7",
+      0.299,
+      0.801
+    ],
+    [
+      "scratch_ratio",
+      0.008,
+      -0.226
+    ],
+    [
+      "avg_nps",
+      0.365,
+      0.85
+    ],
+    [
+      "peak_nps_1s",
+      0.405,
+      0.872
+    ],
+    [
+      "peak_measure_nps",
+      0.332,
+      0.855
+    ],
+    [
+      "chord_count",
+      0.26,
+      0.693
+    ],
+    [
+      "chord2_count",
+      -0.029,
+      0.112
+    ],
+    [
+      "chord3plus_count",
+      0.317,
+      0.735
+    ],
+    [
+      "jack_count",
+      0.137,
+      0.219
+    ]
+  ],
+  "experiment": {
+    "baseline": {
+      "mae": 1.0592712958653767,
+      "rmse": 1.4005235036214192,
+      "r2": 0.8699873089790344
+    },
+    "new": {
+      "mae": 1.1145570278167725,
+      "rmse": 1.4996383587519329,
+      "r2": 0.8508988420168558
+    },
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  },
+  "bands": {
+    "sl0-2": {
+      "n": 109,
+      "baseline_mae": 0.6364,
+      "new_mae": 0.629
+    },
+    "sl3-5": {
+      "n": 57,
+      "baseline_mae": 1.1075,
+      "new_mae": 1.3008
+    },
+    "sl6-8": {
+      "n": 52,
+      "baseline_mae": 1.3505,
+      "new_mae": 1.3596
+    },
+    "sl9-12": {
+      "n": 67,
+      "baseline_mae": 1.4802,
+      "new_mae": 1.5559
+    }
+  }
+}
