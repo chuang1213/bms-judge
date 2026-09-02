@@ -176,11 +176,10 @@ def main() -> None:
     fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
     # BP plausibility guard: BP counts misses, cannot exceed the note count by much
     fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
-    # v0 restricted targets to sl/st/insane tables; since h_knn_acc (objective kNN in
-    # stat space) replaced the table-level feature (PHASE3_2_REPORT.md §7), the table
-    # filter is dropped — target = any chart with manifest stats. `table`/`level`
-    # columns are kept only for scope-comparison subsetting.
-    fp = fp[fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    # Sample space (user decision 2026-09-03): targets restricted to the sl/st/発狂2018
+    # union — off-table charts are quality-uncontrolled. FEATURES remain table-free
+    # (h_knn_acc + 26D stats; see chart_repr.py contract and PROTOCOL.md §1).
+    fp = fp[fp["table"].notna() & fp["notes"].notna() & (fp["notes"] > 0)].copy()
     fp = fp.reset_index(drop=True)  # positional alignment for the kNN stat matrix
     fp["bp_ratio"] = fp["bp"] / fp["notes"]  # normalized BP: misses per note
 

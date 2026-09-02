@@ -9,8 +9,10 @@
 - 排除：course 行（len(sha256)≠64 或 mode≥100）、首打 clear==NO_PLAY(0)、首打 ex==0、
   BP > notes+5、无 manifest 统计的谱面；
 - active 玩家名单由 `players.json` 管理（include=true），经 `ingest_player.py` 进入；
-- **难度表等级不进入任何特征或样本筛选**（仅作 coverage audit 坐标与外部参照，
-  见 chart_repr.py 的契约）。
+- **样本空间（用户决定 2026-09-03）**：目标限定 sl/st/発狂2018 三表并集内的谱面——表外
+  谱面质量不可控，作为质量围栏使用；表等级本身仍不作特征（特征契约见 chart_repr.py），
+  若未来放开围栏需重新审计表外谱面质量；
+- **难度表等级不进入任何训练特征**。
 
 ## 2. 时间切分（strict temporal extrapolation）
 

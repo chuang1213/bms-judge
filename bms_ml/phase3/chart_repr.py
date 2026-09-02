@@ -2,10 +2,11 @@
 
 Three tiers, with an explicit contract:
 
-1. difficulty-table information  -> EXTERNAL REFERENCE ONLY.
-   Used for coverage audit coordinates and future validation studies.
-   MUST NOT appear in any training feature list. Enforced by keeping it out of
-   this registry's feature vectors (there is no API that returns it).
+1. difficulty-table information  -> EXTERNAL REFERENCE + SCOPE FENCE only.
+   The sl/st/発狂2018 union bounds which charts are eligible targets (quality fence,
+   user decision 2026-09-03; see PROTOCOL.md §1) and serves coverage-audit
+   coordinates. Table levels MUST NOT appear in any training feature list —
+   there is no API here that returns them.
 2. objective chart statistics    -> the strong baseline encoder (26 dims from
    bms_ml parsing; no community input).
 3. Phase2A representation        -> learned-encoder candidate (64-dim T1 pooled
