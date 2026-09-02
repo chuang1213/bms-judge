@@ -96,6 +96,9 @@ def load_firstplays() -> pd.DataFrame:
         df = df[(df["sha256"].str.len() == 64) & (df["mode"].astype(int) < 100)]
         df = df.sort_values("date").drop_duplicates("sha256", keep="first")
         df = df[df["clear"] != 0]  # NO_PLAY first rows: aborted/practice, not a real attempt
+        # ex==0 first rows are non-attempts too (immediate quit); they also carry the
+        # minbp=INT32_MAX sentinel (observed once in chuang). See PHASE3_AUDIT.md §9.
+        df = df[df["score"] > 0]
         parts.append(pd.DataFrame({
             "player": player,
             "sha256": df["sha256"].values,
@@ -113,7 +116,8 @@ def build_history_features(fp: pd.DataFrame, log_counts: pd.DataFrame,
 
     fp: all first-play rows (any player). log_counts: (player, time) of all scorelog rows.
     """
-    past = fp[fp["time"] <= cutoff]
+    past = fp[fp["time"] <= cutoff].copy()
+    past["bp_ratio"] = past["bp"] / past["notes"]
     rows = []
     for player, g in past.groupby("player"):
         known = g.dropna(subset=["acc"])
@@ -128,6 +132,7 @@ def build_history_features(fp: pd.DataFrame, log_counts: pd.DataFrame,
             "h_acc_std": known["acc"].std() if len(known) else np.nan,
             "h_acc_last10": known.sort_values("time")["acc"].tail(10).mean() if len(known) else np.nan,
             "h_bp_mean": known["bp"].mean() if len(known) else np.nan,
+            "h_bp_ratio_mean": known["bp_ratio"].mean() if len(known) else np.nan,
             "h_fail_rate": (g["lamp"] == 1).mean(),
             "h_fc_rate": (g["lamp"] >= 8).mean(),
             "h_days_since_active": (cutoff - last_active).total_seconds() / 86400.0,
@@ -159,7 +164,10 @@ def main() -> None:
     fp = fp.merge(manifest, on="sha256", how="left")
     fp = fp.merge(tables, on="sha256", how="left")
     fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
+    # BP plausibility guard: BP counts misses, cannot exceed the note count by much
+    fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
     fp = fp[fp["table"].notna() & fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    fp["bp_ratio"] = fp["bp"] / fp["notes"]  # normalized BP: misses per note
     fp["level_norm"] = fp["level"] / fp.groupby("table")["level"].transform("max")
     for t in ["satellite", "stella", "insane"]:
         fp[f"table_{t}"] = (fp["table"] == t).astype(float)
