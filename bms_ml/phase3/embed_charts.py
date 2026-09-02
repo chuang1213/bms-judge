@@ -39,7 +39,14 @@ def main() -> None:
 
     shas = sorted(fp["sha256"].unique())
     have = [s for s in shas if (SEQ_ROOT / f"{s}.npy").exists()]
-    print(f"charts needed {len(shas)}, with sequence npy {len(have)}")
+    # incremental: skip charts already embedded
+    out_path = DS / "chart_repr_t1.parquet"
+    if out_path.exists():
+        old = pd.read_parquet(out_path)
+        have = [s for s in have if s not in set(old["sha256"])]
+        print(f"existing {len(old)}, new to embed {len(have)}")
+    else:
+        print(f"charts needed {len(shas)}, with sequence npy {len(have)}")
 
     enc = GridEncoder()
     enc.load_state_dict(torch.load(CKPT, map_location="cpu"))
@@ -64,8 +71,10 @@ def main() -> None:
 
     out = pd.DataFrame(rows, columns=["sha256", "n_windows"] +
                        [f"r{i}" for i in range(64)])
-    out.to_parquet(DS / "chart_repr_t1.parquet")
-    print("saved", len(out), "->", DS / "chart_repr_t1.parquet")
+    if out_path.exists() and rows:
+        out = pd.concat([pd.read_parquet(out_path), out], ignore_index=True)
+    out.to_parquet(out_path)
+    print("saved", len(out), "->", out_path)
 
 
 if __name__ == "__main__":

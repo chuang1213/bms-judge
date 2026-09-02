@@ -78,17 +78,13 @@ def centered_r2(te: pd.DataFrame, pred: np.ndarray, col: str) -> float:
 
 
 def event_matrix(fp_sorted: pd.DataFrame, variant: str, reps: pd.DataFrame | None) -> np.ndarray:
+    """Objective ladder: C0 outcome+time, C1 +26D stats, C2 +Phase2A rep."""
     blocks = [np.stack([fp_sorted["lamp"].values / 9.0,
                         fp_sorted["acc"].values / 100.0,
                         np.log1p(fp_sorted["bp"].values)], axis=1)]
-    if variant in ("C1", "C2", "C3"):
-        blocks.append(np.stack([fp_sorted["level_norm"].values,
-                                (fp_sorted["table"] == "satellite").astype(float),
-                                (fp_sorted["table"] == "stella").astype(float),
-                                (fp_sorted["table"] == "insane").astype(float)], axis=1))
-    if variant in ("C2", "C3"):
+    if variant in ("C1", "C2"):
         blocks.append(fp_sorted[STAT_COLS].values.astype(float))
-    if variant == "C3":
+    if variant == "C2":
         R = reps.set_index("sha256").reindex(fp_sorted["sha256"].values)
         mat = R[[f"r{i}" for i in range(64)]].values.astype(float)
         blocks.append(np.nan_to_num(mat))
@@ -145,7 +141,7 @@ class Model(nn.Module):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variants", default="C0,C1,C2,C3")
+    ap.add_argument("--variants", default="C0,C1,C2")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
     global SEED
@@ -153,7 +149,7 @@ def main() -> None:
     variants = args.variants.split(",")
 
     fp = pd.read_parquet(DS / "firstplays.parquet")
-    reps = pd.read_parquet(DS / "chart_repr_t1.parquet") if "C3" in variants else None
+    reps = pd.read_parquet(DS / "chart_repr_t1.parquet") if "C2" in variants else None
     df = pd.read_parquet(DS / "samples.parquet")
     tr_all, te = df[df["phase"] == "train"], df[df["phase"] == "test"]
 
@@ -162,7 +158,7 @@ def main() -> None:
     pos_by_player = {p: np.where(fp_sorted["player"].values == p)[0]
                      for p in fp_sorted["player"].unique()}
 
-    chart_cols = STAT_COLS + ["level_norm", "table_satellite", "table_stella", "table_insane"]
+    chart_cols = list(STAT_COLS)  # objective features only (table levels dropped)
     results: dict = {"n_train": len(tr_all), "n_test": len(te)}
 
     # temporal val split (per player, last ~10% of train targets)
@@ -201,7 +197,7 @@ def main() -> None:
         return out
 
     # ---------- H / B baselines (HGB) ----------
-    H_FEATS = ["h_level_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
+    H_FEATS = ["h_knn_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
                "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
                "h_days_since_active", "h_plays_last30d", "h_days_span"]
 
@@ -229,11 +225,11 @@ def main() -> None:
         S_va, M_va, D_va = seqs_for(val, variant)
         S_te, M_te, D_te = seqs_for(te, variant)
         seq_dim = S_tr.shape[2]
-        chart_dim = len(chart_cols) + (64 if variant == "C3" else 0)
+        chart_dim = len(chart_cols) + (64 if variant == "C2" else 0)
 
         def chart_mat(d: pd.DataFrame) -> np.ndarray:
             X = d[chart_cols].values.astype(float)
-            if variant == "C3":
+            if variant == "C2":
                 R = reps.set_index("sha256").reindex(d["sha256"].values)
                 X = np.concatenate([X, np.nan_to_num(R[[f"r{i}" for i in range(64)]].values)], axis=1)
             return X
@@ -319,7 +315,7 @@ def main() -> None:
             min(np.searchsorted(t, cut, side="right"), K))}
 
     suffix = "" if SEED == 0 else f"_s{SEED}"
-    json.dump(results, open(OUT / f"phase32_results{suffix}.json", "w"), indent=2, default=str)
+    json.dump(results, open(OUT / f"phase32_obj_results{suffix}.json", "w"), indent=2, default=str)
     print(json.dumps(results, indent=2, default=str))
 
 

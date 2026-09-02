@@ -142,16 +142,15 @@ def build_history_features(fp: pd.DataFrame, log_counts: pd.DataFrame,
     return pd.DataFrame(rows)
 
 
-def level_history_feature(past: pd.DataFrame, table: str, level: float,
-                          fallback_mean: float) -> float:
-    """Player's mean acc on past first-plays of the same table & same level."""
-    same = past[(past["table"] == table) & (past["level"] == level)]
-    if len(same):
-        return same["acc"].mean()
-    same_table = past[past["table"] == table]
-    if len(same_table):
-        return same_table["acc"].mean()
-    return fallback_mean
+def knn_acc_feature(past_Z: np.ndarray, past_acc: np.ndarray, target_z: np.ndarray,
+                    k: int = 20) -> float:
+    """Mean acc of the player's k nearest past charts in standardized 26-dim stat
+    space — the objective, difficulty-table-free replacement for h_level_acc."""
+    if len(past_acc) == 0:
+        return np.nan
+    d = np.sqrt(((past_Z - target_z) ** 2).sum(1))
+    idx = np.argsort(d)[:k]
+    return float(np.mean(past_acc[idx]))
 
 
 def main() -> None:
@@ -166,11 +165,13 @@ def main() -> None:
     fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
     # BP plausibility guard: BP counts misses, cannot exceed the note count by much
     fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
-    fp = fp[fp["table"].notna() & fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    # v0 restricted targets to sl/st/insane tables; since h_knn_acc (objective kNN in
+    # stat space) replaced the table-level feature (PHASE3_2_REPORT.md §7), the table
+    # filter is dropped — target = any chart with manifest stats. `table`/`level`
+    # columns are kept only for scope-comparison subsetting.
+    fp = fp[fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    fp = fp.reset_index(drop=True)  # positional alignment for the kNN stat matrix
     fp["bp_ratio"] = fp["bp"] / fp["notes"]  # normalized BP: misses per note
-    fp["level_norm"] = fp["level"] / fp.groupby("table")["level"].transform("max")
-    for t in ["satellite", "stella", "insane"]:
-        fp[f"table_{t}"] = (fp["table"] == t).astype(float)
 
     # all scorelog rows (activity features need the full row stream, not just first plays)
     log_rows = []
@@ -187,9 +188,19 @@ def main() -> None:
     cut.columns = ["T_train", "T_test"]
     print("cutoffs:\n", cut)
 
+    # standardized stat space for the objective kNN history feature
+    from sklearn.preprocessing import StandardScaler
+    stat_cols = [c for c in fp.columns if c.startswith("c_")]
+    scaler = StandardScaler().fit(fp[stat_cols].values)
+    fp_Z = np.nan_to_num(scaler.transform(fp[stat_cols].values))
+
     samples = []
     for player, row in cut.iterrows():
         pf = fp[fp["player"] == player]
+        pf_pos = pf.index.values
+        pf_Z = fp_Z[pf.index.values]
+        pf_times = pf["time"].values
+        pf_acc = pf["acc"].values
         # train: targets in (T_train, T_test], features at T_train (prediction time)
         # test:  targets in (T_test, end],    features at T_test
         phases = [("train", row.T_train, row.T_test),
@@ -200,13 +211,15 @@ def main() -> None:
                 continue
             hist = build_history_features(fp, log_counts, hi)
             hs = hist[hist["player"] == player].iloc[0]
-            past = pf[pf["time"] <= hi]
-            fallback = past.dropna(subset=["acc"])["acc"].mean()
+            n_past = int((pf_times <= np.datetime64(hi)).sum())
+            past_Z = pf_Z[:n_past]
+            past_acc = pf_acc[:n_past]
+            tz = scaler.transform(targets[stat_cols].values)
             t = targets.copy()
             t["phase"] = phase
             t["cutoff"] = hi
-            t["h_level_acc"] = [level_history_feature(past, tb, lv, fallback)
-                                for tb, lv in zip(t["table"], t["level"])]
+            t["h_knn_acc"] = [knn_acc_feature(past_Z, past_acc, z)
+                              for z in tz]
             for k, v in hs.items():
                 if k != "player":
                     t[k] = v
