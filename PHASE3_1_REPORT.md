@@ -5,6 +5,17 @@
 > 数据定义与 v0 完全一致（4 玩家、三表并集、严格时间外推、首打事件、NO_PLAY/ex==0 排除、course 排除、manifest.notes 归一）。
 > 数据修正：新增两条清洗规则——首打 ex==0（含 1 例 minbp=INT32_MAX 哨兵）视为未实际游玩，排除（共 3 行）。
 
+> **⚠️ 更正（2026-09-04）**：本报告写作时的管线存在历史窗口泄漏 bug——历史特征窗口以
+> phase cutoff / 玩家最后一局为界，导致目标谱面自身的结果进入 h_knn_acc（k=20 邻域含自身）
+> 与 h_acc_mean 等特征，test 行更包含整个测试期的战果。泄漏已被修复（历史 = 严格早于
+> 目标首打时刻的事件；见 PHASE3_4_TIME_ABLATION.md §2 与 data.py build_history_features），
+> 本报告正文中的绝对数字（尤其 centered R² 与 H/B 的 MAE）偏乐观，层级结论
+> （H 主导 acc、B 主导 lamp/BP、时间特征重要性）以 PHASE3_4 与最新
+> compare_nolevel 输出为准。修复后 6 玩家基线：A 12.26 / H 8.17 / B 7.18。
+> 产物：`bms_ml/output/phase3/{target_relations.*, baseline31_results.json, c_model_*.json, phase31_summary.png}`（不入库）
+> 数据定义与 v0 完全一致（4 玩家、三表并集、严格时间外推、首打事件、NO_PLAY/ex==0 排除、course 排除、manifest.notes 归一）。
+> 数据修正：新增两条清洗规则——首打 ex==0（含 1 例 minbp=INT32_MAX 哨兵）视为未实际游玩，排除（共 3 行）。
+
 ## 0. 一句话结论
 
 三个目标都可预测，且呈现清晰的**信息梯度**：acc 由玩家历史主导（chart 无增益）、lamp 由谱面主导（history 补充）、BP 需要两者（唯一 B 显著最优的目标）；同 acc 的玩家在 lamp/BP 上仍有巨大差异，**acc 不足以描述 player performance** 得到直接证实。C（GRU history encoder）v1 在 acc 上输给手工统计（11.96 vs 9.34）、在 lamp 上赢 H 但输 B；多任务共享头无明确收益。

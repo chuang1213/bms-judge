@@ -121,42 +121,98 @@ def load_firstplays() -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True)
 
 
-def build_history_features(fp: pd.DataFrame, log_counts: pd.DataFrame,
-                           cutoff: pd.Timestamp) -> pd.DataFrame:
-    """Per-player history statistics strictly from events at or before `cutoff`.
+def build_history_features(fp_sorted: pd.DataFrame, log_counts: pd.DataFrame,
+                           Z: np.ndarray, k: int = 20) -> pd.DataFrame:
+    """Per-sample history = the player's first plays STRICTLY BEFORE the target's own
+    first-play time — the player state at the moment they walk up to the target chart.
 
-    fp: all first-play rows (any player). log_counts: (player, time) of all scorelog rows.
-    """
-    past = fp[fp["time"] <= cutoff].copy()
-    past["bp_ratio"] = past["bp"] / past["notes"]
-    rows = []
-    for player, g in past.groupby("player"):
-        known = g.dropna(subset=["acc"])
-        last_active = log_counts.loc[log_counts["player"] == player, "time"].max()
-        recent = log_counts[(log_counts["player"] == player)
-                            & (log_counts["time"] > cutoff - pd.Timedelta(days=30))]
-        rows.append({
-            "player": player,
-            "h_n_firstplays": len(g),
-            "h_n_known_acc": len(known),
-            "h_acc_mean": known["acc"].mean() if len(known) else np.nan,
-            "h_acc_std": known["acc"].std() if len(known) else np.nan,
-            "h_acc_last10": known.sort_values("time")["acc"].tail(10).mean() if len(known) else np.nan,
-            "h_bp_mean": known["bp"].mean() if len(known) else np.nan,
-            "h_bp_ratio_mean": known["bp_ratio"].mean() if len(known) else np.nan,
-            "h_fail_rate": (g["lamp"] == 1).mean(),
-            "h_fc_rate": (g["lamp"] >= 8).mean(),
-            "h_days_since_active": (cutoff - last_active).total_seconds() / 86400.0,
-            "h_plays_last30d": len(recent),
-            "h_days_span": (cutoff - g["time"].min()).total_seconds() / 86400.0,
-        })
-    return pd.DataFrame(rows)
+    Corrects the Phase 3.1-3.3 bug where history windows were bounded by the phase
+    cutoff (or the player's last play), which included the target's own outcome in
+    h_knn_acc/h_acc_mean and, for test rows, the whole test window (leakage).
+    Time features are bounded by the target time, never by a cutoff. Returns a
+    DataFrame aligned 1:1 with fp_sorted rows."""
+    n = len(fp_sorted)
+    acc = fp_sorted["acc"].values
+    lamp = fp_sorted["lamp"].values
+    bp = fp_sorted["bp"].values
+    bp_ratio = (fp_sorted["bp"] / fp_sorted["notes"]).values
+    known = ~np.isnan(acc)
+
+    cols = {c: np.full(n, np.nan) for c in [
+        "h_n_firstplays", "h_n_known_acc", "h_acc_mean", "h_acc_std", "h_acc_last10",
+        "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
+        "h_days_since_active", "h_plays_last30d", "h_days_span", "h_knn_acc"]}
+
+    log_by = {p: np.sort(g["time"].values.astype("datetime64[s]").astype(np.int64))
+              for p, g in log_counts.groupby("player")}
+    times = fp_sorted["time"].values.astype("datetime64[s]").astype(np.int64)
+
+    for player, idx in fp_sorted.groupby("player", sort=False).indices.items():
+        pos = np.asarray(idx)
+        r = len(pos)
+        t = times[pos]
+        lt = log_by[player]
+        known_p = known[pos]
+        # prefix sums over the player's chronological first plays
+        cs_known = np.concatenate([[0], np.cumsum(known_p)])
+        cs_acc = np.concatenate([[0.0], np.cumsum(np.where(known_p, acc[pos], 0.0))])
+        cs_acc2 = np.concatenate([[0.0], np.cumsum(np.where(known_p, acc[pos] ** 2, 0.0))])
+        cs_fail = np.concatenate([[0], np.cumsum(lamp[pos] == 1)])
+        cs_fc = np.concatenate([[0], np.cumsum(lamp[pos] >= 8)])
+        cs_bp = np.concatenate([[0.0], np.cumsum(bp[pos])])
+        cs_bpr = np.concatenate([[0.0], np.cumsum(bp_ratio[pos])])
+        kp = np.flatnonzero(known_p)          # ranks with known acc
+        # kNN among strictly-prior rows, chunked
+        Zi = Z[pos]
+        knn = np.full(r, np.nan)
+        lo0 = 0
+        while lo0 < r:
+            hi0 = min(lo0 + 256, r)
+            if hi0 == 0:
+                break
+            D = np.sqrt(((Zi[lo0:hi0, None, :] - Zi[None, :hi0, :]) ** 2).sum(-1))
+            for j in range(lo0, hi0):
+                drow = D[j - lo0, :j]
+                if len(drow) == 0:
+                    continue
+                kk = min(k, len(drow))
+                near = np.argpartition(drow, kk - 1)[:kk]
+                knn[j] = np.mean(acc[pos][near])
+            lo0 = hi0
+        for j in range(r):
+            c_known = cs_known[j]
+            cols["h_n_firstplays"][pos[j]] = j
+            cols["h_n_known_acc"][pos[j]] = c_known
+            if c_known:
+                cols["h_acc_mean"][pos[j]] = cs_acc[j] / c_known
+                if c_known > 1:
+                    m = cs_acc[j] / c_known
+                    var = max(cs_acc2[j] / c_known - m * m, 0.0)
+                    cols["h_acc_std"][pos[j]] = np.sqrt(var)
+            cnt10 = np.searchsorted(kp, j)
+            if cnt10:
+                sel = kp[max(0, cnt10 - 10):cnt10]
+                cols["h_acc_last10"][pos[j]] = np.mean(acc[pos[sel]])
+            cols["h_bp_mean"][pos[j]] = cs_bp[j] / j if j else np.nan
+            cols["h_bp_ratio_mean"][pos[j]] = cs_bpr[j] / j if j else np.nan
+            cols["h_fail_rate"][pos[j]] = cs_fail[j] / j if j else np.nan
+            cols["h_fc_rate"][pos[j]] = cs_fc[j] / j if j else np.nan
+            cols["h_knn_acc"][pos[j]] = knn[j]
+            ts = t[j]
+            hi_b = np.searchsorted(lt, ts, side="left")
+            lo_b = np.searchsorted(lt, ts - 30 * 86400, side="left")
+            cols["h_plays_last30d"][pos[j]] = float(hi_b - lo_b)
+            if hi_b:
+                cols["h_days_since_active"][pos[j]] = (ts - lt[hi_b - 1]) / 86400.0
+            if j:
+                cols["h_days_span"][pos[j]] = (ts - t[0]) / 86400.0
+    return pd.DataFrame(cols)
 
 
 def knn_acc_feature(past_Z: np.ndarray, past_acc: np.ndarray, target_z: np.ndarray,
                     k: int = 20) -> float:
-    """Mean acc of the player's k nearest past charts in standardized 26-dim stat
-    space — the objective, difficulty-table-free replacement for h_level_acc."""
+    """(kept for reference) Mean acc of the k nearest past charts in standardized
+    26-dim stat space."""
     if len(past_acc) == 0:
         return np.nan
     d = np.sqrt(((past_Z - target_z) ** 2).sum(1))
@@ -193,48 +249,31 @@ def main() -> None:
                                       "time": pd.to_datetime(df["date"], unit="s")}))
     log_counts = pd.concat(log_rows, ignore_index=True)
 
-    # time cutoffs per player
+    # time cutoffs per player (define the train/test split of TARGETS only;
+    # features never use them — see build_history_features)
     cut = fp.groupby("player")["time"].quantile([TRAIN_Q, TEST_Q]).unstack()
     cut.columns = ["T_train", "T_test"]
-    print("cutoffs:\n", cut)
+    print("cutoffs:")
+    print(cut)
 
-    # standardized stat space for the objective kNN history feature
     from sklearn.preprocessing import StandardScaler
     stat_cols = [c for c in fp.columns if c.startswith("c_")]
     scaler = StandardScaler().fit(fp[stat_cols].values)
-    fp_Z = np.nan_to_num(scaler.transform(fp[stat_cols].values))
+    fp_sorted = fp.sort_values(["player", "time"]).reset_index(drop=True)
+    Z = np.nan_to_num(scaler.transform(fp_sorted[stat_cols].values)).astype(np.float64)
 
-    samples = []
-    for player, row in cut.iterrows():
-        pf = fp[fp["player"] == player]
-        pf_pos = pf.index.values
-        pf_Z = fp_Z[pf.index.values]
-        pf_times = pf["time"].values
-        pf_acc = pf["acc"].values
-        # train: targets in (T_train, T_test], features at T_train (prediction time)
-        # test:  targets in (T_test, end],    features at T_test
-        phases = [("train", row.T_train, row.T_test),
-                  ("test", row.T_test, pf["time"].max())]
-        for phase, lo, hi in phases:
-            targets = pf[(pf["time"] > lo) & (pf["time"] <= hi)]
-            if not len(targets):
-                continue
-            hist = build_history_features(fp, log_counts, hi)
-            hs = hist[hist["player"] == player].iloc[0]
-            n_past = int((pf_times <= np.datetime64(hi)).sum())
-            past_Z = pf_Z[:n_past]
-            past_acc = pf_acc[:n_past]
-            tz = scaler.transform(targets[stat_cols].values)
-            t = targets.copy()
-            t["phase"] = phase
-            t["cutoff"] = hi
-            t["h_knn_acc"] = [knn_acc_feature(past_Z, past_acc, z)
-                              for z in tz]
-            for k, v in hs.items():
-                if k != "player":
-                    t[k] = v
-            samples.append(t)
-    samples = pd.concat(samples, ignore_index=True)
+    H = build_history_features(fp_sorted, log_counts, Z)
+    for c in H.columns:
+        fp_sorted[c] = H[c].values
+
+    t_sec = fp_sorted["time"]
+    Ttr = fp_sorted["player"].map(cut["T_train"])
+    Tte = fp_sorted["player"].map(cut["T_test"])
+    phase = np.where(t_sec <= Ttr, "history", np.where(t_sec <= Tte, "train", "test"))
+    fp_sorted["phase"] = phase
+    fp_sorted["phase_cutoff"] = np.where(phase == "train", Ttr, Tte)
+    samples = fp_sorted[fp_sorted["phase"] != "history"].reset_index(drop=True)
+    fp = fp_sorted
 
     fp.to_parquet(OUT / "firstplays.parquet")
     samples.to_parquet(OUT / "samples.parquet")

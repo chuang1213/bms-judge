@@ -4,6 +4,16 @@
 > 实验协议、表征接口固化，不再堆模型。
 > 新增：`coverage_audit.py`、`ingest_player.py`、`players.json`、`chart_repr.py`、`PROTOCOL.md`
 
+> **⚠️ 更正（2026-09-04）**：本报告写作时的管线存在历史窗口泄漏 bug——历史特征窗口以
+> phase cutoff / 玩家最后一局为界，导致目标谱面自身的结果进入 h_knn_acc（k=20 邻域含自身）
+> 与 h_acc_mean 等特征，test 行更包含整个测试期的战果。泄漏已被修复（历史 = 严格早于
+> 目标首打时刻的事件；见 PHASE3_4_TIME_ABLATION.md §2 与 data.py build_history_features），
+> 本报告正文中的绝对数字（尤其 centered R² 与 H/B 的 MAE）偏乐观，层级结论
+> （H 主导 acc、B 主导 lamp/BP、时间特征重要性）以 PHASE3_4 与最新
+> compare_nolevel 输出为准。修复后 6 玩家基线：A 12.26 / H 8.17 / B 7.18。
+> 实验协议、表征接口固化，不再堆模型。
+> 新增：`coverage_audit.py`、`ingest_player.py`、`players.json`、`chart_repr.py`、`PROTOCOL.md`
+
 ## 1. 当前已经稳定的部分
 
 - **数据管线**：`raw save → ingest_player.py 校验 → players.json → data.py → samples.parquet`

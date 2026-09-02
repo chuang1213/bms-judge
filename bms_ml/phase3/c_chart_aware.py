@@ -97,11 +97,13 @@ def build_sequences(samples: pd.DataFrame, fp_sorted: pd.DataFrame,
     """seqs [n, K, d+2], masks [n, K], last_dt [n, 1] — events before each cutoff."""
     seqs, masks, lasts = [], [], []
     dim = E.shape[1] + 2
-    for player, cutoff in zip(samples["player"], samples["cutoff"]):
+    # boundary = the target chart's own first-play time; history is strictly prior
+    # (leak fix: the target event itself must never appear in its own sequence)
+    for player, t_end in zip(samples["player"], samples["time"]):
         pos = pos_by_player[player]
         t = times_days[pos]                      # this player's event times
-        cut = cutoff.timestamp() / 86400.0
-        n_before = int(np.searchsorted(t, cut, side="right"))
+        cut = t_end.timestamp() / 86400.0
+        n_before = int(np.searchsorted(t, cut, side="left"))
         lo, hi = max(0, n_before - K), n_before
         n = hi - lo
         cols = np.zeros((K, dim), dtype=np.float32)
@@ -306,11 +308,14 @@ def main() -> None:
 
     # history length diagnostic (nanji stress test context): events available per
     # player at their train cutoff (capped at K)
+    # recompute the protocol's per-player cutoffs (q50/q75, same as data.py)
+    cut_table = df.groupby("player")["time"].quantile([0.50, 0.75]).unstack()
+    cut_table.columns = ["T_train", "T_test"]
     results["_history_len"] = {}
-    for p in ["chuang", "muiclac", "tzh", "nanji"]:
+    for p in cut_table.index:
         pos = pos_by_player[p]
         t = times_days[pos]
-        cut = tr_all.loc[tr_all["player"] == p, "cutoff"].iloc[0].timestamp() / 86400.0
+        cut = cut_table.loc[p, "T_train"].timestamp() / 86400.0
         results["_history_len"][p] = {"events_at_train_cutoff": int(
             min(np.searchsorted(t, cut, side="right"), K))}
 

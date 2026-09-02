@@ -3,6 +3,15 @@
 > 日期：2026-09-03 | 分支：phase3 | 代码：`bms_ml/phase3/{data.py, baseline.py}`
 > 产物：`bms_ml/output/phase3/{dataset/, baseline_results.json, baseline_mae.png, baseline_scatter.png}`（不入库）
 
+> **⚠️ 更正（2026-09-04）**：本报告写作时的管线存在历史窗口泄漏 bug——历史特征窗口以
+> phase cutoff / 玩家最后一局为界，导致目标谱面自身的结果进入 h_knn_acc（k=20 邻域含自身）
+> 与 h_acc_mean 等特征，test 行更包含整个测试期的战果。泄漏已被修复（历史 = 严格早于
+> 目标首打时刻的事件；见 PHASE3_4_TIME_ABLATION.md §2 与 data.py build_history_features），
+> 本报告正文中的绝对数字（尤其 centered R² 与 H/B 的 MAE）偏乐观，层级结论
+> （H 主导 acc、B 主导 lamp/BP、时间特征重要性）以 PHASE3_4 与最新
+> compare_nolevel 输出为准。修复后 6 玩家基线：A 12.26 / H 8.17 / B 7.18。
+> 产物：`bms_ml/output/phase3/{dataset/, baseline_results.json, baseline_mae.png, baseline_scatter.png}`（不入库）
+
 ## 0. 一句话结论
 
 **"玩家历史 → 未见谱面首打表现"的映射成立**：仅用简单历史统计（H）就把首打 acc 预测从 trivial 的 MAE 12.85 降到 **9.35**（R² 0.32，时间外推测试），首打失败预测 AUC 0.84。且出现一个关键的信号分离：**acc 等级几乎完全由玩家状态主导（chart 特征无增益），而"是否会 FAIL"主要由谱面特征主导**——这直接决定了 Baseline C（history encoder）的设计重点。

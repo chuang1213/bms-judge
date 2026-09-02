@@ -34,6 +34,88 @@
       "time": "real",
       "include": false,
       "note": "首打 <200，用户决定舍弃（2026-09-03）"
+    },
+    "reiaki": {
+      "dir": "玩家资料/reiaki/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-04",
+      "added": "2026-09-03T06:08:42",
+      "audit": {
+        "dir": "玩家资料/reiaki/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 18162,
+        "date_range": [
+          "2021-05-17T19:20:22",
+          "2026-09-02T10:18:01"
+        ],
+        "non_sha256_rows": 323,
+        "top_modes": [
+          [
+            0,
+            17813
+          ],
+          [
+            10000,
+            284
+          ],
+          [
+            1,
+            16
+          ],
+          [
+            10010,
+            13
+          ],
+          [
+            2,
+            11
+          ]
+        ]
+      }
+    },
+    "vsoflan": {
+      "dir": "玩家资料/vsoflan/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-04",
+      "added": "2026-09-03T06:09:02",
+      "audit": {
+        "dir": "玩家资料/vsoflan/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 12021,
+        "date_range": [
+          "2021-10-18T22:58:47",
+          "2026-09-02T20:40:01"
+        ],
+        "non_sha256_rows": 110,
+        "top_modes": [
+          [
+            0,
+            11898
+          ],
+          [
+            10000,
+            100
+          ],
+          [
+            1,
+            17
+          ],
+          [
+            10010,
+            3
+          ],
+          [
+            100,
+            3
+          ]
+        ]
+      }
     }
   }
 }

@@ -5,6 +5,17 @@
 > 数据定义不变（4 玩家、三表并集、严格时间外推、首打事件、NO_PLAY/ex==0/course 排除）。
 > 协议：C 变体为逐目标独立 encoder（3.1 已证 shared 多任务头损害 acc/BP）；C 变体报 3 种子 mean±std，H/B 为确定性单次拟合。
 
+> **⚠️ 更正（2026-09-04）**：本报告写作时的管线存在历史窗口泄漏 bug——历史特征窗口以
+> phase cutoff / 玩家最后一局为界，导致目标谱面自身的结果进入 h_knn_acc（k=20 邻域含自身）
+> 与 h_acc_mean 等特征，test 行更包含整个测试期的战果。泄漏已被修复（历史 = 严格早于
+> 目标首打时刻的事件；见 PHASE3_4_TIME_ABLATION.md §2 与 data.py build_history_features），
+> 本报告正文中的绝对数字（尤其 centered R² 与 H/B 的 MAE）偏乐观，层级结论
+> （H 主导 acc、B 主导 lamp/BP、时间特征重要性）以 PHASE3_4 与最新
+> compare_nolevel 输出为准。修复后 6 玩家基线：A 12.26 / H 8.17 / B 7.18。
+> 产物：`bms_ml/output/phase3/{chart_repr_t1.parquet, phase32_results*.json, phase32_summary.png}`（不入库）
+> 数据定义不变（4 玩家、三表并集、严格时间外推、首打事件、NO_PLAY/ex==0/course 排除）。
+> 协议：C 变体为逐目标独立 encoder（3.1 已证 shared 多任务头损害 acc/BP）；C 变体报 3 种子 mean±std，H/B 为确定性单次拟合。
+
 ## 0. 一句话结论
 
 **阶梯的方向性证据成立，但 neural encoder 在当前数据规模下整体仍不敌手工统计**：给历史事件加入谱面上下文让 lamp 预测可靠改善（C2/C3 ord MAE 1.61-1.63 vs C0 1.81 vs H 1.94，QWK 0.56-0.57 vs 0.30），增益来自 **26 维 chart statistics**（C1 仅难度等级无增益）；Phase2A 表征在 C2 之上无显著附加（QWK 0.573±.02 vs 0.563±.04）。acc 上所有 chart-aware 变体因过拟合恶化（C2 16.8±3.1 vs H 9.34），BP 上 C2 收窄差距但不超越（213.6 vs H 202.7 / B 182.4）。**player×chart interaction（centered R²）所有神经变体 ≤0，H 的 +0.15 仍是唯一正值**——手工的"同表同等级历史均值"这一个特征，就是 C 想用序列模型学而没学会的东西。
