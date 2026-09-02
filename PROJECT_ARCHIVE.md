@@ -2,11 +2,15 @@
 
 > 归档日期：2026-09-02 | 环境：Windows / Python 3.11 / PyTorch 2.11.0+cu128（RTX 4060）
 
-> **Phase 2A 已启动（2026-09-02）**：目标从"预测 SL"转为"从谱面学习 temporal-spatial chart
-> representation"。设计 memo：`PHASE2A.md`；四轮小规模实验报告：
-> `PHASE2A_REPORT.md`（首轮表示 + T1/T2）、`PHASE2A_INTERVENTION_REPORT.md`（统计受控干预）、
-> `PHASE2A_TASK_COMPARISON_REPORT.md`（Task A 对比）、`PHASE2A_POOLED_ONLY_REPORT.md`（pooled-only）。
-> 代码：`bms_ml/phase2a/`。当前结论与下一步见文末新增 §11。
+> **Phase 3 进行中（2026-09-03）**：研究问题转为 player–chart interaction prediction
+> （给定玩家历史与未见谱面，预测其首打表现 score%/lamp/BP）。数据与工程审计已完成：
+> `PHASE3_AUDIT.md`；代码：`bms_ml/phase3/`。
+>
+> **Phase 2A 已完成（2026-09-02）**：目标从"预测 SL"转为"从谱面学习 temporal-spatial chart
+> representation"。设计 memo：`docs/phase2a/PHASE2A.md`；四轮小规模实验报告：
+> `docs/phase2a/PHASE2A_REPORT.md`（首轮表示 + T1/T2）、`docs/phase2a/PHASE2A_INTERVENTION_REPORT.md`（统计受控干预）、
+> `docs/phase2a/PHASE2A_TASK_COMPARISON_REPORT.md`（Task A 对比）、`docs/phase2a/PHASE2A_POOLED_ONLY_REPORT.md`（pooled-only）。
+> 代码：`bms_ml/phase2a/`。当前结论与下一步见文末 §11。Phase 1 封存记录：`docs/phase1/PHASE1.md`。
 
 ## 1. 项目定位
 
@@ -179,7 +183,7 @@ MAE 1.0505（整数） vs 1.0523（one-hot）——无实质差异。产物：an
 整谱打乱 lane（保留 delta_t/type/duration 与 lane 频率，固定种子可复现）：
 MAE 1.0582（原始） vs 1.0524（shuffled）——打乱 lane 后性能不变，
 说明当前 CNN 的预测力几乎全部来自时间/density 结构，lane 排列没有贡献可提取信号。
-产物：analysis/lane_shuffle/。阶段封存见 PHASE1.md。
+产物：analysis/lane_shuffle/。阶段封存见 docs/phase1/PHASE1.md。
 
 ## 6. 关键决策记录
 
@@ -249,7 +253,7 @@ temporal-spatial chart representation？核心工作假设：固定时长窗口�
 
 - 4s 窗口 × 1/60s cell（T=240）× 8 lane（0-6 keys 有序 + scratch 平面），通道 = onset 计数 +
   LN hold 标志；window-relative 时间；不含 BPM/STOP/SCROLL（side channel 预留）。
-- 代码：`bms_ml/phase2a/grid_data.py`；设计：`PHASE2A.md`。
+- 代码：`bms_ml/phase2a/grid_data.py`；设计：`docs/phase2a/PHASE2A.md`。
 
 ### 四轮实验与关键结果
 

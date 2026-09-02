@@ -1,7 +1,7 @@
 # PHASE 2A —— Chart Representation v1 设计 memo
 
 > 日期：2026-09-02 | 状态：设计待审（尚未实现）
-> 前序：`PHASE1.md`（Phase 1 封存）、`PROJECT_ARCHIVE.md`、`handoff.md`
+> 前序：`../phase1/PHASE1.md`（Phase 1 封存）、`PROJECT_ARCHIVE.md`（根目录）、`../archive/handoff.md`
 > 本 memo 只回答问题与设计，不包含实现代码。
 
 > **状态更新（2026-09-02 晚）**：本设计已实现并完成四轮小规模实验，报告：
