@@ -14,6 +14,7 @@ bms_ml/output/sequences/
 bms_ml/output/corpus/manifest.jsonl
 bms_ml/output/tables/
 bms_ml/output/phase2a/
+bms_ml/output/phase3/
 
 # 运行时状态目录
 .agents/
@@ -22,6 +23,10 @@ bms_ml/output/phase2a/
 # 独立 git 仓库（不嵌套提交）
 bms-skills/
 BmsReplayViewer/
+
+# 只读参考项目（phase3 参考，勿改动勿提交）
+lampghost/
+beatoraja-master/
 
 # 临时文件
 *.tmp
