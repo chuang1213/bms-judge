@@ -314,6 +314,14 @@ def main() -> None:
         results["_history_len"][p] = {"events_at_train_cutoff": int(
             min(np.searchsorted(t, cut, side="right"), K))}
 
+    import sys; sys.path.insert(0, str(Path(__file__).parent))
+    from chart_repr import feature_manifest
+    results["features_used"] = {
+        "target_chart": chart_cols + ([f"r{i}" for i in range(64)] if "C2" in variants else []),
+        "event_ladder": {"C0": "outcome+time", "C1": "+26D stats", "C2": "+Phase2A rep"},
+        "history_stats": H_FEATS,
+        "uses_difficulty_table_features": False,
+    }
     suffix = "" if SEED == 0 else f"_s{SEED}"
     json.dump(results, open(OUT / f"phase32_obj_results{suffix}.json", "w"), indent=2, default=str)
     print(json.dumps(results, indent=2, default=str))

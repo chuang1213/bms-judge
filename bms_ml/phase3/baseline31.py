@@ -1,4 +1,6 @@
-"""Phase 3.1 baselines: three targets (acc / lamp / BP) x feature sets
+"""[DEPRECATED 2026-09-03] uses difficulty-table-derived features (h_level_acc, level_norm, table one-hots) which are removed from the current pipeline; kept for history. Use compare_nolevel.py / c_chart_aware.py instead. See PROTOCOL.md.
+
+Phase 3.1 baselines: three targets (acc / lamp / BP) x feature sets
 (A chart-only / H history-statistics-only / B chart+history), same strict time
 split as v0 (train targets in (q50,q75], test targets after q75).
 

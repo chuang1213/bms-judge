@@ -1,4 +1,6 @@
-"""Phase 3.1 model C: history encoder (GRU) + chart features -> 3 performance heads.
+"""[DEPRECATED 2026-09-03] uses difficulty-table-derived features (h_level_acc, level_norm, table one-hots) which are removed from the current pipeline; kept for history. Use compare_nolevel.py / c_chart_aware.py instead. See PROTOCOL.md.
+
+Phase 3.1 model C: history encoder (GRU) + chart features -> 3 performance heads.
 
 Question (brief section 6/8): can a learned player state from the raw first-play
 event sequence beat hand-crafted history statistics (H), and does a SHARED

@@ -1,0 +1,39 @@
+{
+  "players": {
+    "chuang": {
+      "dir": "玩家资料/chuang/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "项目发起人"
+    },
+    "muiclac": {
+      "dir": "玩家资料/muiclac/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "数据量最大；表外谱面占比高"
+    },
+    "tzh": {
+      "dir": "玩家资料/tzh/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "SL9-12 重度；ST4-7 覆盖薄"
+    },
+    "nanji": {
+      "dir": "玩家资料/南极/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "16 个月高密度；acc 双峰"
+    },
+    "buzhang": {
+      "dir": "玩家资料/局长/player2",
+      "client": "beatoraja",
+      "time": "real",
+      "include": false,
+      "note": "首打 <200，用户决定舍弃（2026-09-03）"
+    }
+  }
+}

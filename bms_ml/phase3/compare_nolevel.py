@@ -104,6 +104,9 @@ def main() -> None:
                        "ratio_mae_x1000": round(mae(te["bp"] / te["notes"],
                                                     bp_p / te["notes"]) * 1000, 2)},
             }
+        from chart_repr import feature_manifest, OBJECTIVE_STAT_COLS, HISTORY_FEATURES
+        import sys; sys.path.insert(0, str(Path(__file__).parent))
+        res['features_used'] = feature_manifest(STAT, H_FEATS)
         results[scope] = res
         print(f"[{scope}] n={len(tr)}/{len(te)}",
               {t: round(res[t]["acc"]["mae"], 2) for t in sets})

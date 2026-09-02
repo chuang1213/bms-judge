@@ -31,12 +31,18 @@ CORPUS = ROOT / "bms_ml" / "output" / "corpus"
 TABLES = ROOT / "bms_ml" / "output" / "tables"
 OUT = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 
-PLAYERS = {
-    "chuang": "chuang/player1",
-    "muiclac": "muiclac/player1",
-    "tzh": "tzh/player1",
-    "nanji": "南极/player1",
-}
+
+def load_roster() -> tuple[dict, dict]:
+    """Active players and their time modes come from players.json (managed by
+    ingest_player.py). include=false players are skipped entirely."""
+    roster = json.load(open(Path(__file__).resolve().parent / "players.json",
+                            encoding="utf-8"))
+    active = {n: e for n, e in roster["players"].items() if e.get("include")}
+    return ({n: e["dir"] for n, e in active.items()},
+            {n: e.get("time", "real") for n, e in active.items()})
+
+
+PLAYERS, TIME_MODE = load_roster()
 TRAIN_Q, TEST_Q = 0.50, 0.75
 
 
@@ -89,16 +95,21 @@ def load_firstplays() -> pd.DataFrame:
     """First-play events per player, one row per (player, sha256)."""
     parts = []
     for player, rel in PLAYERS.items():
-        con = sqlite3.connect(DATA / rel / "scorelog.db")
+        con = sqlite3.connect(ROOT / rel / "scorelog.db")
         df = pd.read_sql_query(
-            "SELECT sha256, mode, clear, score, minbp, date FROM scorelog", con)
+            "SELECT rowid, sha256, mode, clear, score, minbp, date FROM scorelog", con)
         con.close()
         df = df[(df["sha256"].str.len() == 64) & (df["mode"].astype(int) < 100)]
-        df = df.sort_values("date").drop_duplicates("sha256", keep="first")
+        df = df.sort_values(["date", "rowid"]).drop_duplicates("sha256", keep="first")
         df = df[df["clear"] != 0]  # NO_PLAY first rows: aborted/practice, not a real attempt
         # ex==0 first rows are non-attempts too (immediate quit); they also carry the
         # minbp=INT32_MAX sentinel (observed once in chuang). See PHASE3_AUDIT.md §9.
         df = df[df["score"] > 0]
+        if TIME_MODE.get(player) == "synthetic":
+            # clients without reliable timestamps (LR2): play-order ordinal days.
+            # ordering preserved, absolute-time semantics lost (see PROTOCOL.md)
+            df = df.sort_values(["date", "rowid"])
+            df["date"] = (np.arange(len(df), dtype=np.int64) + 1) * 86400
         parts.append(pd.DataFrame({
             "player": player,
             "sha256": df["sha256"].values,
@@ -176,7 +187,7 @@ def main() -> None:
     # all scorelog rows (activity features need the full row stream, not just first plays)
     log_rows = []
     for player, rel in PLAYERS.items():
-        con = sqlite3.connect(DATA / rel / "scorelog.db")
+        con = sqlite3.connect(ROOT / rel / "scorelog.db")
         df = pd.read_sql_query("SELECT date FROM scorelog", con)
         con.close()
         log_rows.append(pd.DataFrame({"player": player,
