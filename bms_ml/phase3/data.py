@@ -44,6 +44,10 @@ def load_roster() -> tuple[dict, dict]:
 
 PLAYERS, TIME_MODE = load_roster()
 TRAIN_Q, TEST_Q = 0.50, 0.75
+# Survival-scope experiment (user decision 2026-09-04): drop FAILED and acc<50%
+# first plays from BOTH targets and history — models only see completed,
+# non-collapsed attempts (lamp 4/5/6 = EASY/NORMAL/HARD). Revert by setting False.
+SURVIVAL_SCOPE_ONLY = True
 
 
 def load_manifest() -> pd.DataFrame:
@@ -105,6 +109,9 @@ def load_firstplays() -> pd.DataFrame:
         # ex==0 first rows are non-attempts too (immediate quit); they also carry the
         # minbp=INT32_MAX sentinel (observed once in chuang). See PHASE3_AUDIT.md §9.
         df = df[df["score"] > 0]
+        if SURVIVAL_SCOPE_ONLY:
+            # keep only completed, non-collapsed attempts (see flag docstring)
+            df = df[(df["clear"] >= 4) & (df["clear"] <= 6) & (df["score"] * 50 >= 2500)]
         if TIME_MODE.get(player) == "synthetic":
             # clients without reliable timestamps (LR2): play-order ordinal days.
             # ordering preserved, absolute-time semantics lost (see PROTOCOL.md)
