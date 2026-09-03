@@ -62,6 +62,7 @@ def load_manifest() -> pd.DataFrame:
                 "notes": r["meta"]["total_notes"],
                 "features": r["features"],
                 "quarantine": r.get("quarantine"),
+                "c_jrank": r.get("rank"),  # #RANK judge window tier (parser default 2)
             })
     df = pd.DataFrame(rows)
     feat = pd.DataFrame(df.pop("features").tolist(),
