@@ -42,7 +42,7 @@
 
   注意：`manifest.jsonl` 的 `path` 字段保存的是旧系统绝对路径（解析时改用 `rel_path`
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
-- `.venv` = Python 3.11 + CPU torch（旧 uv venv 已废）。torch 相关用
+- `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；旧 CPU 版已换，下载走 127.0.0.1:7897 代理）。torch 相关用
   `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
 - 测试：`python -m unittest discover bms_ml/tests`（25 个，parser 回归）
 - 数据集重建：`python bms_ml/phase3/data.py`
