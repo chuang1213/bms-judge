@@ -116,6 +116,88 @@
           ]
         ]
       }
+    },
+    "LED": {
+      "dir": "玩家资料/LED/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-04",
+      "added": "2026-09-03T09:00:46",
+      "audit": {
+        "dir": "玩家资料/LED",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 17770,
+        "date_range": [
+          "2023-07-08T19:41:14",
+          "2026-08-07T11:05:03"
+        ],
+        "non_sha256_rows": 236,
+        "top_modes": [
+          [
+            0,
+            17515
+          ],
+          [
+            10000,
+            169
+          ],
+          [
+            10010,
+            55
+          ],
+          [
+            2,
+            11
+          ],
+          [
+            1,
+            11
+          ]
+        ]
+      }
+    },
+    "darklord": {
+      "dir": "玩家资料/darklord/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-04（db 补齐）",
+      "added": "2026-09-03T09:06:09",
+      "audit": {
+        "dir": "玩家资料/darklord/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 13039,
+        "date_range": [
+          "2021-03-12T12:18:45",
+          "2026-09-02T17:03:50"
+        ],
+        "non_sha256_rows": 85,
+        "top_modes": [
+          [
+            0,
+            12958
+          ],
+          [
+            10000,
+            72
+          ],
+          [
+            10010,
+            7
+          ],
+          [
+            10020,
+            1
+          ],
+          [
+            1000,
+            1
+          ]
+        ]
+      }
     }
   }
 }
