@@ -110,8 +110,9 @@ def load_firstplays() -> pd.DataFrame:
         # minbp=INT32_MAX sentinel (observed once in chuang). See PHASE3_AUDIT.md §9.
         df = df[df["score"] > 0]
         if SURVIVAL_SCOPE_ONLY:
-            # keep only completed, non-collapsed attempts (see flag docstring)
-            df = df[(df["clear"] >= 4) & (df["clear"] <= 6) & (df["score"] * 50 >= 2500)]
+            # lamp part of the survival filter; the acc>=50 part needs `notes`
+            # from the manifest merge, applied in main()
+            df = df[(df["clear"] >= 4) & (df["clear"] <= 6)]
         if TIME_MODE.get(player) == "synthetic":
             # clients without reliable timestamps (LR2): play-order ordinal days.
             # ordering preserved, absolute-time semantics lost (see PROTOCOL.md)
@@ -243,6 +244,9 @@ def main() -> None:
     # union — off-table charts are quality-uncontrolled. FEATURES remain table-free
     # (h_knn_acc + 26D stats; see chart_repr.py contract and PROTOCOL.md §1).
     fp = fp[fp["table"].notna() & fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    if SURVIVAL_SCOPE_ONLY:
+        # acc>=50 part: acc = ex*50/notes >= 50  <=>  ex >= notes
+        fp = fp[fp["acc"] >= 50].copy()
     fp = fp.reset_index(drop=True)  # positional alignment for the kNN stat matrix
     fp["bp_ratio"] = fp["bp"] / fp["notes"]  # normalized BP: misses per note
 
