@@ -50,7 +50,9 @@ def main() -> None:
 
     enc = GridEncoder()
     enc.load_state_dict(torch.load(CKPT, map_location="cpu"))
-    enc.eval()
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    enc.to(dev).eval()
+    print("encoder device:", dev)
 
     cache = SeqCache(str(SEQ_ROOT))
     rows, done = [], 0
@@ -62,8 +64,9 @@ def main() -> None:
                 starts = [0.0]
             starts = pick_starts(starts, MAX_WINDOWS, np.random.RandomState(0))
             grids = np.stack([seq_grid(cache(sha), t0) for t0 in starts])
-            tens = torch.from_numpy(grids).permute(0, 3, 1, 2).float()
-            embs = [enc.pool(tens[i:i + BATCH]).numpy() for i in range(0, len(tens), BATCH)]
+            tens = torch.from_numpy(grids).permute(0, 3, 1, 2).float().to(dev)
+            embs = [enc.pool(tens[i:i + BATCH]).cpu().numpy()
+                    for i in range(0, len(tens), BATCH)]
             rows.append([sha, len(starts)] + np.concatenate(embs).mean(axis=0).tolist())
             done += 1
             if done % 500 == 0:

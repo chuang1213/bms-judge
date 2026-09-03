@@ -43,6 +43,8 @@ STAT_COLS = [f"c_{n}" for n in [
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
+DEV = "cuda" if torch.cuda.is_available() else "cpu"
+T = lambda x, dtype=torch.float32: torch.as_tensor(x, dtype=dtype, device=DEV)
 
 
 class Imputer:
@@ -244,24 +246,22 @@ def main() -> None:
         def cmat(d):
             return np.nan_to_num((chart_mat(d) - cmu) / csd).astype(np.float32)
 
-        S_va_t = (torch.tensor(S_va), torch.tensor(M_va), torch.tensor(cmat(val)),
-                  torch.tensor(D_va))
+        S_va_t = (T(S_va), T(M_va), T(cmat(val)), T(D_va))
 
         def train_head(head: str):
             torch.manual_seed(SEED)
-            model = Model(seq_dim, chart_dim)
+            model = Model(seq_dim, chart_dim).to(DEV)
             opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
             if head == "acc":
-                ytr = torch.tensor(trn["acc"].values / 100.0, dtype=torch.float32)
-                yva = torch.tensor(val["acc"].values / 100.0, dtype=torch.float32)
+                ytr = T(trn["acc"].values / 100.0)
+                yva = T(val["acc"].values / 100.0)
             elif head == "bp":
-                ytr = torch.tensor(np.log1p(trn["bp"].values), dtype=torch.float32)
-                yva = torch.tensor(np.log1p(val["bp"].values), dtype=torch.float32)
+                ytr = T(np.log1p(trn["bp"].values))
+                yva = T(np.log1p(val["bp"].values))
             else:
-                ytr = torch.tensor(trn["lamp"].values - 1)
-                yva = torch.tensor(val["lamp"].values - 1)
-            Xt, Mt, DT, CT = (torch.tensor(S_tr), torch.tensor(M_tr),
-                              torch.tensor(D_tr), torch.tensor(cmat(trn)))
+                ytr = T(trn["lamp"].values - 1, dtype=torch.long)
+                yva = T(val["lamp"].values - 1, dtype=torch.long)
+            Xt, Mt, DT, CT = T(S_tr), T(M_tr), T(D_tr), T(cmat(trn))
             lossf = nn.functional.cross_entropy if head == "lamp" else nn.functional.huber_loss
             best, best_state, patience = np.inf, None, 0
             for ep in range(60):
@@ -292,15 +292,14 @@ def main() -> None:
             model = train_head(head)
             model.eval()
             with torch.no_grad():
-                out = model(torch.tensor(S_te), torch.tensor(M_te),
-                            torch.tensor(cmat(te)), torch.tensor(D_te))
+                out = model(T(S_te), T(M_te), T(cmat(te)), T(D_te))
             if head == "acc":
-                preds["acc"] = out["acc"].numpy() * 100.0
+                preds["acc"] = out["acc"].cpu().numpy() * 100.0
             elif head == "bp":
-                bp_log = out["bp"].numpy().clip(0.0, float(np.log1p(tr_all["bp"].max())))
+                bp_log = out["bp"].cpu().numpy().clip(0.0, float(np.log1p(tr_all["bp"].max())))
                 preds["bp"] = np.expm1(bp_log)
             else:
-                preds["lamp"] = torch.softmax(out["lamp"], dim=1).numpy() @ np.arange(1, 10)
+                preds["lamp"] = torch.softmax(out["lamp"], dim=1).cpu().numpy() @ np.arange(1, 10)
         results[variant] = eval_preds(preds)
         print(variant, "| acc", results[variant]["acc"]["mae"],
               "| lamp", results[variant]["lamp"]["ord_mae"],
