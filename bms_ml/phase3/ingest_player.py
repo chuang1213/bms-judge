@@ -46,9 +46,16 @@ def audit_dir(rel_dir: str, client: str) -> dict:
         for f in ["score.db", "scorelog.db", "scoredatalog.db"]:
             p = d / f
             info["files"][f] = p.exists()
-        if not info["files"]["score.db"] or not info["files"]["scorelog.db"]:
-            info["issues"].append("beatoraja save requires at least score.db + scorelog.db")
+        if not info["files"]["scorelog.db"]:
+            info["issues"].append("scorelog.db is the ONLY required file (first-play "
+                                  "events + timestamps); it is missing")
             return info
+        if not info["files"]["score.db"]:
+            info["issues"].append("score.db missing (ok for the current pipeline; "
+                                  "loses playcount/ghost aggregates)")
+        if not info["files"]["scoredatalog.db"]:
+            info["issues"].append("scoredatalog.db missing (ok for the current "
+                                  "pipeline; loses per-play judgment detail)")
         con = sqlite3.connect(d / "scorelog.db")
         try:
             n = con.execute("SELECT COUNT(*) FROM scorelog").fetchone()[0]
