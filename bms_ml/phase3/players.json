@@ -198,6 +198,80 @@
           ]
         ]
       }
+    },
+    "hl": {
+      "dir": "玩家资料/hl/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05",
+      "added": "2026-09-03T11:26:46",
+      "audit": {
+        "dir": "玩家资料/hl/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 2822,
+        "date_range": [
+          "2023-07-22T02:48:55",
+          "2026-08-21T11:28:45"
+        ],
+        "non_sha256_rows": 35,
+        "top_modes": [
+          [
+            0,
+            2786
+          ],
+          [
+            10000,
+            35
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      }
+    },
+    "yangtao": {
+      "dir": "玩家资料/yangtao/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05",
+      "added": "2026-09-03T11:26:46",
+      "audit": {
+        "dir": "玩家资料/yangtao/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 2204,
+        "date_range": [
+          "2024-04-21T21:39:38",
+          "2026-08-30T22:26:13"
+        ],
+        "non_sha256_rows": 39,
+        "top_modes": [
+          [
+            0,
+            2104
+          ],
+          [
+            10000,
+            32
+          ],
+          [
+            1,
+            32
+          ],
+          [
+            2,
+            29
+          ],
+          [
+            10010,
+            3
+          ]
+        ]
+      }
     }
   }
 }

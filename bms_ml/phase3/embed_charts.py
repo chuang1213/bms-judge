@@ -74,8 +74,10 @@ def main() -> None:
 
     out = pd.DataFrame(rows, columns=["sha256", "n_windows"] +
                        [f"r{i}" for i in range(64)])
-    if out_path.exists() and rows:
+    # never clobber: always merge with the existing library (even when rows is empty)
+    if out_path.exists():
         out = pd.concat([pd.read_parquet(out_path), out], ignore_index=True)
+    out = out.drop_duplicates(subset="sha256", keep="last")
     out.to_parquet(out_path)
     print("saved", len(out), "->", out_path)
 
