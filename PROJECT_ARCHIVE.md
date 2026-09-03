@@ -223,6 +223,10 @@ MAE 1.0582（原始） vs 1.0524（shuffled）——打乱 lane 后性能不变�
 
 ## 8. 复现命令
 
+> 路径别名：下述 `F:\` 为旧系统写法，本机对应 `D:\`（项目根 `F:\Projects\bms judge`
+> ＝ `D:\Projects\bms judge`，语料库 `F:\games\BMS` ＝ `D:\games\BMS`）。
+> 完整对照表见 `AGENTS.md`「路径与多系统」；接入新系统时在该表追加新别名，勿改写历史条目。
+
 ```powershell
 cd "F:\Projects\bms judge"
 .venv\Scripts\python.exe -m bms_ml.recon_corpus --root "F:\games\BMS"

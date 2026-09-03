@@ -29,7 +29,19 @@
 
 ## 环境与命令
 
-- 双系统机器：旧文档路径 F: → 现 D:，C: → 现 E:
+- **路径与多系统（重要）**：本项目在多个系统间迁移，同一位置可能有多个盘符别名。
+  代码与脚本一律使用相对仓库根的路径；文档/manifest 遇到绝对路径时按下表换算，
+  **接入新系统时把新盘符追加进本表，不要改写历史条目**：
+
+  | 位置 | 已知别名 |
+  |---|---|
+  | 项目根 | 旧系统 `F:\Projects\bms judge` ＝ 本机 `D:\Projects\bms judge` |
+  | BMS 语料库 | 旧 `F:\games\BMS` ＝ 本机 `D:\games\BMS` |
+  | beatoraja 安装 | 本机 `D:\games\beatoraja`（旧系统无记录） |
+  | 旧 venv 的 uv Python | 旧系统 `C:\Users\user\...` ＝ 本机旧 C 盘（现 `E:`），且用户名已变为 `Administrator` |
+
+  注意：`manifest.jsonl` 的 `path` 字段保存的是旧系统绝对路径（解析时改用 `rel_path`
+  或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CPU torch（旧 uv venv 已废）。torch 相关用
   `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
 - 测试：`python -m unittest discover bms_ml/tests`（25 个，parser 回归）
