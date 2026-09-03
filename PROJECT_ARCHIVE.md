@@ -1,9 +1,21 @@
 # BMS 难度预测项目 —— 进度归档
 
-> 归档日期：2026-09-02 | 环境：Windows / Python 3.11 / PyTorch 2.11.0+cu128（RTX 4060）
+> 归档日期：2026-09-04 | 环境：Windows / Python 3.11 + CPU torch（`.venv` 已于 09-03 重建）
+> 新 agent 必读：`AGENTS.md`（工作指南）→ `PROTOCOL.md`（实验协议）→ 各期报告。
 
-> **Phase 3 进行中（2026-09-03）**：研究问题转为 player–chart interaction prediction
-> （给定玩家历史与未见谱面，预测其首打表现 score%/lamp/BP）。数据与工程审计已完成：
+> **Phase 3.4 完成（2026-09-04）**：Time Ablation（`PHASE3_4_TIME_ABLATION.md`）+ 修复贯穿性
+> 历史窗口泄漏 bug（历史 = 严格早于目标首打时刻；此前 3.1-3.3 报告绝对数字偏乐观，已加更正横幅）。
+> 当前 8 玩家（chuang/muiclac/tzh/nanji/reiaki/vsoflan/LED/darklord），无泄漏基线：
+> A 11.69 / H 7.63 / B 7.02；**C0 的 centered R² 首次转正（+0.08），规模响应假设开始兑现**。
+> 时间信息价值 ~1.1 acc MAE；无时间交互信号消失（LR2 判定 B 级：可用但交互降级）。
+>
+> **Phase 3.1-3.3 摘要**：三目标分离（acc=玩家状态、lamp=谱面、BP=交互）；难度表等级
+> 被证明可被客观 kNN 特征完全替代并移出特征（用户决定）；样本空间限定三表并集；
+> 协议固化于 `PROTOCOL.md`。详见 `PHASE3_1_REPORT.md` / `PHASE3_2_REPORT.md` /
+> `PHASE3_3_READINESS.md`（含 Player Coverage Audit 与新玩家 SOP）。
+>
+> **Phase 3 起点（2026-09-03）**：研究问题转为 player–chart interaction prediction
+> （给定玩家历史与未见谱面，预测其首打表现 score%/lamp/BP）。数据与工程审计：
 > `PHASE3_AUDIT.md`；代码：`bms_ml/phase3/`。
 >
 > **Phase 2A 已完成（2026-09-02）**：目标从"预测 SL"转为"从谱面学习 temporal-spatial chart
