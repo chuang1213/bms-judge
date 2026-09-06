@@ -39,7 +39,7 @@ STAT_COLS = [f"c_{n}" for n in [
     "max_bpm", "bpm_change_count", "stop_count", "stop_total_sec", "lane0_scratch",
     "lane1", "lane2", "lane3", "lane4", "lane5", "lane6", "lane7", "scratch_ratio",
     "avg_nps", "peak_nps_1s", "peak_measure_nps", "chord_count", "chord2_count",
-    "chord3plus_count", "jack_count"]]
+    "chord3plus_count", "jack_count", "jrank"]]
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)

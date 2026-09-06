@@ -50,7 +50,8 @@ def chart_encoder_registry() -> dict:
     """Encoder name -> (feature builder description, dim). New encoders register here
     and are compared on the same downstream task (PROTOCOL.md section 3)."""
     return {
-        "objective_stats": ("26-dim parsing statistics (bms_ml features.py)", 26),
+        "objective_stats": ("26-dim parsing statistics + c_jrank (#RANK window tier)",
+                            27),
         "phase2a_t1_pooled": ("64-dim mean-pooled T1 GridEncoder windows", 64),
     }
 

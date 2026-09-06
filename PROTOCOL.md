@@ -26,7 +26,9 @@
 
 ## 3. 特征与表征（chart_repr.py 为唯一登记处）
 
-- objective_stats（26 维解析统计）：当前强基线 encoder；
+- objective_stats（26 维解析统计 + `c_jrank` 判定窗等级，共 27 维）：当前强基线 encoder；
+  c_jrank 于 2026-09-05 加入（消除 tight-rank 谱面 acc 被高估 5-11pp 的系统偏差）；
+  已知限制：parser 对未写 #RANK 的谱默认 rank=2；有效判定窗还受玩家 config 影响；
 - phase2a_t1_pooled（64 维）：learned encoder 候选；
 - 新 encoder 一律注册进 `chart_encoder_registry()` 并在同一任务上比较；
 - 评价标准唯一：**是否提升对未见 player × chart 首打表现的预测**，不以其与人工

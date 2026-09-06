@@ -1,12 +1,17 @@
 # BMS 难度预测项目 —— 进度归档
 
-> 归档日期：2026-09-04 | 环境：Windows / Python 3.11 + CPU torch（`.venv` 已于 09-03 重建）
-> 新 agent 必读：`AGENTS.md`（工作指南）→ `PROTOCOL.md`（实验协议）→ 各期报告。
+> 归档日期：2026-09-05 | 环境：Windows / Python 3.11 + CUDA torch 2.11+cu128（RTX 4060）
+> 新 agent 必读：`AGENTS.md`（工作指南）→ `PROTOCOL.md`（协议）→ `EXPERIMENT_LOG.md`（台账）→ 各期报告。
 
-> **Phase 3.4 完成（2026-09-04）**：Time Ablation（`PHASE3_4_TIME_ABLATION.md`）+ 修复贯穿性
+> **Phase 3.4 Transfer 完成（2026-09-05）**：17 名玩家。**Cross-player transfer 验证为真**
+> （`PHASE3_4_TRANSFER.md`）：严格 player-level holdout 下，人群预训练+个体 conditioning 的 M2
+> acc MAE 7.30，在 16/17 玩家上胜过 D-local（10.30）；few-shot 曲线显示 3-5× 样本效率
+> （M2@10≈M1@50），唯一负区域 ST4-7。同批：+7 玩家（含 SL 低中段与首批 ST8+）、
+> `c_jrank` 特征加入（消除判定窗混杂，B survival acc 3.88→3.74）、GPU 加速（C 训练 4.4×）、
+> survival scope 与 LOPO 冷启动实验。**逐次变更与数字见 `EXPERIMENT_LOG.md` 台账。**
+>
+> **Phase 3.4 前半（2026-09-04）**：Time Ablation（`PHASE3_4_TIME_ABLATION.md`）+ 修复贯穿性
 > 历史窗口泄漏 bug（历史 = 严格早于目标首打时刻；此前 3.1-3.3 报告绝对数字偏乐观，已加更正横幅）。
-> 当前 8 玩家（chuang/muiclac/tzh/nanji/reiaki/vsoflan/LED/darklord），无泄漏基线：
-> A 11.69 / H 7.63 / B 7.02；**C0 的 centered R² 首次转正（+0.08），规模响应假设开始兑现**。
 > 时间信息价值 ~1.1 acc MAE；无时间交互信号消失（LR2 判定 B 级：可用但交互降级）。
 >
 > **Phase 3.1-3.3 摘要**：三目标分离（acc=玩家状态、lamp=谱面、BP=交互）；难度表等级
