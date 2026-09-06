@@ -67,6 +67,14 @@ def chart_v2_stats(seq: np.ndarray) -> dict:
             out["v2_ioi_lane_p25"] = float(np.percentile(pooled, 25))
             out["v2_ioi_lane_mean"] = float(pooled.mean())
 
+    # ---- ALL-onset IOI (window-free density extremes; replaces the arbitrary
+    # 1-second window of v1 peak_nps_1s) ----
+    tg = np.diff(t)
+    tg = tg[tg > 1e-9]
+    if len(tg):
+        out["v2_ioi_global_p05"] = float(np.percentile(tg, 5))
+        out["v2_ioi_global_p25"] = float(np.percentile(tg, 25))
+
     # ---- scratch-lane IOI ----
     ts = np.sort(t[lanes == SCRATCH_LANE])
     if len(ts) > 1:

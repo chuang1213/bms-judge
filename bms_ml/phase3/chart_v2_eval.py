@@ -48,6 +48,8 @@ def main() -> None:
         "B_v2": OBJECTIVE_STAT_COLS + OBJECTIVE_V2_COLS + HISTORY_FEATURES,
         "B_no_cj": [c for c in OBJECTIVE_STAT_COLS if c not in PATTERN_COLS]
                    + HISTORY_FEATURES,
+        "B_no_peak": [c for c in OBJECTIVE_STAT_COLS if c != "c_peak_nps_1s"]
+                     + HISTORY_FEATURES,
         "B_v2only": OBJECTIVE_V2_COLS + HISTORY_FEATURES,
     }
 

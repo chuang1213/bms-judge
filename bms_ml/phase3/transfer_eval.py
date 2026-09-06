@@ -30,6 +30,7 @@ Leakage guards (asserted):
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -47,6 +48,13 @@ KS = [0, 1, 5, 10, 20, 50, 100, 200]
 KNN_K = 20
 STAT, HIST = OBJECTIVE_STAT_COLS, HISTORY_FEATURES
 HIST_FEW = HISTORY_FEW_FEATURES
+
+# v2 ablation (Phase 3.5 task 6): add the threshold-free distribution stats to the
+# chart side of M0/M2. A/B without editing: P3_USE_V2=1 python transfer_eval.py
+# NB: the kNN stat space (scaler in prefix_hist_features) stays on the v1 27-dim —
+# the training h_knn_acc comes from data.py's v1 space, so mixing v2 into the
+# few-shot kNN would make the SAME feature incomparable between train and eval.
+USE_V2 = os.environ.get("P3_USE_V2", "0") == "1"
 
 
 def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
@@ -95,14 +103,23 @@ def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
 
 def main() -> None:
     fp = add_region(load_firstplays().reset_index(drop=True))
+    # v2 chart-side ablation: merge the distribution stats in as extra columns
+    CHART = list(STAT)
+    if USE_V2:
+        from chart_repr import OBJECTIVE_V2_COLS
+        fp = fp.merge(pd.read_parquet(DS / "chart_stats_v2.parquet"),
+                      on="sha256", how="left")
+        CHART = CHART + OBJECTIVE_V2_COLS
     players = sorted(fp["player"].unique())
-    results: dict = {"scope_rows": len(fp), "players": players, "ks": KS, "lopo": {}}
+    results: dict = {"scope_rows": len(fp), "players": players, "ks": KS,
+                     "use_v2": USE_V2, "lopo": {}}
 
     for D in players:
         others = fp[fp["player"] != D]
         mine = fp[fp["player"] == D].sort_values("time").reset_index(drop=True)
         assert (others["player"] != D).all()
-        # strict scaler: training players' chart stats only (leakage guard)
+        # strict scaler: training players' chart stats only (leakage guard);
+        # always the v1 space — see the USE_V2 note above
         scaler = StandardScaler().fit(others[STAT].values)
 
         res = {"n_events": int(len(mine))}
@@ -110,13 +127,13 @@ def main() -> None:
         # ---------- Exp 1: protocol band, FULL causal features ----------
         te_band = mine[mine["phase"] == "test"]
         tr_others = others  # all rows are causal w.r.t. their own targets
-        m0 = {k: hgb_fit_predict(tr_others, te_band, STAT, tr_others[k].values)
+        m0 = {k: hgb_fit_predict(tr_others, te_band, CHART, tr_others[k].values)
               for k in ("acc", "lamp")}
-        m0["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, STAT,
+        m0["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, CHART,
                                          np.log1p(tr_others["bp"].values)))
-        m2 = {k: hgb_fit_predict(tr_others, te_band, STAT + HIST, tr_others[k].values)
+        m2 = {k: hgb_fit_predict(tr_others, te_band, CHART + HIST, tr_others[k].values)
               for k in ("acc", "lamp")}
-        m2["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, STAT + HIST,
+        m2["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, CHART + HIST,
                                          np.log1p(tr_others["bp"].values)))
         m1_acc = te_band["h_knn_acc"].values  # D-local: causal kNN within own archive
         m1_lamp = te_band["h_acc_mean"].values / 100 * 6  # crude D-local lamp proxy
@@ -173,10 +190,10 @@ def main() -> None:
                                                      np.log1p(tr_others["bp"].values)),
                                         0, bp_cap))
 
-            p0_acc = hgb_fit_predict(tr_others, te_k, STAT, tr_others["acc"].values)
-            p0_lamp = hgb_fit_predict(tr_others, te_k, STAT, tr_others["lamp"].values.astype(float))
-            p2_acc = hgb_fit_predict(tr_others, te_k, STAT + HIST_FEW, tr_others["acc"].values)
-            p2_lamp = hgb_fit_predict(tr_others, te_k, STAT + HIST_FEW,
+            p0_acc = hgb_fit_predict(tr_others, te_k, CHART, tr_others["acc"].values)
+            p0_lamp = hgb_fit_predict(tr_others, te_k, CHART, tr_others["lamp"].values.astype(float))
+            p2_acc = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW, tr_others["acc"].values)
+            p2_lamp = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW,
                                    tr_others["lamp"].values.astype(float))
             pk_acc = te_k["h_knn_acc"].values
             pk_lamp = te_k["h_acc_mean"].values / 100 * 6
@@ -190,9 +207,9 @@ def main() -> None:
                 "M0_lamp": round(mae(te_k["lamp"], p0_lamp), 3),
                 "M1_lamp": round(mae(te_k["lamp"], pk_lamp), 3),
                 "M2_lamp": round(mae(te_k["lamp"], p2_lamp), 3),
-                "M0_bp": round(mae(te_k["bp"], bp_pred(STAT)), 2),
+                "M0_bp": round(mae(te_k["bp"], bp_pred(CHART)), 2),
                 "M1_bp": round(mae(te_k["bp"], pk_bp), 2),
-                "M2_bp": round(mae(te_k["bp"], bp_pred(STAT + HIST)), 2),
+                "M2_bp": round(mae(te_k["bp"], bp_pred(CHART + HIST)), 2),
             })
         res["fewshot"] = curve
         results["lopo"][D] = res

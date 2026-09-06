@@ -63,7 +63,22 @@ OBJECTIVE_V2_COLS = [
     "v2_ioi_scratch_p05", "v2_nps_std", "v2_nps_p90",
     "v2_simul_max", "v2_simul_std", "v2_lane_entropy",
     "v2_hand_balance", "v2_scratch_nps", "v2_ln_mean_dur",
+    # window-free density extremes: percentiles of ALL-onset inter-onset
+    # intervals. These replace the arbitrary 1-second window of v1's
+    # peak_nps_1s (any window choice is a convention; percentiles are not).
+    "v2_ioi_global_p05", "v2_ioi_global_p25",
 ]
+
+# Known convention-dependence audit (2026-09-07, user prompt: "there may be other
+# human-made metrics beyond jack/chord"):
+#   v1 peak_nps_1s      -> 1s window is arbitrary; v2_ioi_global_* is the window-free analogue
+#   v1 jack/chord counts-> threshold/categorisation conventions (kept: they still carry
+#                          unique signal, see chart_v2_eval B_no_cj)
+#   v2 hand_balance     -> assumes the physical 7-key layout (lanes 1-3 left, 5-7 right);
+#                          a human-factor assumption, NOT file structure
+#   v2 nps_std/p90      -> 1s bins (same convention as v1 avg/peak, but distribution-level)
+#   everything else     -> file-objective (LN via LNTYPE/LNOBJ, STOP via spec, lane
+#                          0 = channel 16 scratch, grid positions)
 
 
 def load_phase2a(shas) -> pd.DataFrame:
