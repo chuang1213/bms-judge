@@ -19,6 +19,7 @@ events after the cutoff.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 
@@ -49,6 +50,19 @@ TRAIN_Q, TEST_Q = 0.50, 0.75
 # non-collapsed attempts (lamp 4/5/6 = EASY/NORMAL/HARD). Revert by setting False.
 SURVIVAL_SCOPE_ONLY = False
 
+# The sl/st/発狂2018 fence is a TARGET-space quality control (PROTOCOL.md §1,
+# PHASE3_AUDIT §12: "训练/评估目标限定...表并集内的谱面"). But the fence is applied
+# before history construction, so it also censors what the model may know about a
+# player: 13,016 / 38,120 parseable first plays (34%) never enter any history
+# feature — 66% of yangtao's, 54% of hl's, ~48% of reiaki/muiclac/vsoflan's.
+#
+# OFF by default (preserves current behaviour exactly). Flip to True to let
+# off-table-but-parseable plays count as player history. This is a protocol-level
+# question, not a bug fix — measure before adopting. See PHASE3_5_REVIEW.md.
+# A/B without editing the file:
+#   P3_HISTORY_OFFTABLE=1 python bms_ml/phase3/data.py
+HISTORY_USES_OFFTABLE = os.environ.get("P3_HISTORY_OFFTABLE", "0") == "1"
+
 
 def load_manifest() -> pd.DataFrame:
     rows = []
@@ -66,7 +80,8 @@ def load_manifest() -> pd.DataFrame:
             })
     df = pd.DataFrame(rows)
     feat = pd.DataFrame(df.pop("features").tolist(),
-                        columns=json.load(open(CORPUS / "analysis" / "features_schema.json"))["names"])
+                        columns=json.load(open(CORPUS / "analysis" / "features_schema.json",
+                                               encoding="utf-8"))["names"])
     feat.columns = [f"c_{c}" for c in feat.columns]
     return pd.concat([df.reset_index(drop=True), feat], axis=1)
 
@@ -81,7 +96,10 @@ def load_tables() -> pd.DataFrame:
     out = {}
     for name, fname in [("satellite", "satellite_data.json"), ("stella", "stella_data.json"),
                         ("insane", "insane_data.json")]:
-        for e in json.load(open(TABLES / fname)):
+        # encoding is explicit: the table JSONs are UTF-8 and a non-UTF-8 locale
+        # (cp936/gbk on zh-CN Windows) otherwise raises UnicodeDecodeError here,
+        # which breaks `python data.py` — step 4 of the new-player SOP.
+        for e in json.load(open(TABLES / fname, encoding="utf-8")):
             sha = e.get("sha256") or md5_to_sha.get((e.get("md5") or "").lower())
             if not sha:
                 continue
@@ -244,10 +262,17 @@ def main() -> None:
     # Sample space (user decision 2026-09-03): targets restricted to the sl/st/発狂2018
     # union — off-table charts are quality-uncontrolled. FEATURES remain table-free
     # (h_knn_acc + 26D stats; see chart_repr.py contract and PROTOCOL.md §1).
-    fp = fp[fp["table"].notna() & fp["notes"].notna() & (fp["notes"] > 0)].copy()
+    # Parseable = we have manifest notes + the objective stats, needed for acc and
+    # for the kNN stat space.
+    fp = fp[fp["notes"].notna() & (fp["notes"] > 0)].copy()
     if SURVIVAL_SCOPE_ONLY:
         # acc>=50 part: acc = ex*50/notes >= 50  <=>  ex >= notes
         fp = fp[fp["acc"] >= 50].copy()
+    # `is_target` = eligible to be PREDICTED (in-table). The history frame may be
+    # wider when HISTORY_USES_OFFTABLE is on.
+    fp["is_target"] = fp["table"].notna()
+    if not HISTORY_USES_OFFTABLE:
+        fp = fp[fp["is_target"]].copy()
     fp = fp.reset_index(drop=True)  # positional alignment for the kNN stat matrix
     fp["bp_ratio"] = fp["bp"] / fp["notes"]  # normalized BP: misses per note
 
@@ -263,7 +288,9 @@ def main() -> None:
 
     # time cutoffs per player (define the train/test split of TARGETS only;
     # features never use them — see build_history_features)
-    cut = fp.groupby("player")["time"].quantile([TRAIN_Q, TEST_Q]).unstack()
+    # Cutoffs come from the TARGET timeline only, so they do not shift when the
+    # history frame widens (keeps train/test bands comparable across the flag).
+    cut = fp[fp["is_target"]].groupby("player")["time"].quantile([TRAIN_Q, TEST_Q]).unstack()
     cut.columns = ["T_train", "T_test"]
     print("cutoffs:")
     print(cut)
@@ -284,7 +311,8 @@ def main() -> None:
     phase = np.where(t_sec <= Ttr, "history", np.where(t_sec <= Tte, "train", "test"))
     fp_sorted["phase"] = phase
     fp_sorted["phase_cutoff"] = np.where(phase == "train", Ttr, Tte)
-    samples = fp_sorted[fp_sorted["phase"] != "history"].reset_index(drop=True)
+    samples = fp_sorted[(fp_sorted["phase"] != "history")
+                        & fp_sorted["is_target"]].reset_index(drop=True)
     fp = fp_sorted
 
     fp.to_parquet(OUT / "firstplays.parquet")
