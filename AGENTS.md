@@ -8,18 +8,22 @@
 （acc / lamp / BP 三目标分开）**，最终目标是可验证的 player state 表示。
 研究工程，不是产品开发；负结果同样是交付物。
 
-## 当前状态一句话（2026-09-05）
+## 当前状态一句话（2026-09-07）
 
-17 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏）下基线：A 11.84 / H 7.55 / B 7.08（acc MAE）。
+17 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏）下基线：A 11.79 / H 7.55 / B 7.01（acc MAE）；
+centered R²：H +0.281 / B +0.380 / C0 +0.129。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
-在 16/17 玩家上胜过 D-local，few-shot 样本效率 3-5×。所有数字变化见 `EXPERIMENT_LOG.md` 台账。
+在 16/17 玩家上胜过 D-local，few-shot 样本效率 3-5×。
+**Phase 3.5 审阅**（PHASE3_5_REVIEW.md）：B 比平凡基线"玩家均值"（9.997）好 2.99（30%）→ 路线健康；
+**A（11.79）比全局均值还差**，不得当下界引用；**C0−B 差距单调收窄 3.42→1.94→1.56→1.25**。
+所有数字变化见 `EXPERIMENT_LOG.md` 台账。
 
 ## 阅读顺序（动代码前必读）
 
 1. `PROTOCOL.md` — 实验协议（样本定义/切分/指标/可信度规范），**改协议必须先改此文件**
 2. `EXPERIMENT_LOG.md` — **优化/实验/玩家数据的追加式台账**（看"改过什么、效果如何"先查这里）
 3. `PHASE3_AUDIT.md` — 原始存档数据语义（scorelog 的真实含义、所有坑）
-4. 最新一期报告（当前：`PHASE3_4_TRANSFER.md`，cross-player transfer + few-shot）
+4. 最新一期报告（当前：`PHASE3_5_REVIEW.md`，代码审阅 + 方向反思）
 5. `PHASE3_3_READINESS.md` §7 — 新玩家接入 SOP
 
 ## 目录
@@ -33,8 +37,9 @@
     `embed_charts.py`（Phase2A 表征计算，增量安全）
   - **专项实验**：`time_ablation.py`（时间消融）、`lopo_eval.py`（LOPO 冷启动）、
     `transfer_eval.py`（cross-player transfer + few-shot）、`relations.py`（三目标关系统计）
-  - **契约**：`chart_repr.py`（特征登记处，特征清单/新 encoder 注册的唯一权威）
-  - **已弃用**（用难度表特征，仅留档）：`baseline31.py`、`c_model.py`
+  - **契约**：`chart_repr.py`（特征登记处，特征清单/新 encoder 注册的唯一权威）、
+    `common.py`（共享评估原语：Imputer / mae / r2 / centered_r2 / hgb_fit_predict / 难度区域）
+  - **已弃用**（用难度表特征，仅留档，**运行会因列缺失而崩**）：`baseline.py`、`baseline31.py`、`c_model.py`
 - `玩家资料/<name>/player1/` — 玩家原始存档（gitignore，**唯一副本，改动前提醒用户备份**）
 - `lampghost/`、`beatoraja-master/` — **只读参考项目**（gitignore，schema/语义权威来源）
 - `docs/` — Phase 1/2A 归档文档；`docs/reference/` — framework paper
@@ -56,7 +61,12 @@
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；下载慢走 127.0.0.1:7897 代理）。
   torch 相关用 `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
-- 测试：`python -m unittest discover bms_ml/tests`（25 个，parser 回归）
+- 测试：`python -m unittest discover bms_ml/tests`（**34 个**：25 parser/timeline 回归
+  + 9 个 phase3 特征登记处与评估原语回归）
+- **特征清单纪律（2026-09-07 起）**：任何脚本需要 27 维 chart 统计或 12 维历史特征，
+  一律 `from chart_repr import OBJECTIVE_STAT_COLS / HISTORY_FEATURES`，**不要在脚本里重新声明**；
+  少数派/指标一律 `from common import ...`。此前 5 份拷贝导致 `c_jrank` 加进所有脚本
+  却漏了登记处（已修，`test_phase3_registry.py` 会防住复发）
 - 数据集重建：`python bms_ml/phase3/data.py`（约 6s；GPU 相关步骤才需要 .venv）
 - 基线：`python bms_ml/phase3/compare_nolevel.py`；C 阶梯（GPU，全套 3 seeds ≈2.5min）：
   `.venv/Scripts/python.exe bms_ml/phase3/c_chart_aware.py --variants C0,C1,C2 --seed 0/1/2`
