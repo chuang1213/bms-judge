@@ -539,6 +539,51 @@
           ]
         ]
       }
+    },
+    "taffy": {
+      "dir": "玩家资料/taffy/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-07（Phase 3.5 接入）",
+      "added": "2026-09-07T06:36:04",
+      "audit": {
+        "dir": "玩家资料/taffy/player1",
+        "client": "beatoraja",
+        "issues": [
+          "score.db missing (ok for the current pipeline; loses playcount/ghost aggregates)",
+          "scoredatalog.db missing (ok for the current pipeline; loses per-play judgment detail)"
+        ],
+        "fatal": [],
+        "scorelog_rows": 10596,
+        "date_range": [
+          "2024-07-21T20:56:45",
+          "2026-09-02T21:45:19"
+        ],
+        "non_sha256_rows": 48,
+        "top_modes": [
+          [
+            0,
+            10541
+          ],
+          [
+            10000,
+            40
+          ],
+          [
+            1,
+            7
+          ],
+          [
+            10010,
+            5
+          ],
+          [
+            1000,
+            2
+          ]
+        ]
+      }
     }
   }
 }
