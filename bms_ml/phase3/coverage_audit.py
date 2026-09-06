@@ -15,10 +15,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from common import load_firstplays
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
 DS = OUT / "dataset"
-PLAYERS = ["chuang", "muiclac", "tzh", "nanji"]
 
 
 def coordinate(row) -> str:
@@ -44,8 +45,9 @@ BINS = ["SL0-2", "SL3-5", "SL6-8", "SL9-12",
 
 
 def main() -> None:
-    fp = pd.read_parquet(DS / "firstplays.parquet")
+    fp = load_firstplays()
     fp["coord"] = fp.apply(coordinate, axis=1)
+    PLAYERS = sorted(fp["player"].unique())
 
     # --- per player x bin first-play counts ---
     counts = fp.groupby(["player", "coord"]).size().unstack(fill_value=0)
@@ -59,8 +61,8 @@ def main() -> None:
     multi = fp[fp["n_players"] >= 2]
     multi_bin = multi.groupby("coord").agg(
         charts=("sha256", "nunique"), rows=("sha256", "size")).reindex(BINS, fill_value=0)
-    four = fp[fp["n_players"] == 4].groupby("coord")["sha256"].nunique().reindex(BINS, fill_value=0)
-    multi_bin["charts_4player"] = four
+    all_p = fp[fp["n_players"] == len(PLAYERS)].groupby("coord")["sha256"].nunique()
+    multi_bin[f"charts_{len(PLAYERS)}player"] = all_p.reindex(BINS, fill_value=0)
     print("\nco-first-played charts (>=2 players) per bin:")
     print(multi_bin.to_string())
 
@@ -90,7 +92,7 @@ def main() -> None:
         "co_firstplay_bins": multi_bin.to_dict(),
         "pairwise_overlap_charts": pair,
         "pairwise_overlap_by_bin": pair_bin.to_dict(),
-        "charts_firstplayed_by_4players": int((n_players_per_chart == 4).sum()),
+        "charts_firstplayed_by_all_players": int((n_players_per_chart == len(PLAYERS)).sum()),
         "charts_firstplayed_by_3plus": int((n_players_per_chart >= 3).sum()),
         "charts_firstplayed_by_2plus": int((n_players_per_chart >= 2).sum()),
         "total_unique_charts": int(fp["sha256"].nunique()),
@@ -116,7 +118,7 @@ def main() -> None:
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(11, 4))
     bottom = np.zeros(len(BINS))
-    colors = ["#3498db", "#e74c3c", "#2ecc71", "#9b59b6"]
+    colors = plt.cm.tab20(np.linspace(0, 1, max(len(PLAYERS), 1)))
     for p, c in zip(PLAYERS, colors):
         vals = counts.loc[p].values.astype(float)
         ax.bar(BINS, vals, bottom=bottom, label=p, color=c, alpha=0.85)
@@ -126,7 +128,8 @@ def main() -> None:
     ax.tick_params(axis="x", rotation=30, labelsize=8)
     ax.set_ylabel("first plays"); ax2.set_ylabel("co-played charts")
     ax.set_title("player coverage by difficulty coordinate (SL/ST as coordinate only)")
-    ax.legend(fontsize=8, loc="upper left"); ax2.legend(fontsize=8, loc="upper right")
+    ax.legend(fontsize=6, loc="upper left", ncol=2)
+    ax2.legend(fontsize=8, loc="upper right")
     fig.tight_layout()
     fig.savefig(OUT / "coverage_audit.png", dpi=140)
     print("saved ->", OUT / "coverage_audit.json", "|", OUT / "coverage_audit.png")
