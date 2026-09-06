@@ -51,10 +51,30 @@ HISTORY_FEATURES = [
 HISTORY_TIME_FEATURES = ["h_days_since_active", "h_plays_last30d", "h_days_span"]
 HISTORY_FEW_FEATURES = [c for c in HISTORY_FEATURES if c not in HISTORY_TIME_FEATURES]
 
+# v2 chart statistics (2026-09-07): threshold-free, pattern-vocabulary-free
+# distribution stats of the raw onset data. The v1 jack/chord counts are
+# community-conventional categories (threshold-dependent, and largely projections
+# of density — a chord is density at an instant, a jack is density on one lane);
+# v2 replaces the vocabulary with distribution percentiles/shapes. Built by
+# chart_stats_v2.py from the corpus note sequences; sequence coverage 99.3%,
+# the rest impute to the train median downstream.
+OBJECTIVE_V2_COLS = [
+    "v2_ioi_lane_p05", "v2_ioi_lane_p25", "v2_ioi_lane_mean",
+    "v2_ioi_scratch_p05", "v2_nps_std", "v2_nps_p90",
+    "v2_simul_max", "v2_simul_std", "v2_lane_entropy",
+    "v2_hand_balance", "v2_scratch_nps", "v2_ln_mean_dur",
+]
+
 
 def load_phase2a(shas) -> pd.DataFrame:
     """Phase2A T1 chart representations (64-dim) for the requested sha256 set."""
     reps = pd.read_parquet(DS / "chart_repr_t1.parquet")
+    return reps[reps["sha256"].isin(set(shas))]
+
+
+def load_v2(shas) -> pd.DataFrame:
+    """v2 threshold-free distribution stats (see OBJECTIVE_V2_COLS) for the sha256 set."""
+    reps = pd.read_parquet(DS / "chart_stats_v2.parquet")
     return reps[reps["sha256"].isin(set(shas))]
 
 
@@ -64,6 +84,10 @@ def chart_encoder_registry() -> dict:
     return {
         "objective_stats": ("26-dim parsing statistics + c_jrank (#RANK window tier)",
                             27),
+        "objective_stats_v2": ("v1 (27) + 12 threshold-free distribution stats: "
+                               "per-lane IOI percentiles, density variability, "
+                               "simultaneity shape, lane entropy/hand balance",
+                            27 + len(OBJECTIVE_V2_COLS)),
         "phase2a_t1_pooled": ("64-dim mean-pooled T1 GridEncoder windows", 64),
     }
 
