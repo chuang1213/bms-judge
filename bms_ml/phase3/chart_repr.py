@@ -7,8 +7,8 @@ Three tiers, with an explicit contract:
    user decision 2026-09-03; see PROTOCOL.md §1) and serves coverage-audit
    coordinates. Table levels MUST NOT appear in any training feature list —
    there is no API here that returns them.
-2. objective chart statistics    -> the strong baseline encoder (26 dims from
-   bms_ml parsing; no community input).
+2. objective chart statistics    -> the strong baseline encoder (27 dims = 26
+   parsing statistics + c_jrank; no community input).
 3. Phase2A representation        -> learned-encoder candidate (64-dim T1 pooled
    windows, built by embed_charts.py).
 
@@ -31,6 +31,10 @@ OBJECTIVE_STAT_COLS = [
     "c_lane6", "c_lane7", "c_scratch_ratio", "c_avg_nps", "c_peak_nps_1s",
     "c_peak_measure_nps", "c_chord_count", "c_chord2_count", "c_chord3plus_count",
     "c_jack_count",
+    # #RANK judge-window tier (added 2026-09-05; parser default 2 when #RANK absent).
+    # Without it, tight-rank charts have their acc over-predicted by 5-11pp
+    # (see EXPERIMENT_LOG 2026-09-05).
+    "c_jrank",
 ]
 
 HISTORY_FEATURES = [
@@ -38,6 +42,14 @@ HISTORY_FEATURES = [
     "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
     "h_days_since_active", "h_plays_last30d", "h_days_span",
 ]
+
+# Recency / calendar terms. In protocol training these come from the DENSE scorelog
+# row stream; in few-shot evaluation they can only come from the SPARSE first-play
+# prefix, so their distributions are incomparable (evaluation values land beyond
+# training p99 — this once faked a collapse of the M2 few-shot curve). Few-shot
+# schemas drop them (train and eval, same schema). See PHASE3_4_TRANSFER.md appendix.
+HISTORY_TIME_FEATURES = ["h_days_since_active", "h_plays_last30d", "h_days_span"]
+HISTORY_FEW_FEATURES = [c for c in HISTORY_FEATURES if c not in HISTORY_TIME_FEATURES]
 
 
 def load_phase2a(shas) -> pd.DataFrame:
