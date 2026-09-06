@@ -137,10 +137,13 @@ def main() -> None:
     # have <=156 train rows, so all of their data became validation and they
     # contributed ZERO rows to training while still being evaluated in test.
     tr_all = tr_all.sort_values("time")
-    n_val = lambda g: max(1, int(round(len(g) * 0.1)))
-    val = tr_all.groupby("player", group_keys=False).apply(
-        lambda g: g.tail(n_val(g)))
-    trn = tr_all.drop(val.index)
+    # NB: groupby(...).apply() is avoided on purpose — pandas >=2.2 strips the
+    # grouping column from the frame passed to the callback, which silently drops
+    # `player`. Index slicing keeps the schema intact.
+    val_idx = np.concatenate([g.index[-max(1, int(round(len(g) * 0.1))):]
+                              for _, g in tr_all.groupby("player", sort=False)])
+    val = tr_all.loc[val_idx]
+    trn = tr_all.drop(index=val_idx)
     assert len(trn) and len(val), "empty train or val split"
 
     def seqs_for(d: pd.DataFrame, E: np.ndarray):

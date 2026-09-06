@@ -3,6 +3,17 @@
 #   .venv\Scripts\python.exe -m pip install -r requirements.txt
 #   若官方源慢，可加: --index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu128
 
+# ---- GPU / DL（只在 .venv 中需要）----
 torch==2.11.0+cu128
 torchvision==0.26.0+cu128
+
+# ---- 全项目通用（系统 python 也需要）----
 numpy==2.4.6
+pandas>=2.2
+scikit-learn>=1.5
+scipy>=1.13            # time_ablation: spearmanr
+pyarrow>=16            # parquet 读写（samples.parquet / firstplays.parquet）
+matplotlib>=3.9        # 各实验的 PNG（Agg 后端，无需 GUI）
+
+# 说明：AGENTS.md 记录的做法是「torch 相关用 .venv/Scripts/python.exe，
+# 纯分析用系统 python(3.13)」。两个环境都需要上面第二段。
