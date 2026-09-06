@@ -38,17 +38,18 @@ def save_roster(roster: dict) -> None:
 
 def audit_dir(rel_dir: str, client: str) -> dict:
     d = ROOT / rel_dir
-    info: dict = {"dir": rel_dir, "client": client, "files": {}, "issues": []}
+    info: dict = {"dir": rel_dir, "client": client, "files": {},
+                  "issues": [], "fatal": []}
     if not d.exists():
-        info["issues"].append("directory does not exist")
+        info["fatal"].append("directory does not exist")
         return info
     if client == "beatoraja":
         for f in ["score.db", "scorelog.db", "scoredatalog.db"]:
             p = d / f
             info["files"][f] = p.exists()
         if not info["files"]["scorelog.db"]:
-            info["issues"].append("scorelog.db is the ONLY required file (first-play "
-                                  "events + timestamps); it is missing")
+            info["fatal"].append("scorelog.db is the ONLY required file (first-play "
+                                 "events + timestamps); it is missing")
             return info
         if not info["files"]["score.db"]:
             info["issues"].append("score.db missing (ok for the current pipeline; "
@@ -76,7 +77,7 @@ def audit_dir(rel_dir: str, client: str) -> dict:
         if dates[0] == 0 and dates[1] == 0:
             info["issues"].append("no usable timestamps -> use --time synthetic")
     else:
-        info["issues"].append(f"client '{client}' has no parser yet (LR2 stub)")
+        info["fatal"].append(f"client '{client}' has no parser yet (LR2 stub)")
     return info
 
 
@@ -100,8 +101,8 @@ def main() -> None:
         sys.exit("usage: ingest_player.py add <name> <dir> [--client ...] [--time ...]")
     audit = audit_dir(args.dir, args.client)
     print(json.dumps(audit, ensure_ascii=False, indent=2, default=str))
-    if audit["issues"] and "no usable timestamps" not in audit["issues"]:
-        sys.exit("validation failed; player NOT added")
+    if audit["fatal"]:
+        sys.exit("validation failed; player NOT added: " + "; ".join(audit["fatal"]))
     roster["players"][args.name] = {
         "dir": args.dir, "client": args.client, "time": args.time,
         "include": False, "note": args.note,

@@ -47,7 +47,7 @@ TRAIN_Q, TEST_Q = 0.50, 0.75
 # Survival-scope experiment (user decision 2026-09-04): drop FAILED and acc<50%
 # first plays from BOTH targets and history — models only see completed,
 # non-collapsed attempts (lamp 4/5/6 = EASY/NORMAL/HARD). Revert by setting False.
-SURVIVAL_SCOPE_ONLY = True
+SURVIVAL_SCOPE_ONLY = False
 
 
 def load_manifest() -> pd.DataFrame:

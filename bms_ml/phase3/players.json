@@ -272,6 +272,273 @@
           ]
         ]
       }
+    },
+    "MRCA": {
+      "dir": "玩家资料/MRCA/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:26",
+      "audit": {
+        "dir": "玩家资料/MRCA/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 2824,
+        "date_range": [
+          "2024-07-29T22:46:59",
+          "2026-08-30T21:53:51"
+        ],
+        "non_sha256_rows": 64,
+        "top_modes": [
+          [
+            0,
+            2287
+          ],
+          [
+            1,
+            473
+          ],
+          [
+            10000,
+            37
+          ],
+          [
+            10001,
+            21
+          ],
+          [
+            10010,
+            6
+          ]
+        ]
+      }
+    },
+    "NIGHT": {
+      "dir": "玩家资料/NIGHT/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:27",
+      "audit": {
+        "dir": "玩家资料/NIGHT/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 740,
+        "date_range": [
+          "2025-12-08T18:32:54",
+          "2026-06-10T18:14:42"
+        ],
+        "non_sha256_rows": 1,
+        "top_modes": [
+          [
+            0,
+            739
+          ],
+          [
+            10000,
+            1
+          ]
+        ]
+      }
+    },
+    "anshi": {
+      "dir": "玩家资料/anshi/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:27",
+      "audit": {
+        "dir": "玩家资料/anshi/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 665,
+        "date_range": [
+          "2025-05-26T11:41:23",
+          "2026-09-02T22:16:21"
+        ],
+        "non_sha256_rows": 14,
+        "top_modes": [
+          [
+            0,
+            651
+          ],
+          [
+            10000,
+            12
+          ],
+          [
+            100,
+            2
+          ]
+        ]
+      }
+    },
+    "plus": {
+      "dir": "玩家资料/plus/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:27",
+      "audit": {
+        "dir": "玩家资料/plus/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 1087,
+        "date_range": [
+          "2025-06-14T22:00:44",
+          "2026-09-02T19:45:45"
+        ],
+        "non_sha256_rows": 125,
+        "top_modes": [
+          [
+            0,
+            962
+          ],
+          [
+            10000,
+            83
+          ],
+          [
+            10010,
+            38
+          ],
+          [
+            110,
+            3
+          ],
+          [
+            100,
+            1
+          ]
+        ]
+      }
+    },
+    "stella": {
+      "dir": "玩家资料/stella/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:27",
+      "audit": {
+        "dir": "玩家资料/stella/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 1706,
+        "date_range": [
+          "2025-06-10T16:14:57",
+          "2026-08-12T00:33:02"
+        ],
+        "non_sha256_rows": 105,
+        "top_modes": [
+          [
+            0,
+            1599
+          ],
+          [
+            10000,
+            84
+          ],
+          [
+            10010,
+            19
+          ],
+          [
+            100,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ]
+      }
+    },
+    "wufe8": {
+      "dir": "玩家资料/wufe8/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增玩家 2026-09-05 批次",
+      "added": "2026-09-07T03:00:27",
+      "audit": {
+        "dir": "玩家资料/wufe8/player1",
+        "client": "beatoraja",
+        "issues": [],
+        "scorelog_rows": 11392,
+        "date_range": [
+          "2021-03-10T23:07:41",
+          "2025-05-18T02:39:03"
+        ],
+        "non_sha256_rows": 233,
+        "top_modes": [
+          [
+            0,
+            11158
+          ],
+          [
+            10000,
+            225
+          ],
+          [
+            10010,
+            8
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      }
+    },
+    "steve": {
+      "dir": "玩家资料/steve/player1",
+      "client": "beatoraja",
+      "time": "real",
+      "include": true,
+      "note": "新增 2026-09-05 批次",
+      "added": "2026-09-07T03:03:47",
+      "audit": {
+        "dir": "玩家资料/steve/player1",
+        "client": "beatoraja",
+        "issues": [
+          "score.db missing (ok for the current pipeline; loses playcount/ghost aggregates)",
+          "scoredatalog.db missing (ok for the current pipeline; loses per-play judgment detail)"
+        ],
+        "fatal": [],
+        "scorelog_rows": 15770,
+        "date_range": [
+          "2023-12-02T20:20:40",
+          "2026-09-01T18:32:20"
+        ],
+        "non_sha256_rows": 659,
+        "top_modes": [
+          [
+            0,
+            15110
+          ],
+          [
+            10010,
+            370
+          ],
+          [
+            10000,
+            283
+          ],
+          [
+            110,
+            3
+          ],
+          [
+            20000,
+            1
+          ]
+        ]
+      }
     }
   }
 }

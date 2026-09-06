@@ -1,0 +1,276 @@
+"""Phase 3.4 (transfer): cross-player transfer / few-shot adaptation.
+
+Core question: does data from other players help a player who never participated
+in training?
+
+Models (protocol per PROTOCOL.md; scope = samples.parquet's current scope):
+  M0  chart-only       — HGB trained on ALL other players, objective chart features
+                         only. Population's notion of chart difficulty; no player info.
+  M1  D-local          — prediction formed ONLY from D's own prefix: kNN-20 mean acc
+                         of D's most similar played charts in objective stat space
+                         (fallback: prefix mean). No other player's data anywhere.
+  M2  cross-player     — HGB trained on ALL other players (chart + history features,
+                         causal), conditioned on D via history features computed from
+                         D's prefix ONLY. D appears nowhere in training.
+
+Few-shot: for k in {0,1,5,10,20,50,100,200}, D's first k plays form the prefix,
+targets are D's plays strictly after the prefix; all D history features derive from
+the prefix (not D's full archive). M0 is constant in k; the M2-vs-M1 gap vs k is
+the sample-efficiency test.
+
+Exp-1 (strict protocol band): M0/M1/M2 with FULL causal history features on each
+D's protocol test band (time > q75), matching PROTOCOL.md.
+
+Leakage guards (asserted):
+  - training frames contain zero rows of D;
+  - every prefix event precedes its target in time;
+  - target sha256 never in its own prefix;
+  - the kNN stat-space scaler is fitted on training players' chart stats only.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.metrics import cohen_kappa_score
+from sklearn.preprocessing import StandardScaler
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / "bms_ml" / "output" / "phase3"
+DS = OUT / "dataset"
+KS = [0, 1, 5, 10, 20, 50, 100, 200]
+KNN_K = 20
+STAT = [f"c_{n}" for n in [
+    "total_notes", "ln_ratio", "duration_sec", "measures", "initial_bpm", "min_bpm",
+    "max_bpm", "bpm_change_count", "stop_count", "stop_total_sec", "lane0_scratch",
+    "lane1", "lane2", "lane3", "lane4", "lane5", "lane6", "lane7", "scratch_ratio",
+    "avg_nps", "peak_nps_1s", "peak_measure_nps", "chord_count", "chord2_count",
+    "chord3plus_count", "jack_count", "jrank"]]
+HIST = ["h_knn_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
+        "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
+        "h_days_since_active", "h_plays_last30d", "h_days_span"]
+# few-shot subset: time-recency features are computed from the DENSE scorelog stream
+# in training but can only come from the SPARSE first-play prefix at eval — their
+# distributions are incomparable (values land beyond training p99). Measured in
+# PHASE3_4_TIME_ABLATION; excluded from the few-shot feature schema.
+HIST_FEW = [c for c in HIST if c not in
+            ("h_days_since_active", "h_plays_last30d", "h_days_span")]
+
+
+class Imp:
+    def fit(self, X):
+        X = np.asarray(X, float)
+        self.m = np.nan_to_num(np.nanmedian(X, axis=0))
+        return self
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+    def transform(self, X):
+        X = np.asarray(X, float).copy()
+        return np.where(np.isnan(X), self.m, X)
+
+
+def mae(y, p):
+    return float(np.mean(np.abs(np.asarray(y, float) - np.asarray(p, float))))
+
+
+def hgb_fit_pred(tr, te, feats, y, seed=0):
+    imp = Imp()
+    sc = StandardScaler().fit(imp.fit_transform(tr[feats]))
+    m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06, max_depth=3,
+                                      random_state=seed)
+    m.fit(sc.transform(imp.fit_transform(tr[feats])), y)
+    return m.predict(sc.transform(imp.transform(te[feats])))
+
+
+def coord(row):
+    t, lv = row["table"], row["level"]
+    if t == "satellite":
+        return "SL"
+    if t == "stella":
+        return "ST0-3" if lv <= 3 else ("ST4-7" if lv <= 7 else "ST8+")
+    return "insane(★)"
+
+
+def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
+                         scaler: StandardScaler) -> pd.DataFrame:
+    """The 12 history features for each target, computed from `prefix` events only
+    (all prefix events are strictly before every target by construction)."""
+    n = len(targets)
+    Zp = scaler.transform(prefix[STAT].values)
+    Tp = prefix["time"].values.astype("datetime64[s]").astype(np.int64) // 10**9
+    acc = prefix["acc"].values
+    known = ~np.isnan(acc)
+    Zk, ak, tk = Zp[known], acc[known], Tp[known]
+    lamp = prefix["lamp"].values
+    bp = prefix["bp"].values
+    bpr = (prefix["bp"] / prefix["notes"].replace(0, np.nan)).values
+    tt = targets["time"].values.astype("datetime64[s]").astype(np.int64) // 10**9
+    Zt = scaler.transform(targets[STAT].values)
+
+    d = np.sqrt(((Zt[:, None, :] - Zk[None, :, :]) ** 2).sum(-1)) if len(Zk) else \
+        np.full((n, 0), np.nan)
+    knn = np.full(n, np.nan)
+    for j in range(n):
+        if d.shape[1] == 0:
+            knn[j] = ak.mean() if len(ak) else np.nan
+            continue
+        kk = min(KNN_K, d.shape[1])
+        near = np.argpartition(d[j], kk - 1)[:kk]
+        knn[j] = ak[near].mean()
+
+    out = pd.DataFrame(index=targets.index)
+    out["h_knn_acc"] = knn
+    out["h_n_firstplays"] = float(len(prefix))
+    known_t = ~np.isnan(targets["acc"].values)
+    for col, vals in [("h_acc_mean", acc[known]), ("h_acc_last10", ak[-10:]),
+                      ("h_bp_mean", bp), ("h_bp_ratio_mean", bpr)]:
+        out[col] = float(np.nanmean(vals)) if len(vals) else np.nan
+    out["h_acc_std"] = float(np.nanstd(acc)) if len(acc) > 1 else np.nan
+    out["h_fail_rate"] = float((lamp == 1).mean())
+    out["h_fc_rate"] = float((lamp >= 8).mean())
+    out["h_days_since_active"] = (tt - Tp.max()) / 86400.0 if len(Tp) else np.nan
+    out["h_plays_last30d"] = (((tt[:, None] - Tp[None, :]) / 86400.0) <= 30).sum(axis=1) \
+        if len(Tp) else np.nan
+    out["h_days_span"] = (tt - Tp.min()) / 86400.0 if len(Tp) else np.nan
+    return out[[c for c in HIST]]
+
+
+def main() -> None:
+    fp = pd.read_parquet(DS / "firstplays.parquet").reset_index(drop=True)
+    fp["region"] = fp.apply(coord, axis=1)
+    players = sorted(fp["player"].unique())
+    results: dict = {"scope_rows": len(fp), "players": players, "ks": KS, "lopo": {}}
+
+    for D in players:
+        others = fp[fp["player"] != D]
+        mine = fp[fp["player"] == D].sort_values("time").reset_index(drop=True)
+        assert (others["player"] != D).all()
+        # strict scaler: training players' chart stats only (leakage guard)
+        scaler = StandardScaler().fit(others[STAT].values)
+
+        res = {"n_events": int(len(mine))}
+
+        # ---------- Exp 1: protocol band, FULL causal features ----------
+        te_band = mine[mine["phase"] == "test"]
+        tr_others = others  # all rows are causal w.r.t. their own targets
+        m0 = {k: hgb_fit_pred(tr_others, te_band, STAT, tr_others[k].values)
+              for k in ("acc", "lamp")}
+        m0["bp"] = np.expm1(hgb_fit_pred(tr_others, te_band, STAT,
+                                         np.log1p(tr_others["bp"].values)))
+        m2 = {k: hgb_fit_pred(tr_others, te_band, STAT + HIST, tr_others[k].values)
+              for k in ("acc", "lamp")}
+        m2["bp"] = np.expm1(hgb_fit_pred(tr_others, te_band, STAT + HIST,
+                                         np.log1p(tr_others["bp"].values)))
+        m1_acc = te_band["h_knn_acc"].values  # D-local: causal kNN within own archive
+        m1_lamp = te_band["h_acc_mean"].values / 100 * 6  # crude D-local lamp proxy
+        m1_bp = te_band["h_bp_mean"].values
+
+        def metrics(acc_p, lamp_p, bp_p):
+            lerr = np.abs(te_band["lamp"].values - lamp_p)
+            return {"acc_mae": round(mae(te_band["acc"], acc_p), 3),
+                    "lamp_mae": round(float(lerr.mean()), 3),
+                    "lamp_qwk": round(float(cohen_kappa_score(
+                        te_band["lamp"], np.clip(np.round(lamp_p), 1, 9).astype(int),
+                        weights="quadratic", labels=list(range(1, 10)))), 3),
+                    "bp_mae": round(mae(te_band["bp"], bp_p), 2)}
+
+        res["exp1"] = {"n_eval": int(len(te_band)),
+                       "M0": metrics(m0["acc"], m0["lamp"], m0["bp"]),
+                       "M1": metrics(m1_acc, m1_lamp, m1_bp),
+                       "M2": metrics(m2["acc"], m2["lamp"], m2["bp"])}
+
+        # per-region M2-M1 on protocol band
+        reg = {}
+        for r, sub in te_band.groupby("region"):
+            idx = sub.index
+            reg[r] = {"n": int(len(sub)),
+                      "M1": round(mae(sub["acc"], m1_acc[te_band.index.get_indexer(idx)]), 2),
+                      "M2": round(mae(sub["acc"], m2["acc"][te_band.index.get_indexer(idx)]), 2)}
+        res["exp1_regions"] = reg
+
+        # ---------- Exp 2: few-shot prefix curve ----------
+        # targets = the plays IMMEDIATELY following the prefix (window W), so the
+        # prefix is temporally adjacent to the targets — matching real deployment
+        # ("player has k plays so far, predict their next charts") and keeping the
+        # history-recency feature distribution consistent with training.
+        W = 150
+        curve = []
+        for k in KS:
+            if k >= len(mine) - 1:
+                continue
+            prefix = mine.iloc[:k]
+            targets = mine.iloc[k:k + W]
+            if not len(targets):
+                continue
+            assert (targets["time"].values > prefix["time"].values[-1]).all() if k else True
+            assert not prefix["sha256"].isin(targets["sha256"]).any()
+            hf = prefix_hist_features(prefix, targets, scaler) if k else \
+                pd.DataFrame(np.nan, index=targets.index, columns=HIST)
+            te_k = targets.copy()
+            te_k[HIST_FEW] = hf[HIST_FEW].values
+
+            bp_cap = float(np.log1p(tr_others["bp"].max()))
+
+            def bp_pred(feats):
+                return np.expm1(np.clip(hgb_fit_pred(tr_others, te_k, feats,
+                                                     np.log1p(tr_others["bp"].values)),
+                                        0, bp_cap))
+
+            p0_acc = hgb_fit_pred(tr_others, te_k, STAT, tr_others["acc"].values)
+            p0_lamp = hgb_fit_pred(tr_others, te_k, STAT, tr_others["lamp"].values.astype(float))
+            p2_acc = hgb_fit_pred(tr_others, te_k, STAT + HIST_FEW, tr_others["acc"].values)
+            p2_lamp = hgb_fit_pred(tr_others, te_k, STAT + HIST_FEW,
+                                   tr_others["lamp"].values.astype(float))
+            pk_acc = te_k["h_knn_acc"].values
+            pk_lamp = te_k["h_acc_mean"].values / 100 * 6
+            pk_bp = te_k["h_bp_mean"].values
+
+            curve.append({
+                "k": k, "n_eval": int(len(te_k)),
+                "M0_acc": round(mae(te_k["acc"], p0_acc), 3),
+                "M1_acc": round(mae(te_k["acc"], pk_acc), 3),
+                "M2_acc": round(mae(te_k["acc"], p2_acc), 3),
+                "M0_lamp": round(mae(te_k["lamp"], p0_lamp), 3),
+                "M1_lamp": round(mae(te_k["lamp"], pk_lamp), 3),
+                "M2_lamp": round(mae(te_k["lamp"], p2_lamp), 3),
+                "M0_bp": round(mae(te_k["bp"], bp_pred(STAT)), 2),
+                "M1_bp": round(mae(te_k["bp"], pk_bp), 2),
+                "M2_bp": round(mae(te_k["bp"], bp_pred(STAT + HIST)), 2),
+            })
+        res["fewshot"] = curve
+        results["lopo"][D] = res
+        e1 = res["exp1"]
+        print(f"{D:9} exp1: M0 {e1['M0']['acc_mae']:.2f} M1 {e1['M1']['acc_mae']:.2f} "
+              f"M2 {e1['M2']['acc_mae']:.2f} | k=50: "
+              f"M1 {next(c for c in curve if c['k']==50)['M1_acc']:.2f} "
+              f"M2 {next(c for c in curve if c['k']==50)['M2_acc']:.2f}")
+
+    # ---------- aggregate few-shot curves (weighted by n_eval) ----------
+    agg = []
+    for k in KS:
+        rows = [c for D in players for c in results["lopo"][D]["fewshot"] if c["k"] == k]
+        if not rows:
+            continue
+        w = np.array([c["n_eval"] for c in rows], float)
+        entry = {"k": k, "n_eval": int(w.sum())}
+        for key in ["M0_acc", "M1_acc", "M2_acc", "M0_lamp", "M1_lamp", "M2_lamp",
+                    "M0_bp", "M1_bp", "M2_bp"]:
+            entry[key] = round(float(np.average([c[key] for c in rows], weights=w)), 3)
+        agg.append(entry)
+    results["fewshot_aggregate"] = agg
+
+    json.dump(results, open(OUT / "transfer_results.json", "w"), indent=2, default=str)
+    print("\nfew-shot aggregate (weighted):")
+    for e in agg:
+        print(f"  k={e['k']:3}: M0 {e['M0_acc']:.2f}  M1 {e['M1_acc']:.2f}  "
+              f"M2 {e['M2_acc']:.2f} | lamp M1 {e['M1_lamp']:.2f} M2 {e['M2_lamp']:.2f} "
+              f"| BP M1 {e['M1_bp']:.1f} M2 {e['M2_bp']:.1f}")
+
+
+if __name__ == "__main__":
+    main()
