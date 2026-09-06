@@ -36,9 +36,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import cohen_kappa_score
-from sklearn.preprocessing import StandardScaler
+
+from common import (add_region, centered_r2, hgb_fit_predict, load_firstplays,
+                    load_samples, mae, r2)
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "玩家资料"
@@ -54,49 +55,6 @@ FEATURES = {
     "H_no_time": list(SET_FEATURES),
     "H_order_only": SET_FEATURES + ["h_acc_last10"],
 }
-
-
-class Imp:
-    def fit(self, X):
-        X = np.asarray(X, float)
-        self.m = np.nan_to_num(np.nanmedian(X, axis=0))
-        return self
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        X = np.asarray(X, float).copy()
-        return np.where(np.isnan(X), self.m, X)
-
-
-def mae(y, p):
-    return float(np.mean(np.abs(np.asarray(y, float) - np.asarray(p, float))))
-
-
-def r2(y, p):
-    y, p = np.asarray(y, float), np.asarray(p, float)
-    return float(1 - np.sum((y - p) ** 2) / np.sum((y - y.mean()) ** 2))
-
-
-def centered_r2(d, pred, col="acc"):
-    a = d[col].values - d.groupby("player")[col].transform("mean").values
-    b = pred - d.groupby("player")[col].transform("mean").values
-    den = np.sum((a - a.mean()) ** 2)
-    return float(1 - np.sum((a - b) ** 2) / den)
-
-
-def coordinate(row) -> str:
-    t, lv = row["table"], row["level"]
-    if t == "satellite":
-        return "SL"
-    if t == "stella":
-        if lv <= 3:
-            return "ST0-3"
-        if lv <= 7:
-            return "ST4-7"
-        return "ST8+"
-    return "insane(★)"
 
 
 def load_log_counts() -> pd.DataFrame:
@@ -160,21 +118,15 @@ def masked_time_features(samples: pd.DataFrame, fp: pd.DataFrame,
 
 
 def main() -> None:
-    df = pd.read_parquet(DS / "samples.parquet")
-    fp = pd.read_parquet(DS / "firstplays.parquet")
+    df = add_region(load_samples())
+    fp = load_firstplays()
     log = load_log_counts()
-    df["region"] = df.apply(coordinate, axis=1)
     tr, te = df[df["phase"] == "train"], df[df["phase"] == "test"]
 
     results: dict = {"n_train": len(tr), "n_test": len(te), "seeds": SEEDS}
 
     def hgb_pred(feats, y, seed, trX=tr, teX=te):
-        imp = Imp()
-        sc = StandardScaler().fit(imp.fit_transform(trX[feats]))
-        m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06,
-                                          max_depth=3, random_state=seed)
-        m.fit(sc.transform(imp.fit_transform(trX[feats])), y)
-        return m.predict(sc.transform(imp.transform(teX[feats])))
+        return hgb_fit_predict(trX, teX, feats, y, seed=seed)
 
     def evaluate(preds: dict, tag: str) -> dict:
         acc_p, lamp_p, bp_p = preds["acc"], preds["lamp"], preds["bp"]

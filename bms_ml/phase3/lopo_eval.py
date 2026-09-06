@@ -24,57 +24,26 @@ import json
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import cohen_kappa_score
-from sklearn.preprocessing import StandardScaler
+
+from chart_repr import HISTORY_FEATURES, OBJECTIVE_STAT_COLS
+from common import hgb_fit_predict, load_samples, mae
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
 DS = OUT / "dataset"
 
-STAT = [f"c_{n}" for n in [
-    "total_notes", "ln_ratio", "duration_sec", "measures", "initial_bpm", "min_bpm",
-    "max_bpm", "bpm_change_count", "stop_count", "stop_total_sec", "lane0_scratch",
-    "lane1", "lane2", "lane3", "lane4", "lane5", "lane6", "lane7", "scratch_ratio",
-    "avg_nps", "peak_nps_1s", "peak_measure_nps", "chord_count", "chord2_count",
-    "chord3plus_count", "jack_count", "jrank"]]
-H_FEATS = ["h_knn_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
-           "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
-           "h_days_since_active", "h_plays_last30d", "h_days_span"]
-
-
-class Imp:
-    def fit(self, X):
-        X = np.asarray(X, float)
-        self.m = np.nan_to_num(np.nanmedian(X, axis=0))
-        return self
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        X = np.asarray(X, float).copy()
-        return np.where(np.isnan(X), self.m, X)
-
-
-def mae(y, p):
-    return float(np.mean(np.abs(np.asarray(y, float) - np.asarray(p, float))))
+STAT, H_FEATS = OBJECTIVE_STAT_COLS, HISTORY_FEATURES
 
 
 def hgb(tr, te, feats, y):
-    imp = Imp()
-    sc = StandardScaler().fit(imp.fit_transform(tr[feats]))
-    Xtr = sc.transform(imp.fit_transform(tr[feats]))
-    Xte = sc.transform(imp.transform(te[feats]))
-    m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06, max_depth=3,
-                                      random_state=0)
-    m.fit(Xtr, y)
-    return m.predict(Xte)
+    return hgb_fit_predict(tr, te, feats, y, seed=0)
 
 
 def main() -> None:
-    df = pd.read_parquet(DS / "samples.parquet")
+    df = load_samples()
+    # scope is a property of how samples.parquet was built (SURVIVAL_SCOPE_ONLY in
+    # data.py); inferring it keeps the JSON honest when the flag is flipped.
     scope = "survival" if (df["lamp"].isin([1]).sum() == 0 and
                            (df["acc"] < 50).sum() == 0) else "full"
     players = sorted(df["player"].unique())

@@ -29,54 +29,20 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
 
+from chart_repr import HISTORY_FEATURES, OBJECTIVE_STAT_COLS
+from common import centered_r2, hgb_fit_predict, load_firstplays, load_samples, mae, r2
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
 DS = OUT / "dataset"
 K = 100
 SEED = 0
-STAT_COLS = [f"c_{n}" for n in [
-    "total_notes", "ln_ratio", "duration_sec", "measures", "initial_bpm", "min_bpm",
-    "max_bpm", "bpm_change_count", "stop_count", "stop_total_sec", "lane0_scratch",
-    "lane1", "lane2", "lane3", "lane4", "lane5", "lane6", "lane7", "scratch_ratio",
-    "avg_nps", "peak_nps_1s", "peak_measure_nps", "chord_count", "chord2_count",
-    "chord3plus_count", "jack_count", "jrank"]]
+STAT_COLS = OBJECTIVE_STAT_COLS
 
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 DEV = "cuda" if torch.cuda.is_available() else "cpu"
 T = lambda x, dtype=torch.float32: torch.as_tensor(x, dtype=dtype, device=DEV)
-
-
-class Imputer:
-    def fit(self, X):
-        X = np.asarray(X, float)
-        self.med = np.nan_to_num(np.nanmedian(X, axis=0))
-        return self
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        X = np.asarray(X, float).copy()
-        return np.where(np.isnan(X), self.med, X)
-
-
-def mae(y, p):
-    return float(np.mean(np.abs(np.asarray(y, float) - np.asarray(p, float))))
-
-
-def r2(y, p):
-    y, p = np.asarray(y, float), np.asarray(p, float)
-    return float(1 - np.sum((y - p) ** 2) / np.sum((y - y.mean()) ** 2))
-
-
-def centered_r2(te: pd.DataFrame, pred: np.ndarray, col: str) -> float:
-    """R2 of within-player deviations: does the model explain chart-relative
-    variation after removing each player's own mean (player strength)?"""
-    a = te[col].values.astype(float) - te.groupby("player")[col].transform("mean").values
-    b = pred - te.groupby("player")[col].transform("mean").values
-    denom = np.sum((a - a.mean()) ** 2)
-    return float(1 - np.sum((a - b) ** 2) / denom) if denom > 0 else float("nan")
 
 
 def event_matrix(fp_sorted: pd.DataFrame, variant: str, reps: pd.DataFrame | None) -> np.ndarray:
@@ -152,9 +118,9 @@ def main() -> None:
     SEED = args.seed
     variants = args.variants.split(",")
 
-    fp = pd.read_parquet(DS / "firstplays.parquet")
+    fp = load_firstplays()
     reps = pd.read_parquet(DS / "chart_repr_t1.parquet") if "C2" in variants else None
-    df = pd.read_parquet(DS / "samples.parquet")
+    df = load_samples()
     tr_all, te = df[df["phase"] == "train"], df[df["phase"] == "test"]
 
     fp_sorted = fp.sort_values(["player", "time"]).reset_index(drop=True)
@@ -165,13 +131,19 @@ def main() -> None:
     chart_cols = list(STAT_COLS)  # objective features only (table levels dropped)
     results: dict = {"n_train": len(tr_all), "n_test": len(te)}
 
-    # temporal val split (per player, last ~10% of train targets)
+    # Temporal val split: last ~10% of EACH player's train targets.
+    # BUG FIX (2026-09-07): this used tr_all.groupby("player").tail(len(tr_all)//40)
+    # — a GLOBAL count of 156 rows. Six players (plus/yangtao/stella/anshi/NIGHT/hl)
+    # have <=156 train rows, so all of their data became validation and they
+    # contributed ZERO rows to training while still being evaluated in test.
     tr_all = tr_all.sort_values("time")
-    val = tr_all.groupby("player").tail(max(1, len(tr_all) // 40))
+    n_val = lambda g: max(1, int(round(len(g) * 0.1)))
+    val = tr_all.groupby("player", group_keys=False).apply(
+        lambda g: g.tail(n_val(g)))
     trn = tr_all.drop(val.index)
+    assert len(trn) and len(val), "empty train or val split"
 
-    def seqs_for(d: pd.DataFrame, variant: str):
-        E = event_matrix(fp_sorted, variant, reps)
+    def seqs_for(d: pd.DataFrame, E: np.ndarray):
         return build_sequences(d, fp_sorted, E, times_days, pos_by_player)
 
     def eval_preds(preds: dict) -> dict:
@@ -201,18 +173,10 @@ def main() -> None:
         return out
 
     # ---------- H / B baselines (HGB) ----------
-    H_FEATS = ["h_knn_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
-               "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
-               "h_days_since_active", "h_plays_last30d", "h_days_span"]
+    H_FEATS = HISTORY_FEATURES
 
     def hgb(feats, y):
-        imp = Imputer()
-        Xtr = StandardScaler().fit_transform(imp.fit_transform(tr_all[feats]))
-        Xte = StandardScaler().fit(imp.fit_transform(tr_all[feats])).transform(imp.transform(te[feats]))
-        m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06, max_depth=3,
-                                          random_state=SEED)
-        m.fit(Xtr, y)
-        return m.predict(Xte)
+        return hgb_fit_predict(tr_all, te, feats, y, seed=SEED)
 
     results["H"] = eval_preds({"acc": hgb(H_FEATS, tr_all["acc"].values),
                                "lamp": hgb(H_FEATS, tr_all["lamp"].values.astype(float)),
@@ -225,9 +189,11 @@ def main() -> None:
     # ---------- C variants (per-target independent encoders — same protocol as 3.1 v1,
     # where the shared multi-task head was shown to hurt acc/BP) ----------
     for variant in variants:
-        S_tr, M_tr, D_tr = seqs_for(trn, variant)
-        S_va, M_va, D_va = seqs_for(val, variant)
-        S_te, M_te, D_te = seqs_for(te, variant)
+        # build the event matrix once per variant (it was rebuilt for every split)
+        E = event_matrix(fp_sorted, variant, reps)
+        S_tr, M_tr, D_tr = seqs_for(trn, E)
+        S_va, M_va, D_va = seqs_for(val, E)
+        S_te, M_te, D_te = seqs_for(te, E)
         seq_dim = S_tr.shape[2]
         chart_dim = len(chart_cols) + (64 if variant == "C2" else 0)
 

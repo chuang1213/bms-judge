@@ -34,66 +34,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
+
+from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, OBJECTIVE_STAT_COLS)
+from common import add_region, hgb_fit_predict, load_firstplays, mae
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
 DS = OUT / "dataset"
 KS = [0, 1, 5, 10, 20, 50, 100, 200]
 KNN_K = 20
-STAT = [f"c_{n}" for n in [
-    "total_notes", "ln_ratio", "duration_sec", "measures", "initial_bpm", "min_bpm",
-    "max_bpm", "bpm_change_count", "stop_count", "stop_total_sec", "lane0_scratch",
-    "lane1", "lane2", "lane3", "lane4", "lane5", "lane6", "lane7", "scratch_ratio",
-    "avg_nps", "peak_nps_1s", "peak_measure_nps", "chord_count", "chord2_count",
-    "chord3plus_count", "jack_count", "jrank"]]
-HIST = ["h_knn_acc", "h_n_firstplays", "h_acc_mean", "h_acc_std", "h_acc_last10",
-        "h_bp_mean", "h_bp_ratio_mean", "h_fail_rate", "h_fc_rate",
-        "h_days_since_active", "h_plays_last30d", "h_days_span"]
-# few-shot subset: time-recency features are computed from the DENSE scorelog stream
-# in training but can only come from the SPARSE first-play prefix at eval — their
-# distributions are incomparable (values land beyond training p99). Measured in
-# PHASE3_4_TIME_ABLATION; excluded from the few-shot feature schema.
-HIST_FEW = [c for c in HIST if c not in
-            ("h_days_since_active", "h_plays_last30d", "h_days_span")]
-
-
-class Imp:
-    def fit(self, X):
-        X = np.asarray(X, float)
-        self.m = np.nan_to_num(np.nanmedian(X, axis=0))
-        return self
-
-    def fit_transform(self, X):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        X = np.asarray(X, float).copy()
-        return np.where(np.isnan(X), self.m, X)
-
-
-def mae(y, p):
-    return float(np.mean(np.abs(np.asarray(y, float) - np.asarray(p, float))))
-
-
-def hgb_fit_pred(tr, te, feats, y, seed=0):
-    imp = Imp()
-    sc = StandardScaler().fit(imp.fit_transform(tr[feats]))
-    m = HistGradientBoostingRegressor(max_iter=300, learning_rate=0.06, max_depth=3,
-                                      random_state=seed)
-    m.fit(sc.transform(imp.fit_transform(tr[feats])), y)
-    return m.predict(sc.transform(imp.transform(te[feats])))
-
-
-def coord(row):
-    t, lv = row["table"], row["level"]
-    if t == "satellite":
-        return "SL"
-    if t == "stella":
-        return "ST0-3" if lv <= 3 else ("ST4-7" if lv <= 7 else "ST8+")
-    return "insane(★)"
+STAT, HIST = OBJECTIVE_STAT_COLS, HISTORY_FEATURES
+HIST_FEW = HISTORY_FEW_FEATURES
 
 
 def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
@@ -141,8 +94,7 @@ def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
 
 
 def main() -> None:
-    fp = pd.read_parquet(DS / "firstplays.parquet").reset_index(drop=True)
-    fp["region"] = fp.apply(coord, axis=1)
+    fp = add_region(load_firstplays().reset_index(drop=True))
     players = sorted(fp["player"].unique())
     results: dict = {"scope_rows": len(fp), "players": players, "ks": KS, "lopo": {}}
 
@@ -158,13 +110,13 @@ def main() -> None:
         # ---------- Exp 1: protocol band, FULL causal features ----------
         te_band = mine[mine["phase"] == "test"]
         tr_others = others  # all rows are causal w.r.t. their own targets
-        m0 = {k: hgb_fit_pred(tr_others, te_band, STAT, tr_others[k].values)
+        m0 = {k: hgb_fit_predict(tr_others, te_band, STAT, tr_others[k].values)
               for k in ("acc", "lamp")}
-        m0["bp"] = np.expm1(hgb_fit_pred(tr_others, te_band, STAT,
+        m0["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, STAT,
                                          np.log1p(tr_others["bp"].values)))
-        m2 = {k: hgb_fit_pred(tr_others, te_band, STAT + HIST, tr_others[k].values)
+        m2 = {k: hgb_fit_predict(tr_others, te_band, STAT + HIST, tr_others[k].values)
               for k in ("acc", "lamp")}
-        m2["bp"] = np.expm1(hgb_fit_pred(tr_others, te_band, STAT + HIST,
+        m2["bp"] = np.expm1(hgb_fit_predict(tr_others, te_band, STAT + HIST,
                                          np.log1p(tr_others["bp"].values)))
         m1_acc = te_band["h_knn_acc"].values  # D-local: causal kNN within own archive
         m1_lamp = te_band["h_acc_mean"].values / 100 * 6  # crude D-local lamp proxy
@@ -217,14 +169,14 @@ def main() -> None:
             bp_cap = float(np.log1p(tr_others["bp"].max()))
 
             def bp_pred(feats):
-                return np.expm1(np.clip(hgb_fit_pred(tr_others, te_k, feats,
+                return np.expm1(np.clip(hgb_fit_predict(tr_others, te_k, feats,
                                                      np.log1p(tr_others["bp"].values)),
                                         0, bp_cap))
 
-            p0_acc = hgb_fit_pred(tr_others, te_k, STAT, tr_others["acc"].values)
-            p0_lamp = hgb_fit_pred(tr_others, te_k, STAT, tr_others["lamp"].values.astype(float))
-            p2_acc = hgb_fit_pred(tr_others, te_k, STAT + HIST_FEW, tr_others["acc"].values)
-            p2_lamp = hgb_fit_pred(tr_others, te_k, STAT + HIST_FEW,
+            p0_acc = hgb_fit_predict(tr_others, te_k, STAT, tr_others["acc"].values)
+            p0_lamp = hgb_fit_predict(tr_others, te_k, STAT, tr_others["lamp"].values.astype(float))
+            p2_acc = hgb_fit_predict(tr_others, te_k, STAT + HIST_FEW, tr_others["acc"].values)
+            p2_lamp = hgb_fit_predict(tr_others, te_k, STAT + HIST_FEW,
                                    tr_others["lamp"].values.astype(float))
             pk_acc = te_k["h_knn_acc"].values
             pk_lamp = te_k["h_acc_mean"].values / 100 * 6
