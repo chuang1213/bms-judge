@@ -38,9 +38,15 @@
 
 | 目标 | 训练形式 | 主指标 | 辅助 |
 |---|---|---|---|
-| acc | 连续（0-100） | MAE、R² | **centered R²**（玩家内去均值，检验 interaction） |
+| acc | 连续（0-100） | **MAE 与 centered R² 并列为头条**（2026-09-07 用户决定：两者都保留） | R² |
 | lamp | 有序 1-9 | ordinal MAE | QWK（quadratic weighted kappa）；regression 式优于 classification 式（3.1 已验证） |
 | BP | **log1p(raw BP)** | raw MAE | ratio MAE×1000（BP/notes）作报告视角；MedAE 看长尾 |
+
+- **头条双指标的分工（2026-09-07）**：聚合 MAE 回答"绝对标定"（部署视角），
+  centered R² 回答"玩家×谱面 interaction"（研究主问题）。二者缺一不可：
+  逐玩家 acc 均值离散度（~10.1）大于模型 MAE（~7.0），nanji 一人占总绝对误差 ~18%，
+  故单独引用 MAE 会高估"interaction 进步"；单独引用 centered R² 则丢失绝对精度。
+  引用结论时必须同时给出两者。
 
 - NO_PLAY 不作为 lamp 等级；禁止把三目标合成单一分数。
 
