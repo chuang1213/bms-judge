@@ -67,6 +67,8 @@
 ## 5. 必备对照与分析
 
 - H（手工历史统计）、B（chart+history）为固定参照；chart-only（A）作下界；
+- **`B_resp` 为当前最优参照**（B + acc 响应块 24 + lamp 响应块 13），已并入
+  `compare_nolevel.py` 的常规输出；完整对照与研究见 `response_eval.py` / `PHASE3_6_REPORT.md`；
 - **centered R²** 必报：interaction 的主判据；
 - **fixed-chart 多玩家子集**（test 内 ≥2 玩家首打的谱面）必报；
 - nanji（及未来任一分布外玩家）单独报告全部目标；

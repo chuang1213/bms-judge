@@ -100,7 +100,9 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   少数派/指标一律 `from common import ...`。此前 5 份拷贝导致 `c_jrank` 加进所有脚本
   却漏了登记处（已修，`test_phase3_registry.py` 会防住复发）
 - 数据集重建：`python bms_ml/phase3/data.py`（约 6s；GPU 相关步骤才需要 .venv）
-- 基线：`python bms_ml/phase3/compare_nolevel.py`；C 阶梯（GPU，全套 3 seeds ≈2.5min）：
+- 基线：`python bms_ml/phase3/compare_nolevel.py`（输出 A/H/B/**B_resp** 四行；B_resp 依赖
+  `history_response.parquet`，缺失时该行跳过并提示）；响应剖面的完整对照：`response_eval.py`；
+  C 阶梯（GPU，全套 3 seeds ≈2.5min）：
   `.venv/Scripts/python.exe bms_ml/phase3/c_chart_aware.py --variants C0,C1,C2 --seed 0/1/2`
 - transfer/few-shot：`python bms_ml/phase3/transfer_eval.py`；LOPO 冷启动：`lopo_eval.py`
 - 新玩家 SOP（顺序不能反）：`ingest_player.py add <name> 玩家资料/<name>/player1` →

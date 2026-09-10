@@ -19,23 +19,50 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
-from chart_repr import (HISTORY_FEATURES, OBJECTIVE_STAT_COLS, feature_manifest)
+from chart_repr import (HISTORY_FEATURES, HISTORY_RESPONSE_COLS,
+                        HISTORY_RESPONSE_LAMP_COLS, OBJECTIVE_STAT_COLS,
+                        feature_manifest)
 from common import centered_r2, hgb_fit_predict, load_samples, mae, r2
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
+DS = OUT / "dataset"
 
 
 def main() -> None:
     df = load_samples()
-    tr, te = df[df["phase"] == "train"], df[df["phase"] == "test"]
-    res = {"n_train": len(tr), "n_test": len(te)}
+    res = {"n_train": 0, "n_test": 0}
 
     sets = {"A": OBJECTIVE_STAT_COLS,
             "H": HISTORY_FEATURES,
             "B": OBJECTIVE_STAT_COLS + HISTORY_FEATURES}
+
+    # B_resp = the current best configuration (PHASE3_6_REPORT.md §1): all of B plus the
+    # per-axis personal response blocks. Acc block full (24), lamp block chart-
+    # conditioned only (13). Soft dependency: response_eval.py owns the full study and
+    # history_response.py produces the parquet, so if it is missing we say so rather
+    # than making the canonical baseline script fail.
+    resp_path = DS / "history_response.parquet"
+    if resp_path.exists():
+        hr = pd.read_parquet(resp_path)
+        df = df.merge(hr[["player", "sha256"] + HISTORY_RESPONSE_COLS
+                         + HISTORY_RESPONSE_LAMP_COLS],
+                      on=["player", "sha256"], how="left")
+        lamp_resp = [c for c in HISTORY_RESPONSE_LAMP_COLS
+                     if c.startswith("l_resp_")
+                     and c not in ("l_resp_mean", "l_resp_std")]
+        sets["B_resp"] = (OBJECTIVE_STAT_COLS + HISTORY_FEATURES
+                          + HISTORY_RESPONSE_COLS + lamp_resp
+                          + ["l_resp_mean", "l_resp_std"])
+    else:
+        print(f"[note] {resp_path.name} missing -> B_resp not reported "
+              f"(run bms_ml/phase3/history_response.py)")
+
+    tr, te = df[df["phase"] == "train"], df[df["phase"] == "test"]
+    res["n_train"], res["n_test"] = len(tr), len(te)
     for tag, feats in sets.items():
         acc_p = hgb_fit_predict(tr, te, feats, tr["acc"].values)
         lamp_p = hgb_fit_predict(tr, te, feats, tr["lamp"].values.astype(float))
