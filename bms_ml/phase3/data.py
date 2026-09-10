@@ -27,7 +27,9 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT / "玩家资料"
+# Archive tree was reorganised 2026-09-11: 玩家资料/<name>/player1 -> PlayerData/beatoraja/<name>/player1
+# (per-player paths live in players.json; this constant is only the tree root).
+DATA = ROOT / "PlayerData" / "beatoraja"
 CORPUS = ROOT / "bms_ml" / "output" / "corpus"
 TABLES = ROOT / "bms_ml" / "output" / "tables"
 OUT = ROOT / "bms_ml" / "output" / "phase3" / "dataset"

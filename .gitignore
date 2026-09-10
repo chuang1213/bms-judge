@@ -8,7 +8,8 @@ __pycache__/
 # 原始/可再生成数据（不提交）
 testbms/
 回放收集/
-玩家资料/
+# 玩家原始存档：2026-09-11 重命名为 PlayerData/{beatoraja,LunaticRave2}
+PlayerData/
 bms_ml/output/corpus/sequences/
 bms_ml/output/sequences/
 bms_ml/output/corpus/manifest.jsonl
@@ -24,10 +25,5 @@ bms_ml/output/phase3/
 bms-skills/
 BmsReplayViewer/
 
-# 只读参考项目（phase3 参考，勿改动勿提交）
-lampghost/
-beatoraja-master/
-Permikon-main/
-
-# 临时文件
-*.tmp
+# 只读参考项目（2026-09-11 起统一收纳到 ref_repo/；勿改动勿提交）
+ref_repo/
