@@ -41,8 +41,26 @@ def load_roster() -> tuple[dict, dict]:
     roster = json.load(open(Path(__file__).resolve().parent / "players.json",
                             encoding="utf-8"))
     active = {n: e for n, e in roster["players"].items() if e.get("include")}
+    assert_single_client(active)
     return ({n: e["dir"] for n, e in active.items()},
             {n: e.get("time", "real") for n, e in active.items()})
+
+
+def assert_single_client(active: dict) -> None:
+    """Client guard (2026-09-11). This builder only understands beatoraja: it expects
+    scorelog.db and derives first plays from it. An LR2 archive has neither first plays
+    nor timestamps, and its labels are measurably on a different scale (see lr2_reader.py:
+    sd 10pp between the two clients on 4,576 shared charts). Silently pulling one in
+    would poison every player-state feature, so refuse loudly instead. Kept as a
+    separate function so the guard itself is unit-testable."""
+    other = sorted(n for n, e in active.items() if e.get("client", "beatoraja") != "beatoraja")
+    if other:
+        raise SystemExit(
+            f"refusing to build: players {other} have client != 'beatoraja'.\n"
+            f"  LR2 archives are player-state only (no first plays, no timestamps) and\n"
+            f"  their labels are not on the beatoraja scale - see lr2_reader.py and\n"
+            f"  PROTOCOL.md. Set include=false for them, or extend this builder "
+            f"deliberately.")
 
 
 PLAYERS, TIME_MODE = load_roster()

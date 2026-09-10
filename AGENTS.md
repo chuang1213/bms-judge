@@ -84,6 +84,11 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   beatoraja 的 lamp **不可直接混比**；**84% 可经 md5→sha256 关联**语料库；额外提供
   `playcount/clearcount/failcount`（beatoraja 的 scorelog 是破纪录日志，给不出"玩过几次"）。
   名册中 `vsoflan_lr2` = include=false 待决（协议问题：LR2-only 玩家的目标定义）
+- **客户端必须分开对待（用户 2026-09-11 明确提出，已实测证实并写进 PROTOCOL §1）**：同一玩家两份存档
+  共有的 4,576 张谱面上，两客户端 acc 差 **sd 10.16pp**、>5pp 占 29.4%、与 LN 比例相关仅 +0.016 →
+  **差异来自判定/记录本身，非计分口径**，且幅度大于模型自身误差。**禁止把 LR2 与 beatoraja 行混进同一
+  份 player state 特征集**；`data.py` 已有守卫（client≠beatoraja 直接拒绝构建，已单测）。
+  跨客户端 lamp 映射 `lr2_reader.lr2_clear_to_beatoraja`（档位 +2）**仅供对比，不代表可混用**
 - **谱面编码器现状（2026-09-11）**：`objective_stats`(27) → `objective_stats_v2`(+14，谱面侧最优)
   → `perm_space`(22，排列空间手部位移几何，**已被 v2 支配**：胜 v1 基线但叠加 v2 无增益，勿重复投入；
   `chart_perm_space.py` 可续跑，`perm_space_eval.py` 可复现)。新编码器一律加进

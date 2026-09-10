@@ -190,6 +190,53 @@ class TestLR2Labels(unittest.TestCase):
         self.assertEqual(LR2_CLEAR[5], "EXHARD")
         self.assertEqual(LR2_CLEAR[7], "PERFECT")
 
+    def test_lr2_to_beatoraja_lamp_mapping(self):
+        """The gauge ladder is the same, beatoraja just inserts two ASSIST levels at 2,3.
+
+        Both enums are transcribed from beatoraja-master (see lr2_reader.py). This
+        mapping exists so a cross-client comparison is explicit - it does NOT make the
+        two clients interchangeable.
+        """
+        from bms_ml.phase3.lr2_reader import (BEATORAJA_CLEAR, lr2_clear_to_beatoraja)
+        self.assertEqual(BEATORAJA_CLEAR[0], "NO_PLAY")
+        self.assertEqual(BEATORAJA_CLEAR[1], "FAILED")
+        self.assertEqual(BEATORAJA_CLEAR[4], "EASY")
+        self.assertEqual(BEATORAJA_CLEAR[6], "HARD")
+        self.assertEqual(BEATORAJA_CLEAR[8], "FC")
+        # gauge ladder shifts by exactly +2
+        for lr2_v, want in [(0, 0), (1, 1), (2, 4), (3, 5), (4, 6), (5, 7),
+                            (6, 8), (7, 9), (8, 10), (9, 2), (10, 3)]:
+            self.assertEqual(lr2_clear_to_beatoraja(lr2_v), want, f"lr2 clear {lr2_v}")
+        # and the shift really does land on the same gauge name
+        self.assertEqual(BEATORAJA_CLEAR[lr2_clear_to_beatoraja(2)], "EASY")
+        self.assertEqual(BEATORAJA_CLEAR[lr2_clear_to_beatoraja(5)], "EXHARD")
+        with self.assertRaises(ValueError):
+            lr2_clear_to_beatoraja(99)
+
+
+class TestClientGuard(unittest.TestCase):
+    """LR2 and beatoraja must not be pooled (user decision 2026-09-11).
+
+    Measured on 4,576 charts present in both of vsoflan's archives: the acc gap has
+    sd 10.16pp and exceeds 5pp on 29.4% of charts, which is larger than the model's own
+    acc MAE. So mixing them would inject noise comparable to the signal, and the builder
+    has to refuse rather than degrade quietly.
+    """
+
+    def test_refuses_non_beatoraja(self):
+        from bms_ml.phase3.data import assert_single_client
+        with self.assertRaises(SystemExit):
+            assert_single_client({"vsoflan_lr2": {"client": "lr2"}})
+
+    def test_accepts_all_beatoraja(self):
+        from bms_ml.phase3.data import assert_single_client
+        assert_single_client({"a": {"client": "beatoraja"}, "b": {}})   # default = beatoraja
+
+    def test_default_is_beatoraja(self):
+        """A roster entry written before the client field existed must still build."""
+        from bms_ml.phase3.data import assert_single_client
+        assert_single_client({"legacy_player": {"dir": "PlayerData/beatoraja/x/player1"}})
+
 
 if __name__ == "__main__":
     unittest.main()

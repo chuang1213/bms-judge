@@ -35,6 +35,25 @@ Label construction (validated on the real archive)
          LR2 lamp scale is NOT directly comparable to a beatoraja archive's.
 Chart identity: LR2 keys on MD5; the manifest's md5 -> sha256 bridge joins 84% of the
 rows to the parsed corpus (the rest are charts outside our BMS library).
+
+MEASURED: the two clients are NOT interchangeable (2026-09-11)
+--------------------------------------------------------------
+vsoflan has 4,576 charts in BOTH archives, so the gap is directly observable. Comparing
+each client's BEST score on the same chart with the same note denominator (manifest
+total_notes, so this is not a notes-counting artefact):
+
+    acc gap (LR2 - beatoraja):  mean +2.14 | median +0.46 | sd 10.16
+    |gap| > 1pp on 58.5% of charts, > 5pp on 29.4%;  corr = 0.84
+    non-LN charts only (n=2241): mean +4.08, sd 8.35  -> the sd is not an LN effect
+    corr(|gap|, ln_ratio) = +0.016 -> it is judgement/recording, not scoring bookkeeping
+
+(The gap mixes the client effect with the fact that the two bests may have been set
+years apart, so read +2.14 as a mixture; the sd of 10pp is the number that matters, and
+it is larger than the model's own acc MAE of 6.5.)
+
+Conclusion, matching the user's intent to treat the clients separately: DO NOT pool
+LR2 and beatoraja rows into one player-state feature set. `data.py` refuses to build
+features for any included player whose client is not beatoraja.
 """
 from __future__ import annotations
 
@@ -48,8 +67,39 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "bms_ml" / "output" / "corpus"
 
+# LR2 lamp IDs, from beatoraja's own compatibility comment
+# (ref_repo/beatoraja-master/src/bms/player/beatoraja/skin/lr2/LR2SelectSkinLoader.java:
+#  "0:NO PLAY, 1:FAILED, 2:EASY, 3:NORMAL, 4:HARD, 5:EXH, 6:FC, 7:PERFECT, 8:MAX, 9:ASSIST, 10:L-ASSIST")
 LR2_CLEAR = {0: "NO_PLAY", 1: "FAILED", 2: "EASY", 3: "NORMAL", 4: "HARD",
-             5: "EXHARD", 6: "FC", 7: "PERFECT"}
+             5: "EXHARD", 6: "FC", 7: "PERFECT", 8: "MAX", 9: "ASSIST",
+             10: "L_ASSIST"}
+
+# beatoraja's own enum, from
+# ref_repo/beatoraja-master/src/bms/player/beatoraja/external/ScreenShotExporter.java
+BEATORAJA_CLEAR = ["NO_PLAY", "FAILED", "ASSIST_EASY", "LIGHT_ASSIST_EASY", "EASY",
+                   "NORMAL", "HARD", "EXHARD", "FC", "PERFECT", "MAX"]
+
+
+def lr2_clear_to_beatoraja(v: int) -> int:
+    """Map an LR2 lamp id onto the beatoraja enum the rest of the project uses.
+
+    The two enums are the same gauge ladder but beatoraja inserts ASSIST_EASY /
+    LIGHT_ASSIST_EASY at 2 and 3, so the ladder is a clean +2 shift:
+        0,1 unchanged; 2..8 -> +2; 9 -> 2 (ASSIST), 10 -> 3 (L_ASSIST).
+    This exists so a cross-client comparison is EXPLICIT. It does NOT make the two
+    clients' lamps equivalent: the real archive only contains LR2 0..5 and the
+    measured acc discrepancy below means they should be kept separate anyway.
+    """
+    v = int(v)
+    if v in (0, 1):
+        return v
+    if 2 <= v <= 8:
+        return v + 2
+    if v == 9:
+        return 2
+    if v == 10:
+        return 3
+    raise ValueError(f"unknown LR2 clear id {v}")
 
 
 def _manifest_bridge() -> dict[str, str]:
@@ -104,9 +154,12 @@ def load_rows(path: str | Path, bridge: dict[str, str] | None = None) -> pd.Data
     sc["notes"] = notes
     sc["acc"] = compute_acc(sc["perfect"], sc["great"], notes)
     sc["lamp"] = sc["clear"].astype(int)
+    # explicit cross-client lamp, for comparison only - do NOT pool the two into one
+    # feature column (see the measured gap in the module docstring)
+    sc["bj_lamp"] = sc["lamp"].map(lr2_clear_to_beatoraja)
     sc["bp"] = sc["minbp"].astype(int)
     sc["player"] = player
-    return sc[["player", "md5", "sha256", "notes", "acc", "lamp", "bp",
+    return sc[["player", "md5", "sha256", "notes", "acc", "lamp", "bj_lamp", "bp",
                "playcount", "clearcount", "failcount"]]
 
 
