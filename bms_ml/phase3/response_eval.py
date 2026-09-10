@@ -118,12 +118,39 @@ def main() -> None:
     for c in HISTORY_RESPONSE_COLS:
         shuf[c] = rng.permutation(shuf[c].values)
     tr_s, te_s = shuf[shuf["phase"] == "train"], shuf[shuf["phase"] == "test"]
+    LAMP_RESP_ALL = [c for c in HISTORY_RESPONSE_LAMP_COLS
+                     if c not in ("l_resp_mean", "l_resp_std")]
+    LAMP_FEATS = (V1 + Hv + HISTORY_RESPONSE_COLS + LAMP_RESP_ALL
+                  + ["l_resp_mean", "l_resp_std"])
     for tag, feats in (("B+shuffled24", V1 + Hv + HISTORY_RESPONSE_COLS),
-                       ("B+shuffled24_v2", V1 + V2 + Hv + HISTORY_RESPONSE_COLS)):
+                       ("B+shuffled24_v2", V1 + V2 + Hv + HISTORY_RESPONSE_COLS),
+                       ("B_full+shuf_lampresp", LAMP_FEATS)):
         results[tag] = evaluate(tr_s, te_s, feats)
         r = results[tag]
-        print(f"{tag:18}{r['acc']['mae']:8.3f}{r['acc']['centered_r2']:+9.3f}"
+        print(f"{tag:22}{r['acc']['mae']:8.3f}{r['acc']['centered_r2']:+9.3f}"
               f"{r['lamp']['ord_mae']:8.3f}{r['lamp']['qwk']:8.3f}{r['bp']['raw_mae']:9.1f}")
+
+    # ONE shuffle draw is not a control. If the lamp gain survives several independent
+    # shuffles it is a capacity/regularisation effect of the 13 extra columns, not the
+    # information in them - a single draw said 1.238 vs the real 1.227, which is far
+    # too close to call on its own.
+    spread = []
+    for s in (1, 2, 3):
+        sh = df.copy()
+        rs = np.random.RandomState(100 + s)
+        for c in LAMP_RESP_ALL + ["l_resp_mean", "l_resp_std"]:
+            sh[c] = rs.permutation(sh[c].values)
+        rs_tr = sh[sh["phase"] == "train"]
+        rs_te = sh[sh["phase"] == "test"]
+        rr = evaluate(rs_tr, rs_te, LAMP_FEATS)
+        spread.append(rr)
+        print(f"  shuf_lamp seed {s:<3}      {rr['acc']['mae']:8.3f}"
+              f"{rr['acc']['centered_r2']:+9.3f}{rr['lamp']['ord_mae']:8.3f}"
+              f"{rr['lamp']['qwk']:8.3f}{rr['bp']['raw_mae']:9.1f}")
+    results["shuf_lampresp_spread"] = {
+        "lamp": [r["lamp"]["ord_mae"] for r in spread],
+        "acc": [r["acc"]["mae"] for r in spread],
+        "bp": [r["bp"]["raw_mae"] for r in spread]}
 
     # who gains? per-player delta on the headline comparison
     pa_h = hgb_fit_predict(tr, te, sets["H"], tr["acc"].values)
