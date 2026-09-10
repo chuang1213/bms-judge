@@ -75,6 +75,11 @@ def main() -> None:
         "B_full": V1 + Hv + HISTORY_RESPONSE_COLS,
         "B_full_v2": V1 + V2 + Hv + HISTORY_RESPONSE_COLS,
     }
+    # the original 6 axes vs the extended axis set (2026-09-11 evening)
+    CORE6 = ["nps", "ln", "scratch", "dur", "chord", "jack"]
+    core6 = ([f"h_resp_{k}" for k in CORE6] + [f"h_slope_{k}" for k in CORE6]
+             + ["h_resp_mean", "h_resp_std"])
+    sets["B_full_v2_core6"] = V1 + V2 + Hv + core6
 
     results: dict = {"n_train": len(tr), "n_test": len(te),
                      "h_resp_mean_missing_frac": round(cov, 4)}
@@ -89,6 +94,24 @@ def main() -> None:
         ms = [mae(te["acc"], hgb_fit_predict(tr, te, sets[tag], tr["acc"].values, seed=s))
               for s in (0, 1, 2)]
         results[f"{tag}_seed_std"] = round(float(np.std(ms)), 4)
+
+    # ---- capacity control -------------------------------------------------
+    # B_full adds 24 columns to a 39-column model. HGB could gain simply from the
+    # extra dimensions, so re-run with the SAME 24 columns, same marginals, but
+    # permuted across rows: the sample-level pairing with the label is destroyed
+    # while width is held fixed. If this also reaches ~6.6 the gain is capacity,
+    # not the response profile.
+    rng = np.random.RandomState(0)
+    shuf = df.copy()
+    for c in HISTORY_RESPONSE_COLS:
+        shuf[c] = rng.permutation(shuf[c].values)
+    tr_s, te_s = shuf[shuf["phase"] == "train"], shuf[shuf["phase"] == "test"]
+    for tag, feats in (("B+shuffled24", V1 + Hv + HISTORY_RESPONSE_COLS),
+                       ("B+shuffled24_v2", V1 + V2 + Hv + HISTORY_RESPONSE_COLS)):
+        results[tag] = evaluate(tr_s, te_s, feats)
+        r = results[tag]
+        print(f"{tag:18}{r['acc']['mae']:8.3f}{r['acc']['centered_r2']:+9.3f}"
+              f"{r['lamp']['ord_mae']:8.3f}{r['lamp']['qwk']:8.3f}{r['bp']['raw_mae']:9.1f}")
 
     # who gains? per-player delta on the headline comparison
     pa_h = hgb_fit_predict(tr, te, sets["H"], tr["acc"].values)

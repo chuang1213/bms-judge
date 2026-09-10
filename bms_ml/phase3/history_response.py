@@ -88,6 +88,12 @@ def build(fp: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     fp = pd.read_parquet(DS / "firstplays.parquet")
+    # v2 axes live in a side table keyed 1:1 on sha256 (built by chart_stats_v2.py)
+    v2 = pd.read_parquet(DS / "chart_stats_v2.parquet")
+    need = [c for c in set(RESPONSE_AXES.values()) if c not in fp.columns]
+    if need:
+        fp = fp.merge(v2[["sha256"] + [c for c in need if c in v2.columns]],
+                      on="sha256", how="left")
     # chronological within player is required for the causal prefix sums
     fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
     feats = build(fp)

@@ -13,9 +13,10 @@
 18 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏、c_jrank 在列）下基线
 （**train 6,358 / test 6,367**，2026-09-11 修复语料库重复 sha256 **去重后**）：
 A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386。
-**当前最优 = `B_full_v2`：acc 6.623 / cR² +0.425 / BP 125.8**
-（= v1 27 + v2 14 + 手工历史 12 + **个人响应剖面 14**；复现：`response_eval.py`）；
-次优 `B_v2` = 6.796 / +0.408。**个人响应剖面是本阶段唯一有效的表示改进**（见 `history_response.py`）。
+**当前最优 = `B_full`：acc 6.583 / cR² +0.430 / BP 124.7**
+（= v1 27 + 手工历史 12 + **个人响应剖面 24**；复现：`response_eval.py`）；
+次优 `B_v2` = 6.796 / +0.408、`B_full_v2` = 6.631。**个人响应剖面是本阶段唯一有效的表示改进**
+（`history_response.py`，11 轴×resp/slope；17/18 玩家改善；**已用"打乱配对"对照排除维度效应**）。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
 在 18/18 玩家上胜过 D-local，few-shot 样本效率 3-5×（**这些结果在旧 12,859 行数据集上**，
 去重影响量级 ~0.02）。
@@ -75,9 +76,10 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   → `perm_space`(22，排列空间手部位移几何，**已被 v2 支配**：胜 v1 基线但叠加 v2 无增益，勿重复投入；
   `chart_perm_space.py` 可续跑，`perm_space_eval.py` 可复现)。新编码器一律加进
   `chart_encoder_registry()` 再在同一任务上比
-- **玩家侧编码器现状（2026-09-11）**：12 维手工历史 → **+14 维个人响应剖面**（`history_response.py`，
-  每玩家每轴的一元 OLS 响应曲线，严格因果前缀和）；这是有效改进（`B_v2 6.796 → B_full_v2 6.623`），
-  复现用 `response_eval.py`。新增历史特征请沿用同一模式：独立 parquet + `(player, sha256)` 键 + 登记处清单
+- **玩家侧编码器现状（2026-09-11）**：12 维手工历史 → **+24 维个人响应剖面**（`history_response.py`，
+  11 轴 × resp/slope，每玩家每轴一元 OLS，严格因果前缀和）；这是有效改进（`B 7.009 → B_full 6.583`，
+  **17/18 玩家改善**，且用"同列数打乱配对"对照排除了维度效应），复现用 `response_eval.py`。
+  新增历史特征请沿用同一模式：独立 parquet + `(player, sha256)` 键 + 登记处清单
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
   `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
   恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。

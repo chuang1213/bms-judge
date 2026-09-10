@@ -58,6 +58,16 @@ RESPONSE_AXES = {
     "dur": "c_duration_sec",
     "chord": "c_chord3plus_count",
     "jack": "c_jack_count",
+    # v2 threshold-free axes (added 2026-09-11): same-lane speed (the window-free
+    # analogue of jack), density variability, simultaneity and lane spread.
+    "ioi": "v2_ioi_lane_p05",
+    "npsstd": "v2_nps_std",
+    "simul": "v2_simul_max",
+    "entropy": "v2_lane_entropy",
+    # judge-window tier: NOT a difficulty property but a scoring setting, and the
+    # history study showed rank1/rank2 charts are mis-scored by 5-11pp without it.
+    # A player's slope here is "how much do tight windows cost me" - a real trait.
+    "jrank": "c_jrank",
 }
 HISTORY_RESPONSE_COLS = ([f"h_resp_{k}" for k in RESPONSE_AXES]
                          + [f"h_slope_{k}" for k in RESPONSE_AXES]
