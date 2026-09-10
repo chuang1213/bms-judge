@@ -55,6 +55,10 @@ HIST_FEW = HISTORY_FEW_FEATURES
 # the training h_knn_acc comes from data.py's v1 space, so mixing v2 into the
 # few-shot kNN would make the SAME feature incomparable between train and eval.
 USE_V2 = os.environ.get("P3_USE_V2", "0") == "1"
+# perm_space ablation (Phase 3.6, 2026-09-11): add the permutation-space hand-travel
+# geometry to the chart side of M0/M2. Same switch pattern as USE_V2.
+#   P3_USE_PERM=1 python transfer_eval.py
+USE_PERM = os.environ.get("P3_USE_PERM", "0") == "1"
 
 
 def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
@@ -102,6 +106,13 @@ def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tag", default="",
+                    help="output suffix; the default writes transfer_results.json "
+                         "(the canonical protocol run). Use e.g. _v2_perm for ablations "
+                         "so an ablation can never silently replace the baseline.")
+    args = ap.parse_args()
     fp = add_region(load_firstplays().reset_index(drop=True))
     # v2 chart-side ablation: merge the distribution stats in as extra columns
     CHART = list(STAT)
@@ -110,9 +121,14 @@ def main() -> None:
         fp = fp.merge(pd.read_parquet(DS / "chart_stats_v2.parquet"),
                       on="sha256", how="left")
         CHART = CHART + OBJECTIVE_V2_COLS
+    if USE_PERM:
+        from chart_repr import OBJECTIVE_PERM_COLS
+        fp = fp.merge(pd.read_parquet(DS / "chart_perm_space.parquet"),
+                      on="sha256", how="left")
+        CHART = CHART + OBJECTIVE_PERM_COLS
     players = sorted(fp["player"].unique())
     results: dict = {"scope_rows": len(fp), "players": players, "ks": KS,
-                     "use_v2": USE_V2, "lopo": {}}
+                     "use_v2": USE_V2, "use_perm": USE_PERM, "lopo": {}}
 
     for D in players:
         others = fp[fp["player"] != D]
@@ -241,7 +257,8 @@ def main() -> None:
         agg.append(entry)
     results["fewshot_aggregate"] = agg
 
-    json.dump(results, open(OUT / "transfer_results.json", "w"), indent=2, default=str)
+    json.dump(results, open(OUT / f"transfer_results{args.tag}.json", "w"),
+              indent=2, default=str)
     print("\nfew-shot aggregate (weighted):")
     for e in agg:
         print(f"  k={e['k']:3}: M0 {e['M0_acc']:.2f}  M1 {e['M1_acc']:.2f}  "

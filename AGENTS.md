@@ -65,8 +65,12 @@ centered R²：H +0.278 / B +0.387；B_v2（+v2 无阈值谱面统计）当前�
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；下载慢走 127.0.0.1:7897 代理）。
   torch 相关用 `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
-- 测试：`python -m unittest discover bms_ml/tests`（**36 个**：25 parser/timeline 回归
-  + 11 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
+- 测试：`python -m unittest discover bms_ml/tests`（**37 个**：25 parser/timeline 回归
+  + 12 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
+- **谱面编码器现状（2026-09-11）**：`objective_stats`(27) → `objective_stats_v2`(+14，**当前最优**)
+  → `perm_space`(22，排列空间手部位移几何，**已被 v2 支配**：胜 v1 基线但叠加 v2 无增益，勿重复投入；
+  `chart_perm_space.py` 可续跑，`perm_space_eval.py` 可复现)。新编码器一律加进
+  `chart_encoder_registry()` 再在同一任务上比
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
   `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
   恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。

@@ -33,11 +33,31 @@ class TestFeatureRegistry(unittest.TestCase):
         # over-predicted by 5-11pp acc (EXPERIMENT_LOG 2026-09-05).
         self.assertIn("c_jrank", chart_repr.OBJECTIVE_STAT_COLS)
 
+    def test_declared_dims_match_lists(self):
+        """Every list-backed encoder must declare its real list length.
+
+        Same failure class as the `c_jrank` drift (2026-09-07): the registry said 27
+        dims while the list had 26. perm_space (2026-09-11) joins the guard.
+        """
+        reg = chart_repr.chart_encoder_registry()
+        pairs = {
+            "objective_stats": chart_repr.OBJECTIVE_STAT_COLS,
+            "objective_stats_v2": (chart_repr.OBJECTIVE_STAT_COLS
+                                   + chart_repr.OBJECTIVE_V2_COLS),
+            "perm_space": chart_repr.OBJECTIVE_PERM_COLS,
+        }
+        for name, cols in pairs.items():
+            self.assertIn(name, reg)
+            self.assertEqual(reg[name][1], len(cols), f"{name} dim mismatch")
+
     def test_no_difficulty_table_features(self):
         """PROTOCOL.md §1: table level is a fence/coordinate, never a feature."""
         banned = {"level", "table", "c_level", "c_table", "level_norm",
                   "h_level_acc", "table_satellite", "table_stella", "table_insane"}
-        allf = set(chart_repr.OBJECTIVE_STAT_COLS) | set(chart_repr.HISTORY_FEATURES)
+        allf = (set(chart_repr.OBJECTIVE_STAT_COLS)
+                | set(chart_repr.HISTORY_FEATURES)
+                | set(chart_repr.OBJECTIVE_V2_COLS)
+                | set(chart_repr.OBJECTIVE_PERM_COLS))
         self.assertEqual(allf & banned, set())
 
     def test_few_shot_schema_is_a_subset(self):

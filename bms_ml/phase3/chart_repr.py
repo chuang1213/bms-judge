@@ -80,6 +80,34 @@ OBJECTIVE_V2_COLS = [
 #   everything else     -> file-objective (LN via LNTYPE/LNOBJ, STOP via spec, lane
 #                          0 = channel 16 scratch, grid positions)
 
+# Permutation-space hand-travel geometry (2026-09-11, user prompt: "the target
+# chart's statistics are probably not the best choice ... there is no truly
+# objective BMS description, hand-craft a new representation"). Built by
+# chart_perm_space.py; inspired by Permikon (Permikon-main/), which evaluates all
+# 5040 key-lane permutations instead of pretending the written arrangement is THE
+# chart. We keep absolute cross-chart-comparable values (no Permikon min-max
+# normalisation) and summarise each metric over the whole permutation space.
+#
+# Convention dependence, declared (same spirit as the v2 audit above):
+#   lane 1..7 as a 1-D spatial coordinate -> physical 7-key layout assumption
+#     (human factor, NOT file structure) -- identical in kind to v2 hand_balance
+#   scratch anchored (not permuted)      -> follows Permikon; BMS RANDOM does
+#     remap scratch, so ps_scratch_* are the only scratch-aware terms here
+#   1/60s-agnostic: positions are exact grid timestamps (file-objective)
+#   weight = min(min_gap/gap, 1)         -> Permikon's "faster notes matter more"
+OBJECTIVE_PERM_COLS = [
+    "ps_smooth_mean", "ps_smooth_std", "ps_smooth_min", "ps_smooth_max",
+    "ps_smooth_base_pct",
+    "ps_tight_mean", "ps_tight_std", "ps_tight_min", "ps_tight_max",
+    "ps_tight_base_pct",
+    "ps_base_mean", "ps_base_std", "ps_base_min", "ps_base_max",
+    "ps_base_base_pct",
+    "ps_spread_mean", "ps_spread_std", "ps_spread_min", "ps_spread_max",
+    "ps_spread_base_pct",
+    # permutation-invariant scratch interleaving (scratch is anchored)
+    "ps_scratch_pos_frac", "ps_scratch_key_frac",
+]
+
 
 def load_phase2a(shas) -> pd.DataFrame:
     """Phase2A T1 chart representations (64-dim) for the requested sha256 set."""
@@ -93,6 +121,12 @@ def load_v2(shas) -> pd.DataFrame:
     return reps[reps["sha256"].isin(set(shas))]
 
 
+def load_perm_space(shas) -> pd.DataFrame:
+    """Permutation-space geometry stats (see OBJECTIVE_PERM_COLS) for the sha256 set."""
+    reps = pd.read_parquet(DS / "chart_perm_space.parquet")
+    return reps[reps["sha256"].isin(set(shas))]
+
+
 def chart_encoder_registry() -> dict:
     """Encoder name -> (feature builder description, dim). New encoders register here
     and are compared on the same downstream task (PROTOCOL.md section 3)."""
@@ -103,6 +137,12 @@ def chart_encoder_registry() -> dict:
                                "per-lane IOI percentiles, density variability, "
                                "simultaneity shape, lane entropy/hand balance",
                             27 + len(OBJECTIVE_V2_COLS)),
+        "perm_space": ("hand-travel geometry summarised over all 5040 key-lane "
+                       "permutations (smooth/tight/base/spread mean,std,min,max + "
+                       "written-arrangement percentile + scratch interleaving); "
+                       "lane 1..7 treated as a 1-D spatial axis (human-factor "
+                       "assumption, declared)",
+                       len(OBJECTIVE_PERM_COLS)),
         "phase2a_t1_pooled": ("64-dim mean-pooled T1 GridEncoder windows", 64),
     }
 

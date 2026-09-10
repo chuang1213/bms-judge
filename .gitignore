@@ -27,6 +27,7 @@ BmsReplayViewer/
 # 只读参考项目（phase3 参考，勿改动勿提交）
 lampghost/
 beatoraja-master/
+Permikon-main/
 
 # 临时文件
 *.tmp
