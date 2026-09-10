@@ -81,6 +81,10 @@ def _response_cols(prefix: str) -> list[str]:
 
 HISTORY_RESPONSE_COLS = _response_cols("h_")            # acc response (protocol best)
 HISTORY_RESPONSE_LAMP_COLS = _response_cols("l_")       # lamp response
+# BP response, on log1p(bp) like every BP model in the project (skew 2.56 -> 0.15).
+# BP improved by 5.2 MAE when the lamp block was added, so the target is responsive to
+# this family of features and deserves its own block.
+HISTORY_RESPONSE_BP_COLS = _response_cols("b_")
 
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play

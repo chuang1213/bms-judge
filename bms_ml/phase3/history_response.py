@@ -22,10 +22,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-from chart_repr import (HISTORY_RESPONSE_COLS, HISTORY_RESPONSE_LAMP_COLS,
-                        RESPONSE_AXES)
+from chart_repr import (HISTORY_RESPONSE_BP_COLS, HISTORY_RESPONSE_COLS,
+                        HISTORY_RESPONSE_LAMP_COLS, RESPONSE_AXES)
 from response_features import axis_sd, build_table
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,14 +46,19 @@ def main() -> None:
     fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
 
     sd = axis_sd(fp)
+    fp["log1p_bp"] = np.log1p(fp["bp"].values.astype(np.float64))   # project-wide BP form
     acc_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
                           target="acc", prefix="h_", clip=(0.0, 100.0))
     lamp_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
                            target="lamp", prefix="l_", clip=(1.0, 9.0))
-    feats = pd.concat([acc_blk, lamp_blk], axis=1)
+    bp_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
+                         target="log1p_bp", prefix="b_", clip=(0.0, 12.0))
+    feats = pd.concat([acc_blk, lamp_blk, bp_blk], axis=1)
     out = pd.concat([fp[["player", "sha256", "phase", "time"]], feats], axis=1)
     out.to_parquet(DS / "history_response.parquet")
-    for blk, cols in (("acc", HISTORY_RESPONSE_COLS), ("lamp", HISTORY_RESPONSE_LAMP_COLS)):
+    for blk, cols in (("acc", HISTORY_RESPONSE_COLS),
+                      ("lamp", HISTORY_RESPONSE_LAMP_COLS),
+                      ("bp", HISTORY_RESPONSE_BP_COLS)):
         # cols[-2] is <prefix>resp_mean
         print(f"{blk}: coverage {float(feats[cols[-2]].notna().mean()):.3f}")
     print(f"rows {len(out)} -> {DS / 'history_response.parquet'}")

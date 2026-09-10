@@ -23,9 +23,9 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
-from chart_repr import (HISTORY_FEATURES, HISTORY_RESPONSE_COLS,
-                        HISTORY_RESPONSE_LAMP_COLS, OBJECTIVE_STAT_COLS,
-                        OBJECTIVE_V2_COLS, feature_manifest)
+from chart_repr import (HISTORY_FEATURES, HISTORY_RESPONSE_BP_COLS,
+                        HISTORY_RESPONSE_COLS, HISTORY_RESPONSE_LAMP_COLS,
+                        OBJECTIVE_STAT_COLS, OBJECTIVE_V2_COLS, feature_manifest)
 from common import centered_r2, hgb_fit_predict, load_samples, mae, r2
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,7 +59,7 @@ def main() -> None:
     hr = pd.read_parquet(DS / "history_response.parquet")
     assert not hr.duplicated(["player", "sha256"]).any(), "response key not unique"
     df = df.merge(hr[["player", "sha256"] + HISTORY_RESPONSE_COLS
-                     + HISTORY_RESPONSE_LAMP_COLS],
+                     + HISTORY_RESPONSE_LAMP_COLS + HISTORY_RESPONSE_BP_COLS],
                   on=["player", "sha256"], how="left")
     v2 = pd.read_parquet(DS / "chart_stats_v2.parquet")
     df = df.merge(v2, on="sha256", how="left")
@@ -98,6 +98,14 @@ def main() -> None:
                 if c.startswith("h_resp_") and c not in ("h_resp_mean", "h_resp_std")]
     sets["B_resp_noslope"] = (V1 + Hv + ACC_RESP + ["h_resp_mean", "h_resp_std"]
                               + LAMP_RESP + ["l_resp_mean", "l_resp_std"])
+    # BP block (target = log1p(bp)); BP is the target that reacted most to the lamp
+    # block, so give it its own response block and test both widths.
+    BP_RESP = [c for c in HISTORY_RESPONSE_BP_COLS
+               if c.startswith("b_resp_") and c not in ("b_resp_mean", "b_resp_std")]
+    CUR = (HISTORY_RESPONSE_COLS + LAMP_RESP + ["l_resp_mean", "l_resp_std"])
+    sets["B_resp+bpblock"] = V1 + Hv + CUR + HISTORY_RESPONSE_BP_COLS
+    sets["B_resp+bpresp"] = (V1 + Hv + CUR + BP_RESP
+                             + ["b_resp_mean", "b_resp_std"])
 
     results: dict = {"n_train": len(tr), "n_test": len(te),
                      "h_resp_mean_missing_frac": round(cov, 4)}
