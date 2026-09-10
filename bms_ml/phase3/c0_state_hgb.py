@@ -30,7 +30,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
 
 from chart_repr import HISTORY_FEW_FEATURES, OBJECTIVE_STAT_COLS
-from common import Imputer, hgb_fit_predict, load_firstplays, mae
+from common import HGBModel, Imputer, load_firstplays, mae
 from c_chart_aware import event_matrix
 from c0_fewshot import build_seqs, train_head
 from transfer_eval import prefix_hist_features
@@ -99,18 +99,39 @@ def main() -> None:
         imp = Imputer()
         C_all = imp.fit_transform(rows_tr[OBJECTIVE_STAT_COLS].values)
         sc = StandardScaler().fit(C_all)
+        # Keep train and eval in the SAME chart space. The GRU is trained on
+        # sc-transformed chart stats and C_te (below) is sc-transformed too, so the
+        # HGB chart columns and the pooled state must live in that same space.
+        # Pre-fix (2026-09-11) the HGB training frame used raw C_all while eval used
+        # C_te: a tree model is invariant to affine rescaling ONLY if both sides get
+        # the same transform, so bin thresholds learnt on raw values were applied to
+        # standardised ones. Verified fix: M2@k1 27.82 -> 23.88, byte-matching
+        # transfer_eval's official curve (see EXPERIMENT_LOG 2026-09-11).
+        C_s = sc.transform(C_all)
 
-        model = train_head("acc", S_tr[~is_val], M_tr[~is_val], sc.transform(C_all[~is_val]),
+        model = train_head("acc", S_tr[~is_val], M_tr[~is_val], C_s[~is_val],
                            rows_tr["acc"].values[~is_val] / 100.0,
-                           S_tr[is_val], M_tr[is_val], sc.transform(C_all[is_val]),
+                           S_tr[is_val], M_tr[is_val], C_s[is_val],
                            rows_tr["acc"].values[is_val] / 100.0,
                            len(OBJECTIVE_STAT_COLS), E.shape[1], seed)
 
         # state for the TRAINING rows too, so HGB sees the same schema at train/eval
-        Z_tr = pooled_state(model, S_tr, M_tr, C_all)
+        Z_tr = pooled_state(model, S_tr, M_tr, C_s)
 
         mine = fp[fp["player"] == D].sort_values("time").reset_index(drop=True)
         pos_D = pos_by_player[D]
+
+        # The HGB training frame is constant in k (C_s, the training history and the
+        # pooled state do not depend on the few-shot prefix), so build it and fit the
+        # two models ONCE per held-out player. Numerically identical (common.HGBModel).
+        F_M2 = [f"f{i}" for i in range(C_s.shape[1] + 9)]
+        F_ALL = [f"f{i}" for i in range(C_s.shape[1] + 9 + Z_tr.shape[1])]
+        tr_hgb = pd.DataFrame(np.hstack([C_s, rows_tr[HISTORY_FEW_FEATURES].values, Z_tr]),
+                              columns=F_ALL)
+        tr_hgb["acc"] = rows_tr["acc"].values
+        hgb_m2 = HGBModel(tr_hgb, F_M2, tr_hgb["acc"].values, seed=seed)
+        hgb_st = HGBModel(tr_hgb, F_ALL, tr_hgb["acc"].values, seed=seed)
+
         curve = []
         for k in KS:
             if k >= len(mine) - 1:
@@ -136,18 +157,12 @@ def main() -> None:
             else:
                 hf = pd.DataFrame(np.nan, index=targets.index,
                                   columns=HISTORY_FEW_FEATURES)
-            tr_hgb = pd.DataFrame(np.hstack([C_all, rows_tr[HISTORY_FEW_FEATURES].values, Z_tr]),
-                                  columns=[f"f{i}" for i in range(C_all.shape[1] + 9 + Z_tr.shape[1])])
             te_hgb = pd.DataFrame(
                 np.hstack([C_te, hf[HISTORY_FEW_FEATURES].values, Z_te]),
-                columns=tr_hgb.columns)
-            tr_hgb["acc"] = rows_tr["acc"].values
-            te_hgb["acc"] = targets["acc"].values
+                columns=tr_hgb.columns[:-1])
 
-            p_m2 = hgb_fit_predict(tr_hgb, te_hgb, [f"f{i}" for i in range(C_all.shape[1] + 9)],
-                                   tr_hgb["acc"].values, seed=seed)
-            p_st = hgb_fit_predict(tr_hgb, te_hgb, list(tr_hgb.columns[:-1]),
-                                   tr_hgb["acc"].values, seed=seed)
+            p_m2 = hgb_m2.predict(te_hgb)
+            p_st = hgb_st.predict(te_hgb)
             curve.append({"k": k, "n_eval": int(len(targets)),
                           "M2_acc": round(mae(targets["acc"], p_m2), 3),
                           "M2state_acc": round(mae(targets["acc"], p_st), 3)})

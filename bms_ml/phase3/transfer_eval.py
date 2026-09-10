@@ -39,7 +39,7 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
 
 from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, OBJECTIVE_STAT_COLS)
-from common import add_region, hgb_fit_predict, load_firstplays, mae
+from common import HGBModel, add_region, hgb_fit_predict, load_firstplays, mae
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
@@ -168,6 +168,20 @@ def main() -> None:
         # ("player has k plays so far, predict their next charts") and keeping the
         # history-recency feature distribution consistent with training.
         W = 150
+        # The k-loop varies ONLY the evaluation frame: tr_others, the labels and the
+        # feature lists are identical for every k. Refitting imputer+scaler+HGB once
+        # per k did the same fit 8x; hoisting it is numerically identical (see
+        # common.HGBModel) and is the bulk of this script's speedup.
+        # NB: M2_bp deliberately uses CHART + HIST (all 12), not CHART + HIST_FEW as
+        # acc/lamp do — preserved as-is for continuity of the reported curve.
+        bp_cap = float(np.log1p(tr_others["bp"].max()))
+        m0_acc = HGBModel(tr_others, CHART, tr_others["acc"].values)
+        m0_lamp = HGBModel(tr_others, CHART, tr_others["lamp"].values.astype(float))
+        m2_acc = HGBModel(tr_others, CHART + HIST_FEW, tr_others["acc"].values)
+        m2_lamp = HGBModel(tr_others, CHART + HIST_FEW, tr_others["lamp"].values.astype(float))
+        m0_bp = HGBModel(tr_others, CHART, np.log1p(tr_others["bp"].values))
+        m2_bp = HGBModel(tr_others, CHART + HIST, np.log1p(tr_others["bp"].values))
+
         curve = []
         for k in KS:
             if k >= len(mine) - 1:
@@ -183,18 +197,12 @@ def main() -> None:
             te_k = targets.copy()
             te_k[HIST_FEW] = hf[HIST_FEW].values
 
-            bp_cap = float(np.log1p(tr_others["bp"].max()))
-
-            def bp_pred(feats):
-                return np.expm1(np.clip(hgb_fit_predict(tr_others, te_k, feats,
-                                                     np.log1p(tr_others["bp"].values)),
-                                        0, bp_cap))
-
-            p0_acc = hgb_fit_predict(tr_others, te_k, CHART, tr_others["acc"].values)
-            p0_lamp = hgb_fit_predict(tr_others, te_k, CHART, tr_others["lamp"].values.astype(float))
-            p2_acc = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW, tr_others["acc"].values)
-            p2_lamp = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW,
-                                   tr_others["lamp"].values.astype(float))
+            p0_acc = m0_acc.predict(te_k)
+            p0_lamp = m0_lamp.predict(te_k)
+            p2_acc = m2_acc.predict(te_k)
+            p2_lamp = m2_lamp.predict(te_k)
+            p0_bp = np.expm1(np.clip(m0_bp.predict(te_k), 0, bp_cap))
+            p2_bp = np.expm1(np.clip(m2_bp.predict(te_k), 0, bp_cap))
             pk_acc = te_k["h_knn_acc"].values
             pk_lamp = te_k["h_acc_mean"].values / 100 * 6
             pk_bp = te_k["h_bp_mean"].values
@@ -207,9 +215,9 @@ def main() -> None:
                 "M0_lamp": round(mae(te_k["lamp"], p0_lamp), 3),
                 "M1_lamp": round(mae(te_k["lamp"], pk_lamp), 3),
                 "M2_lamp": round(mae(te_k["lamp"], p2_lamp), 3),
-                "M0_bp": round(mae(te_k["bp"], bp_pred(CHART)), 2),
+                "M0_bp": round(mae(te_k["bp"], p0_bp), 2),
                 "M1_bp": round(mae(te_k["bp"], pk_bp), 2),
-                "M2_bp": round(mae(te_k["bp"], bp_pred(CHART + HIST)), 2),
+                "M2_bp": round(mae(te_k["bp"], p2_bp), 2),
             })
         res["fewshot"] = curve
         results["lopo"][D] = res

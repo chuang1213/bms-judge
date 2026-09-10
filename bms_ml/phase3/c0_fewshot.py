@@ -99,7 +99,12 @@ def build_seqs(target_pos: np.ndarray, pool_pos: np.ndarray, times_days: np.ndar
 
 
 def train_head(head: str, S_tr, M_tr, C_tr, y_tr, S_va, M_va, C_va, y_va,
-               chart_dim: int, seq_dim: int, seed: int):
+               chart_dim: int, seq_dim: int, seed: int, batch: int = 64):
+    """Train one head. `batch` is the ONLY knob that trades speed for a different SGD
+    trajectory: 64 is the historical default (all reported numbers use it); raising it
+    to 256-512 removes most of the per-step Python/launch overhead (~3-5x on the GRU
+    stage) but changes results, so any run with batch != 64 must be re-validated and
+    must not be mixed into the ledger against batch=64 numbers."""
     torch.manual_seed(seed)
     model = CondModel(seq_dim, chart_dim).to(DEV)
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
@@ -109,18 +114,21 @@ def train_head(head: str, S_tr, M_tr, C_tr, y_tr, S_va, M_va, C_va, y_va,
         lossf = nn.functional.huber_loss
         ytr, yva = T(y_tr), T(y_va)
     Xt, Mt, Ct = T(S_tr), T(M_tr), T(C_tr)
+    # validation tensors hoisted too: the loop below used to re-upload S_va/M_va/C_va
+    # to the GPU on every epoch. Pure H2D waste, identical numbers.
+    Xv, Mv, Cv = T(S_va), T(M_va), T(C_va)
     best, best_state, patience = np.inf, None, 0
     for _ in range(60):
         model.train()
         perm = torch.randperm(len(ytr))
-        for i in range(0, len(ytr), 64):
-            b = perm[i:i + 64]
+        for i in range(0, len(ytr), batch):
+            b = perm[i:i + batch]
             out = model(Xt[b], Mt[b], Ct[b])
             loss = lossf(out[head], ytr[b])
             opt.zero_grad(); loss.backward(); opt.step()
         model.eval()
         with torch.no_grad():
-            vloss = float(lossf(model(T(S_va), T(M_va), T(C_va))[head], yva))
+            vloss = float(lossf(model(Xv, Mv, Cv)[head], yva))
         if vloss < best - 1e-4:
             best, patience, best_state = vloss, 0, {k: v.clone() for k, v in model.state_dict().items()}
         else:
@@ -136,8 +144,12 @@ def train_head(head: str, S_tr, M_tr, C_tr, y_tr, S_va, M_va, C_va, y_va,
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--batch", type=int, default=64,
+                    help="GRU minibatch size; 64 reproduces all reported numbers, "
+                         "256-512 is much faster but changes results (re-validate)")
     args = ap.parse_args()
     seed = args.seed
+    batch = args.batch
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -199,7 +211,7 @@ def main() -> None:
                                 (y_acc if h == "acc" else y_bp if h == "bp" else y_lamp)[~is_val],
                                 S_va, M_va, C_va,
                                 (y_acc if h == "acc" else y_bp if h == "bp" else y_lamp)[is_val],
-                                len(OBJECTIVE_STAT_COLS), E.shape[1], seed)
+                                len(OBJECTIVE_STAT_COLS), E.shape[1], seed, batch=batch)
                   for h in ("acc", "lamp", "bp")}
 
         # ---- few-shot eval ----

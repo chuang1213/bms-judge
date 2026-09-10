@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from bms_ml.phase3 import chart_repr
-from bms_ml.phase3.common import Imputer, centered_r2, mae, r2
+from bms_ml.phase3.common import HGBModel, Imputer, centered_r2, hgb_fit_predict, mae, r2
 
 
 class TestFeatureRegistry(unittest.TestCase):
@@ -86,6 +86,40 @@ class TestEvalPrimitives(unittest.TestCase):
             imp = Imputer().fit(pd.DataFrame({"x": [np.nan, np.nan]}))
             out = imp.transform(pd.DataFrame({"x": [np.nan]}))
         np.testing.assert_allclose(out, [[0.0]])
+
+
+class TestHGBModelHoisting(unittest.TestCase):
+    """Guard for the 2026-09-11 speedup refactor.
+
+    The few-shot k-loop varies ONLY the evaluation frame, so transfer_eval /
+    c0_state_hgb used to refit the identical HGB once per k (~8x redundant). They now
+    hoist the fit through `common.HGBModel`. That is only legitimate if it reproduces
+    the one-shot path exactly — otherwise every reported few-shot number silently
+    shifts. Data-free so it runs anywhere.
+    """
+
+    def test_hgbmodel_matches_hgb_fit_predict(self):
+        rng = np.random.RandomState(0)
+        tr = pd.DataFrame(rng.normal(size=(300, 5)), columns=list("abcde"))
+        tr.iloc[::7, 0] = np.nan                    # exercise the imputer
+        tr["y"] = rng.normal(size=300)
+        te = pd.DataFrame(rng.normal(size=(60, 5)), columns=list("abcde"))
+        te.iloc[::5, 1] = np.nan
+        np.testing.assert_array_equal(
+            hgb_fit_predict(tr, te, list("abcde"), tr["y"].values),
+            HGBModel(tr, list("abcde"), tr["y"].values).predict(te))
+
+    def test_hgbmodel_is_reusable_across_frames(self):
+        """The k-loop contract: one fit, many evaluation frames, same predictions."""
+        rng = np.random.RandomState(1)
+        tr = pd.DataFrame(rng.normal(size=(200, 4)), columns=list("abcd"))
+        tr["y"] = rng.normal(size=200)
+        m = HGBModel(tr, list("abcd"), tr["y"].values)
+        for _ in range(3):
+            te = pd.DataFrame(rng.normal(size=(20, 4)), columns=list("abcd"))
+            np.testing.assert_array_equal(
+                m.predict(te),
+                hgb_fit_predict(tr, te, list("abcd"), tr["y"].values))
 
 
 if __name__ == "__main__":

@@ -8,14 +8,18 @@
 （acc / lamp / BP 三目标分开）**，最终目标是可验证的 player state 表示。
 研究工程，不是产品开发；负结果同样是交付物。
 
-## 当前状态一句话（2026-09-07）
+## 当前状态一句话（2026-09-11）
 
-17 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏）下基线：A 11.79 / H 7.55 / B 7.01（acc MAE）；
-centered R²：H +0.281 / B +0.380 / C0 +0.129。
+18 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏、c_jrank 在列）下基线
+（train 6,425 / test 6,434）：A 11.97 / H 7.62 / **B 6.99**（acc MAE）；
+centered R²：H +0.278 / B +0.387；B_v2（+v2 无阈值谱面统计）当前最优：acc **6.825** / cR² **+0.406**。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
-在 16/17 玩家上胜过 D-local，few-shot 样本效率 3-5×。
-**Phase 3.5 审阅**（PHASE3_5_REVIEW.md）：B 比平凡基线"玩家均值"（9.997）好 2.99（30%）→ 路线健康；
-**A（11.79）比全局均值还差**，不得当下界引用；**C0−B 差距单调收窄 3.42→1.94→1.56→1.25**。
+在 18/18 玩家上胜过 D-local，few-shot 样本效率 3-5×。
+**Phase 3.5 审阅**（PHASE3_5_REVIEW.md）：B 比平凡基线"玩家均值"（9.997）好 ~3.0（30%）→ 路线健康；
+**A 比全局均值（11.43）还差**，不得当下界引用；**C0−B 差距单调收窄 3.42→1.94→1.56→1.25**。
+**2026-09-11 修正**：`c0_state_hgb.py` 训练/评估 chart 尺度不一致的 bug（详见 EXPERIMENT_LOG）——
+修后其内联 M2 与 `transfer_eval` 官方曲线精确对齐，原"learned state 每个 k 都赢"的结论**被推翻**
+（修复后增益退化为噪声级），"C 换掉手工 conditioning"这条路的证据需重估。
 所有数字变化见 `EXPERIMENT_LOG.md` 台账。
 
 ## 阅读顺序（动代码前必读）
@@ -61,8 +65,14 @@ centered R²：H +0.281 / B +0.380 / C0 +0.129。
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；下载慢走 127.0.0.1:7897 代理）。
   torch 相关用 `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
-- 测试：`python -m unittest discover bms_ml/tests`（**34 个**：25 parser/timeline 回归
-  + 9 个 phase3 特征登记处与评估原语回归）
+- 测试：`python -m unittest discover bms_ml/tests`（**36 个**：25 parser/timeline 回归
+  + 11 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
+- **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
+  `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
+  恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。
+  **GRU 加速开关**：c0_fewshot 支持 `--batch`（默认 64 复现全部历史数字；512 实测 **5.1×**，
+  但改变 SGD 轨迹、须重新验证，**不得与 batch=64 的历史数字混用**）。
+  探索性迭代用 1 seed，只有最终报数才跑 3 seeds。
 - **特征清单纪律（2026-09-07 起）**：任何脚本需要 27 维 chart 统计或 12 维历史特征，
   一律 `from chart_repr import OBJECTIVE_STAT_COLS / HISTORY_FEATURES`，**不要在脚本里重新声明**；
   少数派/指标一律 `from common import ...`。此前 5 份拷贝导致 `c_jrank` 加进所有脚本
