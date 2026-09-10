@@ -114,6 +114,52 @@ k 几乎不影响**（6.549–6.637）→ 响应剖面吸收掉了 kNN 邻域的
 
 ---
 
+## 7. 附录：LR2 接入与"客户端分对待"（2026-09-11 晚）
+
+用户提供了第一份真实 LR2 存档（`PlayerData/LunaticRave2/V_soflan.db`），并提出"LR2 与 beatoraja
+判定机制类似但不完全一样，考虑区分对待"。结论：**该判断成立，且已量化**。
+
+### 7.1 LR2 存档的结构（实测）
+
+| 项 | 结论 |
+|---|---|
+| 规模 | `score` 表 6,439 行，**一行 = 一张谱的最佳成绩**（非逐局） |
+| 时间戳 | **完全没有**（`player.playcount` = 14,793 是唯一"次数"痕迹） |
+| 关联语料库 | 84.2%（5,424 行）经 manifest 的 md5→sha256 桥接，库内无重复 |
+| acc | `(PG×2+GR)/(2×notes)`，对存档 `rate` 验证（max\|Δ\|=0.999 = 整数截断，corr 0.9999） |
+| lamp | `clear ∈ {0..5}`，**无 FC/PERFECT** |
+| 独有能力 | `playcount/clearcount/failcount`、`op_history`、`rseed` |
+
+### 7.2 客户端差异实测（4,576 张共有谱面，统一 manifest 分母）
+
+| 指标 | 值 |
+|---|---|
+| acc 差（LR2最佳 − beatoraja最佳） | 均值 **+2.14** / 中位 +0.46 / **sd 10.16** |
+| 差异幅度 | \|差\|>1pp **58.5%**、>5pp **29.4%**；corr 0.84 |
+| 非 LN 谱（n=2,241） | 均值 +4.08 / sd 8.35 |
+| corr(\|差\|, ln_ratio) | **+0.016** → 不是 LN 计分口径差异 |
+
+**sd 10.16pp > 模型自身 acc MAE 6.5** → 混池等于注入与信号同量级的噪声。**禁止混池。**
+
+### 7.3 已落地
+
+1. **`lr2_reader.py`**（不再是 stub）+ `ingest_player.py --client lr2`；
+2. **权威枚举**取自 `ref_repo/beatoraja-master`（`ScreenShotExporter.java`、`LR2SelectSkinLoader.java`）：
+   beatoraja 在 2/3 插入 ASSIST_EASY / L_ASSIST，同一档位**差 +2** → `lr2_clear_to_beatoraja()`
+   **仅供对比，不代表可混用**；
+3. **`data.py` 客户端守卫**：include=true 且 client≠beatoraja 直接拒绝构建（已单测，防止静默污染）；
+4. `PROTOCOL.md §1` 已把"客户端是声明维度 / 禁混池"写为红线；测试 40→**44**。
+
+### 7.4 未决（需用户决策）
+
+- **LR2-only 玩家没有"首打"目标**（一行 = 最佳成绩）→ 当前协议无法纳入。`vsoflan_lr2` 保持
+  include=false。
+- 一个值得注意的契合：**矩阵补全（ALS）不需要时间戳**。LR2 的"缺点"（无时间、无首打）恰恰是
+  `ref_repo/AlphaOSU-main` 所用形式（ALS 分数模型 + pass 模型 + 推理）的**前提**。若要做推荐方向，
+  LR2 数据反而比 beatoraja 更直接可用 —— 这可能是后续把"预测"转成"推荐"的入口。
+
+---
+
 ## 6. 下一步建议（按价值）
 
 1. **把 `B_resp` 立为 `compare_nolevel.py` 的正式参照行**（当前只在 `response_eval.py` 报告），
