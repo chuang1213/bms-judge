@@ -43,6 +43,26 @@ HISTORY_FEATURES = [
     "h_days_since_active", "h_plays_last30d", "h_days_span",
 ]
 
+# Per-axis PERSONAL RESPONSE PROFILE (2026-09-11, PHASE3_5_REVIEW §4.3 follow-up).
+# The only chart-conditioned player feature before this was `h_knn_acc`; these give
+# each player an explicit univariate response curve per chart axis, fitted on their
+# strictly-prior plays (see history_response.py). `h_resp_*` is chart-conditioned
+# (uses the target's own axis value); `h_slope_*` is a pure player trait.
+# Axis -> v1 column. Chosen to span the pressure types the framework paper names
+# (density / LN / scratch / length / chord / same-lane repetition) WITHOUT importing
+# its 7-axis vocabulary — these are plain objective columns, not skill labels.
+RESPONSE_AXES = {
+    "nps": "c_avg_nps",
+    "ln": "c_ln_ratio",
+    "scratch": "c_scratch_ratio",
+    "dur": "c_duration_sec",
+    "chord": "c_chord3plus_count",
+    "jack": "c_jack_count",
+}
+HISTORY_RESPONSE_COLS = ([f"h_resp_{k}" for k in RESPONSE_AXES]
+                         + [f"h_slope_{k}" for k in RESPONSE_AXES]
+                         + ["h_resp_mean", "h_resp_std"])
+
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play
 # prefix, so their distributions are incomparable (evaluation values land beyond

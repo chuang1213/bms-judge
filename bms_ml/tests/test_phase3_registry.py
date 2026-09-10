@@ -50,6 +50,23 @@ class TestFeatureRegistry(unittest.TestCase):
             self.assertIn(name, reg)
             self.assertEqual(reg[name][1], len(cols), f"{name} dim mismatch")
 
+    def test_response_profile_lists_align(self):
+        """history_response.py must emit exactly the registered columns.
+
+        Guards the 2026-09-11 personal-response-profile encoder: the writer and the
+        registry drifted apart once already for a different list (c_jrank), and a
+        silent drift here would produce an all-NaN feature block that HGB imputes
+        away without any error.
+        """
+        axes = chart_repr.RESPONSE_AXES
+        want = ([f"h_resp_{k}" for k in axes] + [f"h_slope_{k}" for k in axes]
+                + ["h_resp_mean", "h_resp_std"])
+        self.assertEqual(chart_repr.HISTORY_RESPONSE_COLS, want)
+        self.assertEqual(len(chart_repr.HISTORY_RESPONSE_COLS), 2 * len(axes) + 2)
+        allc = set(chart_repr.OBJECTIVE_STAT_COLS) | set(chart_repr.OBJECTIVE_V2_COLS)
+        for k, col in axes.items():
+            self.assertIn(col, allc, f"response axis {k} -> {col} is not objective")
+
     def test_no_difficulty_table_features(self):
         """PROTOCOL.md §1: table level is a fence/coordinate, never a feature."""
         banned = {"level", "table", "c_level", "c_table", "level_norm",
@@ -57,7 +74,8 @@ class TestFeatureRegistry(unittest.TestCase):
         allf = (set(chart_repr.OBJECTIVE_STAT_COLS)
                 | set(chart_repr.HISTORY_FEATURES)
                 | set(chart_repr.OBJECTIVE_V2_COLS)
-                | set(chart_repr.OBJECTIVE_PERM_COLS))
+                | set(chart_repr.OBJECTIVE_PERM_COLS)
+                | set(chart_repr.HISTORY_RESPONSE_COLS))
         self.assertEqual(allf & banned, set())
 
     def test_few_shot_schema_is_a_subset(self):

@@ -79,6 +79,15 @@ def load_manifest() -> pd.DataFrame:
                 "c_jrank": r.get("rank"),  # #RANK judge window tier (parser default 2)
             })
     df = pd.DataFrame(rows)
+    # The corpus library contains the SAME chart file under 2-3 paths (e.g.
+    # BMS/gremlin_ogg/x.bms and BMS/GREMLIN/x.bms), so manifest.jsonl has 329
+    # duplicated sha256 (655 rows). Merging on sha256 without dedup duplicated
+    # first-play events: 242 rows of samples.parquet were exact key-duplicates
+    # (128 test / 114 train = 2.0% of test double-counted), and because the two
+    # copies carry the SAME timestamp, one of them had its own chart inside its
+    # strict-prior history window - a subtle self-leak in h_knn_acc. Fixed
+    # 2026-09-11 (see EXPERIMENT_LOG). Keep the manifest 1:1 on sha256.
+    df = df.drop_duplicates("sha256", keep="first").reset_index(drop=True)
     feat = pd.DataFrame(df.pop("features").tolist(),
                         columns=json.load(open(CORPUS / "analysis" / "features_schema.json",
                                                encoding="utf-8"))["names"])
@@ -256,6 +265,12 @@ def main() -> None:
     # chart-side annotation
     fp = fp.merge(manifest, on="sha256", how="left")
     fp = fp.merge(tables, on="sha256", how="left")
+    # Invariant: exactly one row per (player, chart). A violated key both
+    # double-weights the row in train/test and, since the copies share a timestamp,
+    # lets a duplicate of the target chart sit inside its own strict-prior history
+    # window (self-leak in h_knn_acc). Guard against regressions of the 2026-09-11 fix.
+    assert not fp.duplicated(["player", "sha256"]).any(), \
+        "duplicate (player, sha256) first-play rows: a reference table is not 1:1 on sha256"
     fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
     # BP plausibility guard: BP counts misses, cannot exceed the note count by much
     fp = fp[fp["bp"] <= fp["notes"] + 5].copy()

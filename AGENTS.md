@@ -8,18 +8,22 @@
 （acc / lamp / BP 三目标分开）**，最终目标是可验证的 player state 表示。
 研究工程，不是产品开发；负结果同样是交付物。
 
-## 当前状态一句话（2026-09-11）
+## 当前状态一句话（2026-09-11 晚）
 
 18 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏、c_jrank 在列）下基线
-（train 6,425 / test 6,434）：A 11.97 / H 7.62 / **B 6.99**（acc MAE）；
-centered R²：H +0.278 / B +0.387；B_v2（+v2 无阈值谱面统计）当前最优：acc **6.825** / cR² **+0.406**。
+（**train 6,358 / test 6,367**，2026-09-11 修复语料库重复 sha256 **去重后**）：
+A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386。
+**当前最优 = `B_full_v2`：acc 6.623 / cR² +0.425 / BP 125.8**
+（= v1 27 + v2 14 + 手工历史 12 + **个人响应剖面 14**；复现：`response_eval.py`）；
+次优 `B_v2` = 6.796 / +0.408。**个人响应剖面是本阶段唯一有效的表示改进**（见 `history_response.py`）。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
-在 18/18 玩家上胜过 D-local，few-shot 样本效率 3-5×。
+在 18/18 玩家上胜过 D-local，few-shot 样本效率 3-5×（**这些结果在旧 12,859 行数据集上**，
+去重影响量级 ~0.02）。
 **Phase 3.5 审阅**（PHASE3_5_REVIEW.md）：B 比平凡基线"玩家均值"（9.997）好 ~3.0（30%）→ 路线健康；
 **A 比全局均值（11.43）还差**，不得当下界引用；**C0−B 差距单调收窄 3.42→1.94→1.56→1.25**。
-**2026-09-11 修正**：`c0_state_hgb.py` 训练/评估 chart 尺度不一致的 bug（详见 EXPERIMENT_LOG）——
-修后其内联 M2 与 `transfer_eval` 官方曲线精确对齐，原"learned state 每个 k 都赢"的结论**被推翻**
-（修复后增益退化为噪声级），"C 换掉手工 conditioning"这条路的证据需重估。
+**2026-09-11 已有结论的反转与更正**：① `c0_state_hgb.py` 的 chart 尺度 bug 修复后，"learned state
+每个 k 都赢"被推翻（退化为噪声级）；② `perm_space`（排列空间手部几何）胜 v1 但被 v2 支配，勿重复投入；
+③ framework paper 的 **felt-time 主张不适用于我们**（样本空间内 NPS 零膨胀）。
 所有数字变化见 `EXPERIMENT_LOG.md` 台账。
 
 ## 阅读顺序（动代码前必读）
@@ -65,12 +69,15 @@ centered R²：H +0.278 / B +0.387；B_v2（+v2 无阈值谱面统计）当前�
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；下载慢走 127.0.0.1:7897 代理）。
   torch 相关用 `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
-- 测试：`python -m unittest discover bms_ml/tests`（**37 个**：25 parser/timeline 回归
-  + 12 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
-- **谱面编码器现状（2026-09-11）**：`objective_stats`(27) → `objective_stats_v2`(+14，**当前最优**)
+- 测试：`python -m unittest discover bms_ml/tests`（**38 个**：25 parser/timeline 回归
+  + 13 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
+- **谱面编码器现状（2026-09-11）**：`objective_stats`(27) → `objective_stats_v2`(+14，谱面侧最优)
   → `perm_space`(22，排列空间手部位移几何，**已被 v2 支配**：胜 v1 基线但叠加 v2 无增益，勿重复投入；
   `chart_perm_space.py` 可续跑，`perm_space_eval.py` 可复现)。新编码器一律加进
   `chart_encoder_registry()` 再在同一任务上比
+- **玩家侧编码器现状（2026-09-11）**：12 维手工历史 → **+14 维个人响应剖面**（`history_response.py`，
+  每玩家每轴的一元 OLS 响应曲线，严格因果前缀和）；这是有效改进（`B_v2 6.796 → B_full_v2 6.623`），
+  复现用 `response_eval.py`。新增历史特征请沿用同一模式：独立 parquet + `(player, sha256)` 键 + 登记处清单
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
   `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
   恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。
