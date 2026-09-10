@@ -92,6 +92,12 @@ def main() -> None:
                  if c.startswith("l_resp_") and c not in ("l_resp_mean", "l_resp_std")]
     sets["B_full+lampresp"] = (V1 + Hv + HISTORY_RESPONSE_COLS + LAMP_RESP
                                + ["l_resp_mean", "l_resp_std"])
+    # Symmetry check: the lamp block only earns its keep without the per-axis slopes,
+    # so test the same for acc - dropping h_slope_* removes 11 columns.
+    ACC_RESP = [c for c in HISTORY_RESPONSE_COLS
+                if c.startswith("h_resp_") and c not in ("h_resp_mean", "h_resp_std")]
+    sets["B_resp_noslope"] = (V1 + Hv + ACC_RESP + ["h_resp_mean", "h_resp_std"]
+                              + LAMP_RESP + ["l_resp_mean", "l_resp_std"])
 
     results: dict = {"n_train": len(tr), "n_test": len(te),
                      "h_resp_mean_missing_frac": round(cov, 4)}
