@@ -584,6 +584,42 @@
           ]
         ]
       }
+    },
+    "vsoflan_lr2": {
+      "dir": "PlayerData/LunaticRave2",
+      "client": "lr2",
+      "time": "synthetic",
+      "include": false,
+      "note": "LR2 archive, same person as beatoraja vsoflan; player state only (no first plays / no timestamps)",
+      "added": "2026-09-11T07:33:53",
+      "audit": {
+        "dir": "PlayerData/LunaticRave2",
+        "client": "lr2",
+        "issues": [
+          "no FC/PERFECT (clear>=6) rows: LR2 lamp levels are NOT directly comparable to beatoraja's on a mixed roster",
+          "LR2 has no timestamps and no per-play rows -> usable as player state only, never as first-play targets"
+        ],
+        "fatal": [],
+        "db": "PlayerData\\LunaticRave2\\V_soflan.db",
+        "db_bytes": 6863872,
+        "charts": 6439,
+        "joined_to_corpus": 5424,
+        "join_rate": 0.8424,
+        "duplicate_md5": 0,
+        "has_timestamps": false,
+        "has_first_play_rows": false,
+        "clear_levels": {
+          "NO_PLAY": 38,
+          "FAILED": 1662,
+          "EASY": 968,
+          "NORMAL": 498,
+          "HARD": 3098,
+          "EXHARD": 175
+        },
+        "acc_median": 79.28,
+        "playcount_median": 2.0,
+        "playcount_max": 155
+      }
     }
   }
 }

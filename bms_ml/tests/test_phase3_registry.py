@@ -165,5 +165,31 @@ class TestHGBModelHoisting(unittest.TestCase):
                 hgb_fit_predict(tr, te, list("abcd"), tr["y"].values))
 
 
+class TestLR2Labels(unittest.TestCase):
+    """LR2 archives enter the project as player state (2026-09-11, lr2_reader.py).
+
+    The label formula is the one thing that must be right before the data is usable:
+    LR2 EX score is perfect*2 + great over a max of notes*2. Verified on the real
+    archive against its own integer `rate` column.
+    """
+
+    def test_acc_formula(self):
+        from bms_ml.phase3.lr2_reader import compute_acc
+        # 1131 PG + 374 GR over 1530 notes = 2636/3060 = 86.14% (the archive stores 86)
+        self.assertAlmostEqual(float(compute_acc([1131], [374], [1530])[0]),
+                               86.1438, places=3)
+        self.assertAlmostEqual(float(compute_acc([10], [0], [10])[0]), 100.0)
+        self.assertAlmostEqual(float(compute_acc([0], [0], [10])[0]), 0.0)
+        self.assertTrue(np.isnan(compute_acc([1], [1], [0])[0]))
+
+    def test_clear_codes_are_gauge_types(self):
+        from bms_ml.phase3.lr2_reader import LR2_CLEAR
+        # the archive only carries 0..5; FC/PERFECT are declared but absent, which is
+        # exactly why mixing an LR2 lamp with a beatoraja lamp is not allowed
+        self.assertEqual(LR2_CLEAR[1], "FAILED")
+        self.assertEqual(LR2_CLEAR[5], "EXHARD")
+        self.assertEqual(LR2_CLEAR[7], "PERFECT")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -51,9 +51,11 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   - **契约**：`chart_repr.py`（特征登记处，特征清单/新 encoder 注册的唯一权威）、
     `common.py`（共享评估原语：Imputer / mae / r2 / centered_r2 / hgb_fit_predict / 难度区域）
   - **已弃用**（用难度表特征，仅留档，**运行会因列缺失而崩**）：`baseline.py`、`baseline31.py`、`c_model.py`
-- `玩家资料/<name>/player1/` — 玩家原始存档（gitignore，**唯一副本，改动前提醒用户备份**）
-- `lampghost/`、`beatoraja-master/` — **只读参考项目**（gitignore，schema/语义权威来源）
-- `docs/` — Phase 1/2A 归档文档；`docs/reference/` — framework paper
+- `PlayerData/beatoraja/<name>/player1/` — beatoraja 原始存档（gitignore，**唯一副本，改动前提醒用户备份**）；
+  `PlayerData/LunaticRave2/<id>.db` — LR2 存档（**只有最佳成绩，无时间戳、无逐局**，见下）
+- `ref_repo/` — **只读参考项目**（gitignore）：`beatoraja-master`/`lampghost`（schema 语义权威）、
+  `Permikon-main`（排列分析）、`BmsReplayViewer`、`AlphaOSU-main`（osu! 推荐器：ALS 矩阵分解 + pass 模型）
+- `docs/` — Phase 1/2A 归档文档；`docs/reference/` — framework paper、hastie15a（fast ALS）、recommend
 
 ## 环境与命令
 
@@ -67,13 +69,21 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   | BMS 语料库 | 旧 `F:\games\BMS` ＝ 本机 `D:\games\BMS` |
   | beatoraja 安装 | 本机 `D:\games\beatoraja`（旧系统无记录） |
   | 旧 venv 的 uv Python | 旧系统 `C:\Users\user\...` ＝ 本机旧 C 盘（现 `E:`），且用户名已变为 `Administrator` |
+  | **玩家存档根** | 旧 `玩家资料/<name>/player1` ＝ 本机 `PlayerData/beatoraja/<name>/player1`（2026-09-11 重命名；历史报告不改写，按此表换算） |
+  | **只读参考项目** | 旧 `lampghost/`、`beatoraja-master/`、`Permikon-main/` ＝ 本机 `ref_repo/<同名>/`（2026-09-11 收纳） |
 
   注意：`manifest.jsonl` 的 `path` 字段保存的是旧系统绝对路径（解析时改用 `rel_path`
   或按上表换算）。盘符与用户名都会随系统继续变，**唯一稳定锚点是仓库根的相对位置**。
 - `.venv` = Python 3.11 + CUDA torch 2.11+cu128（RTX 4060；下载慢走 127.0.0.1:7897 代理）。
   torch 相关用 `.venv/Scripts/python.exe`；纯分析用系统 `python`（3.13，有 pandas/sklearn/matplotlib）
-- 测试：`python -m unittest discover bms_ml/tests`（**38 个**：25 parser/timeline 回归
-  + 13 个 phase3 特征登记处、评估原语与 HGB 等价性回归）
+- 测试：`python -m unittest discover bms_ml/tests`（**40 个**：25 parser/timeline 回归
+  + 15 个 phase3 特征登记处、评估原语、HGB 等价性与 LR2 标签口径回归）
+- **LR2 存档（2026-09-11 首次真实接入，不再是 stub）**：`lr2_reader.py` + `ingest_player.py --client lr2`。
+  一行 = 一张谱的**最佳成绩**（无时间戳、无逐局、无顺序）→ **只能作 player state，不能作首打目标**；
+  `acc = (PG×2+GR)/(2×notes)`（对存档 `rate` 验证）；`clear` 只有 **0–5（无 FC/PERFECT）**→ 与
+  beatoraja 的 lamp **不可直接混比**；**84% 可经 md5→sha256 关联**语料库；额外提供
+  `playcount/clearcount/failcount`（beatoraja 的 scorelog 是破纪录日志，给不出"玩过几次"）。
+  名册中 `vsoflan_lr2` = include=false 待决（协议问题：LR2-only 玩家的目标定义）
 - **谱面编码器现状（2026-09-11）**：`objective_stats`(27) → `objective_stats_v2`(+14，谱面侧最优)
   → `perm_space`(22，排列空间手部位移几何，**已被 v2 支配**：胜 v1 基线但叠加 v2 无增益，勿重复投入；
   `chart_perm_space.py` 可续跑，`perm_space_eval.py` 可复现)。新编码器一律加进
@@ -105,7 +115,7 @@ A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386�
   C 阶梯（GPU，全套 3 seeds ≈2.5min）：
   `.venv/Scripts/python.exe bms_ml/phase3/c_chart_aware.py --variants C0,C1,C2 --seed 0/1/2`
 - transfer/few-shot：`python bms_ml/phase3/transfer_eval.py`；LOPO 冷启动：`lopo_eval.py`
-- 新玩家 SOP（顺序不能反）：`ingest_player.py add <name> 玩家资料/<name>/player1` →
+- 新玩家 SOP（顺序不能反）：`ingest_player.py add <name> PlayerData/beatoraja/<name>/player1` →
   人工审阅 audit → **再**在 players.json 设 include=true → `data.py` →
   `embed_charts.py`（增量）→ `compare_nolevel.py` → `c_chart_aware.py` → `coverage_audit.py`
   → **在 EXPERIMENT_LOG.md 记一条数据变更**
