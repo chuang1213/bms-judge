@@ -13,10 +13,11 @@
 18 名玩家、协议口径（全 scope，sl/st/発狂2018 围栏、c_jrank 在列）下基线
 （**train 6,358 / test 6,367**，2026-09-11 修复语料库重复 sha256 **去重后**）：
 A 11.96 / H 7.60 / **B 7.01**（acc MAE）；centered R²：H +0.274 / B +0.386。
-**当前最优 = `B_full`：acc 6.583 / cR² +0.430 / BP 124.7**
-（= v1 27 + 手工历史 12 + **个人响应剖面 24**；复现：`response_eval.py`）；
-次优 `B_v2` = 6.796 / +0.408、`B_full_v2` = 6.631。**个人响应剖面是本阶段唯一有效的表示改进**
-（`history_response.py`，11 轴×resp/slope；17/18 玩家改善；**已用"打乱配对"对照排除维度效应**）。
+**当前最优 = `B_resp`：acc 6.501 / cR² +0.434 / lamp 1.227（QWK 0.710）/ BP 119.5**
+（= v1 27 + 手工历史 12 + **acc 响应块 24** + **lamp 响应块(仅 chart-conditioned 13)** = 76 维；
+复现：`response_eval.py` 的 `B_full+lampresp` 行，**16/18 玩家改善**）；
+次优 `B_full` = 6.583 / +0.430、`B_v2` = 6.796。**个人响应剖面是本阶段唯一有效的表示改进**
+（`history_response.py`，11 轴 × resp/slope，按目标分块；**已用"打乱配对"对照排除维度效应**）。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
 在 18/18 玩家上胜过 D-local，few-shot 样本效率 3-5×（**这些结果在旧 12,859 行数据集上**，
 去重影响量级 ~0.02）。

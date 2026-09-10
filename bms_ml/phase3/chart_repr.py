@@ -69,9 +69,18 @@ RESPONSE_AXES = {
     # A player's slope here is "how much do tight windows cost me" - a real trait.
     "jrank": "c_jrank",
 }
-HISTORY_RESPONSE_COLS = ([f"h_resp_{k}" for k in RESPONSE_AXES]
-                         + [f"h_slope_{k}" for k in RESPONSE_AXES]
-                         + ["h_resp_mean", "h_resp_std"])
+def _response_cols(prefix: str) -> list[str]:
+    """Column names of one response block. `h_` = the acc block (shipped 2026-09-11);
+    `l_` = the lamp block (2026-09-11 evening): lamp is the one target the acc-response
+    profile slightly hurt (B_full lamp 1.331 vs B 1.325), and a player's per-axis
+    survival profile is not the same object as their per-axis accuracy profile."""
+    return ([f"{prefix}resp_{k}" for k in RESPONSE_AXES]
+            + [f"{prefix}slope_{k}" for k in RESPONSE_AXES]
+            + [f"{prefix}resp_mean", f"{prefix}resp_std"])
+
+
+HISTORY_RESPONSE_COLS = _response_cols("h_")            # acc response (protocol best)
+HISTORY_RESPONSE_LAMP_COLS = _response_cols("l_")       # lamp response
 
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play

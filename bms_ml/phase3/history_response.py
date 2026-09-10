@@ -24,7 +24,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from chart_repr import HISTORY_RESPONSE_COLS, RESPONSE_AXES
+from chart_repr import (HISTORY_RESPONSE_COLS, HISTORY_RESPONSE_LAMP_COLS,
+                        RESPONSE_AXES)
 from response_features import axis_sd, build_table
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,12 +44,21 @@ def main() -> None:
     # chronological within player is required for the causal prefix sums
     fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
 
-    feats = build_table(fp, axis_sd(fp), min_n=MIN_HISTORY, window=None, rng=None)
+    sd = axis_sd(fp)
+    acc_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
+                          target="acc", prefix="h_", clip=(0.0, 100.0))
+    lamp_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
+                           target="lamp", prefix="l_", clip=(1.0, 9.0))
+    feats = pd.concat([acc_blk, lamp_blk], axis=1)
     out = pd.concat([fp[["player", "sha256", "phase", "time"]], feats], axis=1)
     out.to_parquet(DS / "history_response.parquet")
-    cov = feats["h_resp_mean"].notna().mean()
-    print(f"rows {len(out)} | h_resp_mean coverage {cov:.3f} -> {DS / 'history_response.parquet'}")
+    for blk, cols in (("acc", HISTORY_RESPONSE_COLS), ("lamp", HISTORY_RESPONSE_LAMP_COLS)):
+        # cols[-2] is <prefix>resp_mean
+        print(f"{blk}: coverage {float(feats[cols[-2]].notna().mean()):.3f}")
+    print(f"rows {len(out)} -> {DS / 'history_response.parquet'}")
     print(feats[HISTORY_RESPONSE_COLS].describe().loc[["mean", "std", "min", "max"]]
+          .round(3).T.to_string())
+    print(feats[HISTORY_RESPONSE_LAMP_COLS].describe().loc[["mean", "std", "min", "max"]]
           .round(3).T.to_string())
 
 

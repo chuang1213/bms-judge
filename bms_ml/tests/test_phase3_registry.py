@@ -63,6 +63,11 @@ class TestFeatureRegistry(unittest.TestCase):
                 + ["h_resp_mean", "h_resp_std"])
         self.assertEqual(chart_repr.HISTORY_RESPONSE_COLS, want)
         self.assertEqual(len(chart_repr.HISTORY_RESPONSE_COLS), 2 * len(axes) + 2)
+        # the lamp block must be the same shape under its own prefix
+        lamp = chart_repr.HISTORY_RESPONSE_LAMP_COLS
+        self.assertEqual(lamp, [c.replace("h_", "l_", 1)
+                                for c in chart_repr.HISTORY_RESPONSE_COLS])
+        self.assertEqual(len(lamp), 2 * len(axes) + 2)
         allc = set(chart_repr.OBJECTIVE_STAT_COLS) | set(chart_repr.OBJECTIVE_V2_COLS)
         for k, col in axes.items():
             self.assertIn(col, allc, f"response axis {k} -> {col} is not objective")

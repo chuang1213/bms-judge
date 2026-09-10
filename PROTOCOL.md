@@ -38,8 +38,12 @@
   叠加 v2 无增益），2026-09-11 记录，勿重复投入；
 - **`HISTORY_RESPONSE_COLS`（24 维个人分轴响应剖面，`history_response.py`）：玩家侧当前最优**
   （11 轴 × resp/slope，每玩家每轴一元 OLS，严格因果前缀和；17/18 玩家改善，已用"同列数打乱配对"
-  对照排除维度效应）。**当前最优配置 = `B_full` = v1 27 + 手工历史 12 + 响应剖面 24：
-  acc 6.583 / cR² +0.430**（`response_eval.py`）；
+  对照排除维度效应）；
+- **`HISTORY_RESPONSE_LAMP_COLS`（24 维 lamp 响应块，同脚本）**：lamp 是 acc 响应块唯一拖累的目标。
+  按目标分别加块并**只取 chart-conditioned 一半**（不带 per-axis slope）效果最好——
+  **当前最优配置 = `B_resp` = v1 27 + 手工历史 12 + acc 响应块 24 + lamp 响应块(chart-conditioned 13)
+  = 76 维：acc 6.501 / cR² +0.434 / lamp 1.227 / QWK 0.710 / BP 119.5，16/18 玩家改善**
+  （`response_eval.py` 的 `B_full+lampresp` 行）；
 - 新 encoder 一律注册进 `chart_encoder_registry()` 并在同一任务上比较；
 - 评价标准唯一：**是否提升对未见 player × chart 首打表现的预测**，不以其与人工
   难度维度的对应性定义价值。
