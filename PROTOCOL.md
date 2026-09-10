@@ -9,6 +9,9 @@
 - 排除：course 行（len(sha256)≠64 或 mode≥100）、首打 clear==NO_PLAY(0)、首打 ex==0、
   BP > notes+5、无 manifest 统计的谱面；
 - active 玩家名单由 `players.json` 管理（include=true），经 `ingest_player.py` 进入；
+- **不变量：每个 (player, chart) 恰好一行**。2026-09-11 修过违反：语料库同一谱文件存在多个路径副本
+  （manifest 有 329 个重复 sha256），merge 后样本被双计、且副本时间戳相同会让目标出现在自己的历史
+  窗口里。`data.py` 已加不变量断言，回归会直接报错；样本空间随之收缩（12,859 → 12,725 行）；
 - **样本空间（用户决定 2026-09-03）**：目标限定 sl/st/発狂2018 三表并集内的谱面——表外
   谱面质量不可控，作为质量围栏使用；表等级本身仍不作特征（特征契约见 chart_repr.py），
   若未来放开围栏需重新审计表外谱面质量；
@@ -30,6 +33,13 @@
   c_jrank 于 2026-09-05 加入（消除 tight-rank 谱面 acc 被高估 5-11pp 的系统偏差）；
   已知限制：parser 对未写 #RANK 的谱默认 rank=2；有效判定窗还受玩家 config 影响；
 - phase2a_t1_pooled（64 维）：learned encoder 候选；
+- `objective_stats_v2`（+14 维无阈值分布统计，`chart_stats_v2.py`）：**谱面侧当前最优**；
+- `perm_space`（22 维排列空间手部位移几何，`chart_perm_space.py`）：**已被 v2 支配**（胜 v1 基线但
+  叠加 v2 无增益），2026-09-11 记录，勿重复投入；
+- **`HISTORY_RESPONSE_COLS`（24 维个人分轴响应剖面，`history_response.py`）：玩家侧当前最优**
+  （11 轴 × resp/slope，每玩家每轴一元 OLS，严格因果前缀和；17/18 玩家改善，已用"同列数打乱配对"
+  对照排除维度效应）。**当前最优配置 = `B_full` = v1 27 + 手工历史 12 + 响应剖面 24：
+  acc 6.583 / cR² +0.430**（`response_eval.py`）；
 - 新 encoder 一律注册进 `chart_encoder_registry()` 并在同一任务上比较；
 - 评价标准唯一：**是否提升对未见 player × chart 首打表现的预测**，不以其与人工
   难度维度的对应性定义价值。

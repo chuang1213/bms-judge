@@ -38,8 +38,10 @@ import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
 
-from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, OBJECTIVE_STAT_COLS)
+from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, HISTORY_RESPONSE_COLS,
+                        OBJECTIVE_STAT_COLS, RESPONSE_AXES)
 from common import HGBModel, add_region, hgb_fit_predict, load_firstplays, mae
+from response_features import axis_sd, build_table, prefix_response
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
@@ -59,6 +61,21 @@ USE_V2 = os.environ.get("P3_USE_V2", "0") == "1"
 # geometry to the chart side of M0/M2. Same switch pattern as USE_V2.
 #   P3_USE_PERM=1 python transfer_eval.py
 USE_PERM = os.environ.get("P3_USE_PERM", "0") == "1"
+# personal response profile in the few-shot curve (Phase 3.6, 2026-09-11).
+#   P3_USE_RESP=1 python transfer_eval.py --tag _resp
+# The profile is windowed here (RESP_WIN) and the TRAINING rows are truncation-
+# augmented, because a few-shot row only ever has its prefix while a protocol row has
+# the whole archive - fitting "all available history" would use a different estimator
+# on the two sides (the recency-feature trap from PHASE3_4_TRANSFER). See
+# response_features.py. Only the few-shot curve changes: the exp-1 protocol band keeps
+# its full-causal reference untouched so the two remain comparable.
+USE_RESP = os.environ.get("P3_USE_RESP", "0") == "1"
+RESP_WIN = int(os.environ.get("P3_RESP_WINDOW", "50"))
+RESP_MIN = int(os.environ.get("P3_RESP_MIN", "5"))
+# zero-slope prior worth this many events (see response_features.response_columns).
+# Without it the k=5 slope is pure noise yet the truncation augmentation teaches the
+# model to trust it: measured k=5 = 20.51 vs the 17.50 baseline (worse than k=1).
+RESP_LAMBDA = float(os.environ.get("P3_RESP_LAMBDA", "20"))
 
 
 def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
@@ -126,9 +143,31 @@ def main() -> None:
         fp = fp.merge(pd.read_parquet(DS / "chart_perm_space.parquet"),
                       on="sha256", how="left")
         CHART = CHART + OBJECTIVE_PERM_COLS
+
+    # ---- personal response profile (few-shot only; see USE_RESP above) ----
+    RESP = []
+    if USE_RESP:
+        # four axes are v2 columns kept in a side table
+        need = [c for c in set(RESPONSE_AXES.values()) if c not in fp.columns]
+        if need:
+            v2tab = pd.read_parquet(DS / "chart_stats_v2.parquet")
+            fp = fp.merge(v2tab[["sha256"] + [c for c in need if c in v2tab.columns]],
+                          on="sha256", how="left")
+        fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
+        # TRAINING columns: windowed estimator + deployment-style truncation
+        # augmentation, so the model sees every possible fill level. This depends only
+        # on each row's own past, so it is computed once for the whole roster.
+        sd_axes = axis_sd(fp)
+        tr_resp = build_table(fp, sd_axes, min_n=RESP_MIN, window=RESP_WIN,
+                              rng=np.random.RandomState(0), shrink=RESP_LAMBDA)
+        for c in HISTORY_RESPONSE_COLS:
+            fp[c] = tr_resp[c].values
+        RESP = list(HISTORY_RESPONSE_COLS)
+
     players = sorted(fp["player"].unique())
     results: dict = {"scope_rows": len(fp), "players": players, "ks": KS,
-                     "use_v2": USE_V2, "use_perm": USE_PERM, "lopo": {}}
+                     "use_v2": USE_V2, "use_perm": USE_PERM, "use_resp": USE_RESP,
+                     "resp_window": RESP_WIN if USE_RESP else None, "lopo": {}}
 
     for D in players:
         others = fp[fp["player"] != D]
@@ -191,12 +230,14 @@ def main() -> None:
         # NB: M2_bp deliberately uses CHART + HIST (all 12), not CHART + HIST_FEW as
         # acc/lamp do — preserved as-is for continuity of the reported curve.
         bp_cap = float(np.log1p(tr_others["bp"].max()))
+        M2F = CHART + HIST_FEW + RESP
+        M2B = CHART + HIST + RESP
         m0_acc = HGBModel(tr_others, CHART, tr_others["acc"].values)
         m0_lamp = HGBModel(tr_others, CHART, tr_others["lamp"].values.astype(float))
-        m2_acc = HGBModel(tr_others, CHART + HIST_FEW, tr_others["acc"].values)
-        m2_lamp = HGBModel(tr_others, CHART + HIST_FEW, tr_others["lamp"].values.astype(float))
+        m2_acc = HGBModel(tr_others, M2F, tr_others["acc"].values)
+        m2_lamp = HGBModel(tr_others, M2F, tr_others["lamp"].values.astype(float))
         m0_bp = HGBModel(tr_others, CHART, np.log1p(tr_others["bp"].values))
-        m2_bp = HGBModel(tr_others, CHART + HIST, np.log1p(tr_others["bp"].values))
+        m2_bp = HGBModel(tr_others, M2B, np.log1p(tr_others["bp"].values))
 
         curve = []
         for k in KS:
@@ -212,6 +253,13 @@ def main() -> None:
                 pd.DataFrame(np.nan, index=targets.index, columns=HIST)
             te_k = targets.copy()
             te_k[HIST_FEW] = hf[HIST_FEW].values
+            if RESP:
+                # prefix-only profile (see response_features.prefix_response): the
+                # curve is fitted on the prefix alone and evaluated at each target's
+                # own axis value, so no target can inform another.
+                te_k[RESP] = prefix_response(prefix, targets, sd_axes,
+                                             min_n=RESP_MIN, window=RESP_WIN,
+                                             shrink=RESP_LAMBDA).values
 
             p0_acc = m0_acc.predict(te_k)
             p0_lamp = m0_lamp.predict(te_k)
