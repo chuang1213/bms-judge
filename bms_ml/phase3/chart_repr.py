@@ -86,6 +86,23 @@ HISTORY_RESPONSE_LAMP_COLS = _response_cols("l_")       # lamp response
 # this family of features and deserves its own block.
 HISTORY_RESPONSE_BP_COLS = _response_cols("b_")
 
+
+def _dev_cols(prefix: str) -> list[str]:
+    """Player-relative axis deviation: (x_target - mean_player_history) / sd_player_history.
+
+    `resp_` is the player's LINEAR prediction at this chart's axis value, so it can only
+    express a straight line. `dev_` says how far outside the player's OWN usual range the
+    chart sits; a tree splitting on it places thresholds in player-relative units, which
+    is exactly the mechanism for a saturating / cliff response that the linear profile
+    cannot represent. Same window statistics as the response block, so it is nearly free.
+    """
+    return [f"{prefix}dev_{k}" for k in RESPONSE_AXES]
+
+
+HISTORY_RESPONSE_DEV_COLS = _dev_cols("h_")             # acc block deviation
+HISTORY_LAMP_DEV_COLS = _dev_cols("l_")
+HISTORY_BP_DEV_COLS = _dev_cols("b_")
+
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play
 # prefix, so their distributions are incomparable (evaluation values land beyond

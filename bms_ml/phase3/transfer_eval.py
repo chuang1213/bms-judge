@@ -259,7 +259,7 @@ def main() -> None:
                 # own axis value, so no target can inform another.
                 te_k[RESP] = prefix_response(prefix, targets, sd_axes,
                                              min_n=RESP_MIN, window=RESP_WIN,
-                                             shrink=RESP_LAMBDA).values
+                                             shrink=RESP_LAMBDA)[RESP].values
 
             p0_acc = m0_acc.predict(te_k)
             p0_lamp = m0_lamp.predict(te_k)

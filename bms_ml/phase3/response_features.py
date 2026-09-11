@@ -39,9 +39,15 @@ import numpy as np
 import pandas as pd
 
 try:                                    # run as a script: bms_ml/phase3 is on sys.path
-    from chart_repr import RESPONSE_AXES, _response_cols
+    from chart_repr import RESPONSE_AXES, _dev_cols, _response_cols
 except ModuleNotFoundError:             # imported as bms_ml.phase3.response_features
-    from .chart_repr import RESPONSE_AXES, _response_cols
+    from .chart_repr import RESPONSE_AXES, _dev_cols, _response_cols
+
+
+def _block_cols(prefix: str) -> list[str]:
+    """Everything one block emits: the response columns plus the player-relative
+    axis deviations (2026-09-11)."""
+    return _response_cols(prefix) + _dev_cols(prefix)
 
 
 def _cum(a: np.ndarray) -> np.ndarray:
@@ -68,7 +74,7 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
     """
     names = list(RESPONSE_AXES)
     m = len(y)
-    out = {c: np.full(m, np.nan) for c in _response_cols(prefix)}
+    out = {c: np.full(m, np.nan) for c in _block_cols(prefix)}
     yv = ~np.isnan(y)
     idx = np.arange(m)
     cap = idx if window is None else np.minimum(idx, window)
@@ -128,6 +134,16 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
         resp[a] = r
         out[f"{prefix}resp_{name}"] = r
         out[f"{prefix}slope_{name}"] = beta * sd[name]
+        # player-relative deviation of the target chart from the player's own history
+        # on this axis, in window sd units. Computed from the same (weighted) window
+        # sums as the OLS, so it is free; NaN wherever the fit itself is not defined.
+        safe_n = np.maximum(ne, 1.0)
+        xbar = np.where(ne > 0, sx / safe_n, 0.0)
+        var = np.where(ne > 0, np.maximum(sxx / safe_n - xbar * xbar, 0.0), 0.0)
+        sdx = np.sqrt(var)
+        dev = np.where(sdx > 1e-9, (x - xbar) / np.maximum(sdx, 1e-9), np.nan)
+        dev[~ok] = np.nan
+        out[f"{prefix}dev_{name}"] = dev
     out[f"{prefix}resp_mean"] = np.nanmean(resp, axis=0)
     with np.errstate(invalid="ignore"):
         out[f"{prefix}resp_std"] = np.nanstd(resp, axis=0)
@@ -143,7 +159,7 @@ def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
     by (player, time) — the causal prefix sums depend on it. `half_life` (days) needs a
     `time` column and is forwarded to `response_columns`."""
     names = list(RESPONSE_AXES)
-    cols = _response_cols(prefix)
+    cols = _block_cols(prefix)
     out = {c: np.full(len(fp_chronological), np.nan) for c in cols}
     tcol = None
     if half_life is not None:
@@ -207,11 +223,21 @@ def prefix_response(prefix_df: pd.DataFrame, targets: pd.DataFrame, sd: dict,
                     sl = np.full(m, beta * sd[name])
         out[f"{prefix}resp_{name}"] = r
         out[f"{prefix}slope_{name}"] = sl
+        # same player-relative deviation as build_table, from the prefix window
+        dv = np.full(m, np.nan)
+        if n:
+            x = pre[col].values.astype(np.float64)
+            v = ~np.isnan(x)
+            if v.sum() >= 2:
+                xbar, sdx = float(x[v].mean()), float(x[v].std())
+                if sdx > 1e-9:
+                    dv = (xt - xbar) / sdx
+        out[f"{prefix}dev_{name}"] = dv
         resp[a] = r
     out[f"{prefix}resp_mean"] = np.nanmean(resp, axis=0)
     with np.errstate(invalid="ignore"):
         out[f"{prefix}resp_std"] = np.nanstd(resp, axis=0)
-    return pd.DataFrame(out, index=targets.index)[_response_cols(prefix)]
+    return pd.DataFrame(out, index=targets.index)[_block_cols(prefix)]
 
 
 def axis_sd(fp: pd.DataFrame) -> dict:

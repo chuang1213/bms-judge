@@ -276,6 +276,43 @@ class TestResponseDecay(unittest.TestCase):
             response_columns(X, y, sd, min_n=5, half_life=30.0)
 
 
+class TestResponseDeviation(unittest.TestCase):
+    """`dev_<axis>` = (x_target - mean_player_history) / sd_player_history.
+
+    Hand-checked against a tiny sequence: the last row's deviation must be the target's
+    z-score within its own causal history, and rows with fewer than min_n prior points
+    must be NaN rather than zero (zero would read as "exactly typical").
+    """
+
+    def test_dev_is_player_relative_zscore(self):
+        from bms_ml.phase3.response_features import response_columns
+        m = 6
+        names = list(chart_repr.RESPONSE_AXES)
+        X = np.zeros((m, len(names)))
+        X[:, 0] = [0.0, 1.0, 2.0, 3.0, 4.0, 10.0]
+        y = np.full(m, 70.0)
+        out = response_columns(X, y, {n: 1.0 for n in names}, min_n=3)
+        want = (10.0 - 2.0) / np.std([0.0, 1.0, 2.0, 3.0, 4.0])       # ddof=0
+        self.assertAlmostEqual(float(out["h_dev_nps"][-1]), float(want), places=6)
+        self.assertAlmostEqual(float(out["h_dev_nps"][3]),
+                               float((3.0 - 1.0) / np.std([0.0, 1.0, 2.0])), places=6)
+        for i in (0, 1, 2):                     # fewer than min_n prior points
+            self.assertTrue(np.isnan(out["h_dev_nps"][i]), f"row {i} should be NaN")
+        self.assertTrue(np.isfinite(out["h_dev_nps"][2 + 1:]).all())
+
+    def test_dev_is_scale_free_in_the_player(self):
+        """Rescaling a player's whole history must not change their deviations."""
+        from bms_ml.phase3.response_features import response_columns
+        rng = np.random.RandomState(3)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(80, len(names)))
+        y = 70 + rng.normal(scale=3.0, size=80)
+        sd = {n: 1.0 for n in names}
+        a = response_columns(X, y, sd, min_n=10)
+        b = response_columns(X * 7.0 + 50.0, y, sd, min_n=10)
+        np.testing.assert_allclose(a["h_dev_nps"][15:], b["h_dev_nps"][15:], atol=1e-9)
+
+
 class TestClientGuard(unittest.TestCase):
     """LR2 and beatoraja must not be pooled (user decision 2026-09-11).
 
