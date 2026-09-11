@@ -93,6 +93,7 @@ def load_manifest() -> pd.DataFrame:
                 "sha256": r["sha256"],
                 "md5": r["md5"],
                 "title": r.get("title"),
+                "artist": r.get("artist"),
                 "notes": r["meta"]["total_notes"],
                 "features": r["features"],
                 "quarantine": r.get("quarantine"),

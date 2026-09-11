@@ -108,6 +108,13 @@ dev 配对 +0.243（CI 0.192..0.295，p=3e-19），**打乱对照 6.40-6.46 反�
   **不要再扩同类轴**；`h_resp_*` 与 `h_slope_*` 单独都不如合并 → 增益来自跨轴模式的超加性。
   **`h_knn_acc` 的 k 已结案**：无响应剖面时 k 影响明显（k=20 最差），有响应剖面后 k 几乎不影响
   （6.549–6.637）→ 维持 k=20，TODO 关闭
+- **推荐工具（recommend 分支，2026-09-11）**：`python bms_ml/phase3/recommend.py --player <名>`
+  → `bms_ml/output/phase3/recommend/<名>.{html,csv}`。对玩家档案外的**全部围栏谱面**给出
+  acc/lamp/BP 预测并分三组（暂缓 <3.5 / 挑战 3.5–6.0 / 冲刺 ≥6.0，阈值来自 lamp 回归的实测
+  压缩分布，非名义阶梯）。候选以"未来行"（NaN 目标）追加进玩家因果帧，**零重复实现**地复用
+  `build_history_features` + `build_table`；唯一例外 `h_knn_acc` 在此重算（内建窗口会被其他
+  候选的 NaN acc 污染）。打分时点 = 玩家最近一次 scorelog 记录（不是墙钟，避免 recency 特征
+  出训练分布）。**注意：这不是"练了会变强"的模型** —— 无纵向数据，训练价值不可度量。
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
   `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
   恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。

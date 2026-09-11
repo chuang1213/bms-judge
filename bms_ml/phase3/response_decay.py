@@ -57,7 +57,13 @@ SETS = {
 }
 
 
-def build_response(half_life) -> pd.DataFrame:
+def build_response(half_life, return_sd: bool = False):
+    """Response blocks for every first-play row.
+
+    `return_sd=True` also hands back the global axis std dict, so a caller that needs to
+    score NEW charts (the recommender) can reuse the exact scaling the training rows saw
+    instead of recomputing it on a different frame and silently shifting the slopes.
+    """
     fp = pd.read_parquet(DS / "firstplays.parquet")
     v2 = pd.read_parquet(DS / "chart_stats_v2.parquet")
     need = [c for c in set(RESPONSE_AXES.values())
@@ -76,7 +82,8 @@ def build_response(half_life) -> pd.DataFrame:
                     clip=(0.0, 12.0), half_life=half_life),
     ]
     feats = pd.concat(blocks, axis=1)
-    return pd.concat([fp[["player", "sha256"]], feats], axis=1)
+    out = pd.concat([fp[["player", "sha256"]], feats], axis=1)
+    return (out, sd) if return_sd else out
 
 
 def main() -> None:
