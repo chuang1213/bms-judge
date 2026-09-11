@@ -112,7 +112,12 @@ MSD 是更好的条件化基底；**yangtao 首次改善**（19.20→18.57，msd
   `acc = (PG×2+GR)/(2×notes)`（对存档 `rate` 验证）；`clear` 只有 **0–5（无 FC/PERFECT）**→ 与
   beatoraja 的 lamp **不可直接混比**；**84% 可经 md5→sha256 关联**语料库；额外提供
   `playcount/clearcount/failcount`（beatoraja 的 scorelog 是破纪录日志，给不出"玩过几次"）。
-  名册中 `vsoflan_lr2` = include=false 待决（协议问题：LR2-only 玩家的目标定义）
+  名册中 `vsoflan_lr2` = include=false 待决（协议问题：LR2-only 玩家的目标定义）。
+  **整轴时间消融已实测（2026-09-11，`P3_TIME_MODE=synthetic[_shuffle]` env 开关进 data.py）**：
+  synthetic(保序丢日历) B +1.28 / B_full +0.66 / cR² B 掉 58%、B_full 掉 31%、lamp≈无损；
+  shuffle(乱序) 灾难性（B_full 9.890、cR² +0.111 掉 76%、QWK 0.500）；400d 调窗无改善。
+  顺序本身是信号主要载体；融合模型（响应/偏差/MSD 轴）对时间损失显著更鲁棒；
+  **LR2-only 进当前预测管线的结论被实验加固**（数据入口 = 推荐方向的矩阵补全）
 - **客户端必须分开对待（用户 2026-09-11 明确提出，已实测证实并写进 PROTOCOL §1）**：同一玩家两份存档
   共有的 4,576 张谱面上，两客户端 acc 差 **sd 10.16pp**、>5pp 占 29.4%、与 LN 比例相关仅 +0.016 →
   **差异来自判定/记录本身，非计分口径**，且幅度大于模型自身误差。**禁止把 LR2 与 beatoraja 行混进同一

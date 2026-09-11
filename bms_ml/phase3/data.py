@@ -64,6 +64,13 @@ def assert_single_client(active: dict) -> None:
 
 
 PLAYERS, TIME_MODE = load_roster()
+# Whole-timeline ablation (2026-09-11): simulate an LR2-style archive that has play
+# ORDER but no calendar. P3_TIME_MODE=synthetic re-dates every scorelog row by its true
+# play order (ordinal days); =synthetic_shuffle additionally permutes the first-play
+# ordinal days WITHIN each player, which keeps every chart's label attached to its true
+# first play but destroys the causal order the response machinery relies on. Labels are
+# identical in all three modes, so any number change is pure time information.
+TIME_MODE_OVERRIDE = os.environ.get("P3_TIME_MODE")  # None | synthetic | synthetic_shuffle
 TRAIN_Q, TEST_Q = 0.50, 0.75
 # Survival-scope experiment (user decision 2026-09-04): drop FAILED and acc<50%
 # first plays from BOTH targets and history — models only see completed,
@@ -168,7 +175,7 @@ def load_firstplays() -> pd.DataFrame:
             # lamp part of the survival filter; the acc>=50 part needs `notes`
             # from the manifest merge, applied in main()
             df = df[(df["clear"] >= 4) & (df["clear"] <= 6)]
-        if TIME_MODE.get(player) == "synthetic":
+        if TIME_MODE_OVERRIDE or TIME_MODE.get(player) == "synthetic":
             # clients without reliable timestamps (LR2): play-order ordinal days.
             # ordering preserved, absolute-time semantics lost (see PROTOCOL.md)
             df = df.sort_values(["date", "rowid"])
@@ -181,7 +188,20 @@ def load_firstplays() -> pd.DataFrame:
             "ex": df["score"].values,         # first-play EX score (= best-after on first row)
             "bp": df["minbp"].values,
         }))
-    return pd.concat(parts, ignore_index=True)
+    fp = pd.concat(parts, ignore_index=True)
+    if TIME_MODE_OVERRIDE == "synthetic_shuffle":
+        # keep every chart's true first play (labels intact) but permute WHEN it sits in
+        # the causal order - isolates how much the response machinery needs ORDER as
+        # opposed to mere content. Fixed seed: the ablation is reproducible.
+        rng = np.random.RandomState(7)
+        fp = fp.sort_values(["player", "time"], kind="stable")
+        times = fp["time"].values.copy()
+        for _p, pos in fp.groupby("player", sort=False).indices.items():
+            pos = np.asarray(pos)
+            times[pos] = times[rng.permutation(pos)]
+        fp["time"] = times
+        fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
+    return fp
 
 
 def build_history_features(fp_sorted: pd.DataFrame, log_counts: pd.DataFrame,
@@ -322,10 +342,17 @@ def main() -> None:
     log_rows = []
     for player, rel in PLAYERS.items():
         con = sqlite3.connect(ROOT / rel / "scorelog.db")
-        df = pd.read_sql_query("SELECT date FROM scorelog", con)
+        d = pd.read_sql_query("SELECT date, rowid FROM scorelog", con)
         con.close()
+        # synthetic mode must give the activity stream the SAME ordinal time base as the
+        # first plays - comparing ordinal first-play times against real log dates would
+        # make the two activity features pure garbage (found while building this
+        # ablation; the synthetic path had never run end-to-end before)
+        if TIME_MODE_OVERRIDE or TIME_MODE.get(player) == "synthetic":
+            d = d.sort_values(["date", "rowid"])
+            d["date"] = (np.arange(len(d), dtype=np.int64) + 1) * 86400
         log_rows.append(pd.DataFrame({"player": player,
-                                      "time": pd.to_datetime(df["date"], unit="s")}))
+                                      "time": pd.to_datetime(d["date"], unit="s")}))
     log_counts = pd.concat(log_rows, ignore_index=True)
 
     # time cutoffs per player (define the train/test split of TARGETS only;
