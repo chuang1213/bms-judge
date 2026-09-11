@@ -69,13 +69,18 @@ RESPONSE_AXES = {
     # A player's slope here is "how much do tight windows cost me" - a real trait.
     "jrank": "c_jrank",
 }
-def _response_cols(prefix: str) -> list[str]:
+def _response_cols(prefix: str, axes: dict | None = None) -> list[str]:
     """Column names of one response block. `h_` = the acc block (shipped 2026-09-11);
     `l_` = the lamp block (2026-09-11 evening): lamp is the one target the acc-response
     profile slightly hurt (B_full lamp 1.331 vs B 1.325), and a player's per-axis
-    survival profile is not the same object as their per-axis accuracy profile."""
-    return ([f"{prefix}resp_{k}" for k in RESPONSE_AXES]
-            + [f"{prefix}slope_{k}" for k in RESPONSE_AXES]
+    survival profile is not the same object as their per-axis accuracy profile.
+
+    `axes` (name -> source column) overrides the axis set; None = RESPONSE_AXES. Added
+    for the MinaCart/MSD experiment: the MSD skillsets are a different axis family with
+    its own block prefix, not new members of the structural family."""
+    ax = RESPONSE_AXES if axes is None else axes
+    return ([f"{prefix}resp_{k}" for k in ax]
+            + [f"{prefix}slope_{k}" for k in ax]
             + [f"{prefix}resp_mean", f"{prefix}resp_std"])
 
 
@@ -87,7 +92,7 @@ HISTORY_RESPONSE_LAMP_COLS = _response_cols("l_")       # lamp response
 HISTORY_RESPONSE_BP_COLS = _response_cols("b_")
 
 
-def _dev_cols(prefix: str) -> list[str]:
+def _dev_cols(prefix: str, axes: dict | None = None) -> list[str]:
     """Player-relative axis deviation: (x_target - mean_player_history) / sd_player_history.
 
     `resp_` is the player's LINEAR prediction at this chart's axis value, so it can only
@@ -96,7 +101,8 @@ def _dev_cols(prefix: str) -> list[str]:
     is exactly the mechanism for a saturating / cliff response that the linear profile
     cannot represent. Same window statistics as the response block, so it is nearly free.
     """
-    return [f"{prefix}dev_{k}" for k in RESPONSE_AXES]
+    ax = RESPONSE_AXES if axes is None else axes
+    return [f"{prefix}dev_{k}" for k in ax]
 
 
 HISTORY_RESPONSE_DEV_COLS = _dev_cols("h_")             # acc block deviation

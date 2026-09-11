@@ -44,10 +44,10 @@ except ModuleNotFoundError:             # imported as bms_ml.phase3.response_fea
     from .chart_repr import RESPONSE_AXES, _dev_cols, _response_cols
 
 
-def _block_cols(prefix: str) -> list[str]:
+def _block_cols(prefix: str, axes: dict | None = None) -> list[str]:
     """Everything one block emits: the response columns plus the player-relative
-    axis deviations (2026-09-11)."""
-    return _response_cols(prefix) + _dev_cols(prefix)
+    axis deviations (2026-09-11). `axes` overrides the axis set (None = RESPONSE_AXES)."""
+    return _response_cols(prefix, axes) + _dev_cols(prefix, axes)
 
 
 def _cum(a: np.ndarray) -> np.ndarray:
@@ -59,7 +59,8 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
                      shrink: float = 0.0, prefix: str = "h_",
                      clip: tuple[float, float] = (0.0, 100.0),
                      half_life: float | None = None,
-                     t_days: np.ndarray | None = None) -> dict:
+                     t_days: np.ndarray | None = None,
+                     axes: dict | None = None) -> dict:
     """X: (m, n_axes) axis values, y: (m,) target, sd: axis -> global std (for slope).
 
     `window=None` -> all prior events; `rng` given -> random truncation (training).
@@ -72,9 +73,9 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
     while every target sits in their most recent quartile. `t_days` gives each row's time
     in days (any origin; only differences are used).
     """
-    names = list(RESPONSE_AXES)
+    names = list(RESPONSE_AXES if axes is None else axes)
     m = len(y)
-    out = {c: np.full(m, np.nan) for c in _block_cols(prefix)}
+    out = {c: np.full(m, np.nan) for c in _block_cols(prefix, axes)}
     yv = ~np.isnan(y)
     idx = np.arange(m)
     cap = idx if window is None else np.minimum(idx, window)
@@ -154,12 +155,14 @@ def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
                 window: int | None = None, rng: np.random.RandomState | None = None,
                 shrink: float = 0.0, target: str = "acc", prefix: str = "h_",
                 clip: tuple[float, float] = (0.0, 100.0),
-                half_life: float | None = None) -> pd.DataFrame:
+                half_life: float | None = None,
+                axes: dict | None = None) -> pd.DataFrame:
     """Per-player application of `response_columns`. `fp_chronological` must be sorted
     by (player, time) — the causal prefix sums depend on it. `half_life` (days) needs a
-    `time` column and is forwarded to `response_columns`."""
-    names = list(RESPONSE_AXES)
-    cols = _block_cols(prefix)
+    `time` column and is forwarded to `response_columns`. `axes` (name -> source column)
+    overrides the axis set; the frame must carry those source columns."""
+    names = list(RESPONSE_AXES if axes is None else axes)
+    cols = _block_cols(prefix, axes)
     out = {c: np.full(len(fp_chronological), np.nan) for c in cols}
     tcol = None
     if half_life is not None:
@@ -171,10 +174,12 @@ def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
         pos = np.asarray(pos)
         y = fp_chronological[target].values[pos].astype(np.float64)
         X = np.stack([fp_chronological[RESPONSE_AXES[n]].values[pos].astype(np.float64)
+                      if axes is None else
+                      fp_chronological[axes[n]].values[pos].astype(np.float64)
                       for n in names], axis=1)
         r = response_columns(X, y, sd, min_n=min_n, window=window, rng=rng,
                              shrink=shrink, prefix=prefix, clip=clip,
-                             half_life=half_life,
+                             half_life=half_life, axes=axes,
                              t_days=None if tcol is None else tcol[pos])
         for c in cols:
             out[c][pos] = r[c]
@@ -240,6 +245,7 @@ def prefix_response(prefix_df: pd.DataFrame, targets: pd.DataFrame, sd: dict,
     return pd.DataFrame(out, index=targets.index)[_block_cols(prefix)]
 
 
-def axis_sd(fp: pd.DataFrame) -> dict:
+def axis_sd(fp: pd.DataFrame, axes: dict | None = None) -> dict:
+    ax = RESPONSE_AXES if axes is None else axes
     return {n: float(np.nanstd(fp[col].values.astype(np.float64)))
-            for n, col in RESPONSE_AXES.items()}
+            for n, col in ax.items()}
