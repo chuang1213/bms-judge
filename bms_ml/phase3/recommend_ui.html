@@ -28,8 +28,27 @@ label.chip input{accent-color:#888;margin:0}
 label.chip.on{color:#fff;border-color:#888}
 .bar input[type=number],.bar select,.bar input[type=search]{background:#161616;
   border:1px solid #333;border-radius:0;color:#ddd;padding:4px 8px;font:inherit;font-size:12.5px}
-.bar input[type=number]{width:64px}
 .bar input[type=search]{width:190px}
+#acts{display:flex;gap:10px;margin-left:auto}
+button.btn{background:none;border:1px solid #444;color:#ddd;padding:4px 14px;font:inherit;
+  font-size:12.5px;cursor:pointer}
+button.btn:hover{border-color:#fff;color:#fff}
+details.filterbox{border:1px solid #2a2a2a;margin-top:10px}
+details.filterbox summary{cursor:pointer;list-style:none;padding:8px 12px;color:#aaa;font-size:12.5px}
+details.filterbox summary::-webkit-details-marker{display:none}
+details.filterbox summary::before{content:"+ ";color:#777}
+details.filterbox[open] summary{border-bottom:1px solid #2a2a2a}
+details.filterbox[open] summary::before{content:"− "}
+#grid{padding:10px 12px}
+.grow{display:flex;align-items:flex-start;margin-bottom:6px}
+button.rl{flex:none;width:58px;height:30px;background:none;border:1px solid #444;color:#ddd;
+  font:inherit;font-size:12.5px;cursor:pointer;margin-right:8px;padding:0}
+button.rl:hover{border-color:#fff}
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+button.cell{min-width:34px;height:30px;background:none;border:1px solid #333;color:#999;
+  font:inherit;font-size:12px;cursor:pointer;padding:0}
+button.cell:hover{border-color:#888;color:#ddd}
+button.cell.on{background:#ddd;color:#111;border-color:#ddd;font-weight:600}
 #cnt{color:#777;font-size:12px;margin:10px 2px 6px}
 #cnt b{color:#ddd;font-weight:600}
 table{width:100%;border-collapse:collapse}
@@ -45,11 +64,7 @@ td.pp{font-weight:700;color:#fff}
 td.bp,td.lp{color:#bbb}
 td.g{color:#999;font-size:11.5px;white-space:nowrap}
 .nom{color:#666;font-size:11px}
-.btn{background:none;border:1px solid #444;color:#ddd;padding:5px 18px;font:inherit;
-  font-size:12.5px;cursor:pointer;margin-top:14px}
-.btn:hover{border-color:#fff;color:#fff}
 #more{display:none;margin:14px auto}
-#acts{display:flex;gap:10px}
 </style>
 </head>
 <body>
@@ -69,13 +84,7 @@ td.g{color:#999;font-size:11.5px;white-space:nowrap}
   <div id="result">
     <p class="meta" id="meta"></p>
     <div class="bar">
-      <span class="lb">表</span><span id="tables"></span>
       <span class="lb">分组</span><span id="groups"></span>
-    </div>
-    <div class="bar">
-      <span class="lb">等级</span>
-      <input type="number" id="lo" value="0" min="0" max="25">–
-      <input type="number" id="hi" value="25" min="0" max="25">
       <span class="lb">排序</span>
       <select id="sort">
         <option value="pp">通过概率 高→低</option>
@@ -89,6 +98,10 @@ td.g{color:#999;font-size:11.5px;white-space:nowrap}
       <span id="acts"><button class="btn" id="csv">导出 CSV</button>
       <button class="btn" id="reset">更换存档</button></span>
     </div>
+    <details class="filterbox" id="fbox">
+      <summary>筛选（表 × 等级，点格子切换；行首切换整张表）</summary>
+      <div id="grid"></div>
+    </details>
     <p id="cnt"></p>
     <table><thead><tr>
       <th>表/等级</th><th>标题</th><th>作者</th><th>预测灯</th>
@@ -105,8 +118,7 @@ const GROUPS=["挑战区","冲刺区","暂缓区"];
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
                       .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 let DATA=[],META=null;
-const state={tb:new Set(Object.keys(ORD)),gp:new Set(GROUPS),
-             lo:0,hi:25,sort:"pp",q:"",shown:60};
+const state={sel:new Set(),gp:new Set(GROUPS),sort:"pp",q:"",shown:60};
 
 const CMP={
   pp:(a,b)=>b.pp-a.pp,
@@ -118,8 +130,7 @@ const CMP={
 
 function apply(){
   const q=state.q.toLowerCase();
-  const arr=DATA.filter(r=>state.tb.has(r.t)&&state.gp.has(r.g)
-      &&r.l>=state.lo&&r.l<=state.hi
+  const arr=DATA.filter(r=>state.sel.has(r.t+":"+r.l)&&state.gp.has(r.g)
       &&(!q||(r.ti+" "+r.ar).toLowerCase().includes(q)));
   arr.sort(CMP[state.sort]);
   return arr;
@@ -143,23 +154,53 @@ function render(){
   document.getElementById("more").style.display=
     state.shown<VIEW.length?"block":"none";
 }
-function bindChips(id,attr){
-  document.querySelectorAll("#"+id+" input").forEach(el=>{
-    el.addEventListener("change",()=>{
-      el.checked?state[attr].add(el.value):state[attr].delete(el.value);
-      el.closest("label").classList.toggle("on",el.checked);
-      state.shown=60;VIEW=apply();render();});});
+
+/* ---- filter grid (komasan-inspired): one row per table, one cell per level;
+   row head toggles the table, 全 toggles everything, cells toggle (table,level). */
+function buildGrid(){
+  const byT={};
+  DATA.forEach(r=>{(byT[r.t]??=new Set()).add(r.l)});
+  state.sel=new Set();
+  let h='<div class="grow"><button class="rl" data-all="1">全</button><div class="cells">'
+    +'<span class="nom">未全选时点"全"补全；全选时点"全"清空。行首按钮切换整张表。</span></div></div>';
+  for(const t of Object.keys(ORD)){
+    if(!byT[t])continue;
+    const ls=[...byT[t]].sort((a,b)=>a-b);
+    ls.forEach(l=>state.sel.add(t+":"+l));
+    h+='<div class="grow"><button class="rl" data-row="'+t+'" title="切换 '+SYM[t]+' 整表">'
+      +SYM[t]+'</button><div class="cells">'
+      +ls.map(l=>'<button class="cell on" data-cell="'+t+':'+l+'">'+l+'</button>').join("")
+      +'</div></div>';
+  }
+  document.getElementById("grid").innerHTML=h;
 }
+function syncGrid(){
+  document.querySelectorAll("#grid .cell")
+    .forEach(c=>c.classList.toggle("on",state.sel.has(c.dataset.cell)));
+}
+function toggleCell(k){state.sel.has(k)?state.sel.delete(k):state.sel.add(k);
+  syncGrid();state.shown=60;VIEW=apply();render();}
+function toggleRow(t){
+  const on=DATA.some(r=>r.t===t&&state.sel.has(r.t+":"+r.l));
+  DATA.forEach(r=>{if(r.t===t){on?state.sel.delete(r.t+":"+r.l):state.sel.add(r.t+":"+r.l);}});
+  syncGrid();state.shown=60;VIEW=apply();render();}
+function toggleAll(){
+  // coverage-based, like an ALL checkbox: anything missing -> fill everything,
+  // only when every cell is already on does it clear (a size-based toggle would
+  // wipe a mixed selection, which is never what the click meant)
+  const all=DATA.every(r=>state.sel.has(r.t+":"+r.l));
+  if(all){state.sel.clear();}
+  else{DATA.forEach(r=>state.sel.add(r.t+":"+r.l));}
+  syncGrid();state.shown=60;VIEW=apply();render();}
+
 function showResult(json){
   DATA=json.rows;META=json;
   const gcount={};GROUPS.forEach(g=>gcount[g]=0);
   DATA.forEach(r=>gcount[r.g]++);
-  document.getElementById("tables").innerHTML=Object.keys(ORD).map(t=>
-    '<label class="chip on"><input type="checkbox" checked value="'+t+'">'
-    +SYM[t]+" "+t+" <span class='nom'>"+DATA.filter(r=>r.t===t).length+"</span></label>").join("");
   document.getElementById("groups").innerHTML=GROUPS.map(g=>
     '<label class="chip on"><input type="checkbox" checked value="'+g+'">'
     +g+" <span class='nom'>"+gcount[g]+"</span></label>").join("");
+  buildGrid();
   const m=META.meta;                       // meta fields live one level down; pmae/label
   const who=(META.matched?("已识别为 <b>"+esc(META.label)+"</b> 的存档")
                       :"未匹配名册，按 <b>新玩家</b> 打分");
@@ -199,10 +240,22 @@ document.addEventListener("DOMContentLoaded",()=>{
   dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
   dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("over");
     const f=e.dataTransfer.files[0];if(f)upload(f);});
-  bindChips("tables","tb");bindChips("groups","gp");
-  const lo=document.getElementById("lo"),hi=document.getElementById("hi");
-  const lv=()=>{state.lo=+lo.value;state.hi=+hi.value;state.shown=60;VIEW=apply();render();};
-  lo.addEventListener("change",lv);hi.addEventListener("change",lv);
+
+  /* event DELEGATION on static containers: showResult rebuilds the chips/grid
+     innerHTML, and delegated listeners survive that - per-node listeners did not
+     (that was the bug where toggling a table chip filtered nothing). */
+  document.getElementById("groups").addEventListener("change",e=>{
+    if(!e.target.matches("input"))return;
+    state.gp=new Set([...document.querySelectorAll("#groups input:checked")]
+      .map(el=>el.value));
+    e.target.closest("label").classList.toggle("on",e.target.checked);
+    state.shown=60;VIEW=apply();render();});
+  document.getElementById("grid").addEventListener("click",e=>{
+    const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.all){toggleAll();}
+    else if(b.dataset.row){toggleRow(b.dataset.row);}
+    else if(b.dataset.cell){toggleCell(b.dataset.cell);}});
+
   document.getElementById("sort").addEventListener("change",e=>{
     state.sort=e.target.value;VIEW=apply();render();});
   document.getElementById("q").addEventListener("input",e=>{
@@ -224,6 +277,14 @@ document.addEventListener("DOMContentLoaded",()=>{
     a.download=(META.label||"recommend")+"_recommend.csv";a.click();
     URL.revokeObjectURL(a.href);});
 });
+
+/* headless-harness hooks (no-ops in the browser) */
+globalThis.__T={showResult,
+  setSort:s=>{state.sort=s;VIEW=apply();render();},
+  setQ:q=>{state.q=q;VIEW=apply();render();},
+  cell:toggleCell,row:toggleRow,all:toggleAll,
+  sel:()=>state.sel,cnt:()=>document.getElementById("cnt").innerHTML,
+  missed:()=>DATA.filter(r=>!(state.sel.has(r.t+":"+r.l)&&state.gp.has(r.g)))};
 </script>
 </body>
 </html>

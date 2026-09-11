@@ -33,6 +33,10 @@ calibrated pass probability. Grouping thresholds follow the lamp head's ACTUAL s
   挑战区  3.5 .. 6.0             plausible pass, needs a real attempt
   冲刺区  >= 6.0                 expected clean pass, near the model's ceiling
 
+overjoy is BLOCKED from the candidates (user decision 2026-09-11, ★★ tiering too uneven
+to recommend against); the training fence is unchanged - its first plays still count as
+history and as protocol targets.
+
 How candidate features are built (the part worth reading)
 ---------------------------------------------------------
 Candidates are appended to the player's chronological frame as FUTURE rows with NaN
@@ -296,6 +300,10 @@ def score_archive(db_path: Path, label: str, mdl: dict, ctx: dict,
 
     cand = man.merge(tab, on="sha256", how="inner")
     cand = cand[cand["notes"].notna() & (cand["notes"] > 0)]
+    # overjoy is BLOCKED from the recommendation space (user decision 2026-09-11):
+    # the ★★ tiering is too uneven to recommend against. Recommender-level only -
+    # the TRAINING protocol fence is untouched (overjoy first plays stay in samples).
+    cand = cand[cand["table"] != "overjoy"]
     cand = cand[~cand["sha256"].isin(set(own["sha256"]))].reset_index(drop=True)
 
     # append as future rows; NaN targets keep them out of every causal window
