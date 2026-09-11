@@ -3,6 +3,9 @@
 > 追加式台账：每次**优化/方法变更**、**实验结论**、**玩家数据变更**都记一条（新条目在上）。
 > 目的：任何 agent/session 不翻报告就能看到"我们改过什么、效果如何、数据怎么变的"。
 > 详细分析见各期报告（PHASE3*.md）；协议见 PROTOCOL.md。
+> **Phase 3 已封存（2026-09-11 晚，tag `phase3-complete`）**：台账冻结于本版本，
+> Phase 4 计划见 `PHASE4_READINESS.md`。过程性诊断脚本已归档至 `bms_ml/output/phase3/audit/`
+> （正文提到的 `_perplayer` / `_yangtao_diag` / `_missing_msd_diag` 等均在该目录）。
 
 ## 一、优化与方法变更
 

@@ -3,6 +3,16 @@
 > 归档日期：2026-09-05 | 环境：Windows / Python 3.11 + CUDA torch 2.11+cu128（RTX 4060）
 > 新 agent 必读：`AGENTS.md`（工作指南）→ `PROTOCOL.md`（协议）→ `EXPERIMENT_LOG.md`（台账）→ 各期报告。
 
+> **Phase 3 完成 + 首个推荐工具交付（2026-09-11 晚，tag `phase3-complete`）**：
+> 五表围栏（sl/st/発狂/normal☆/overjoy★★）14,011 行下，**B_full acc 5.801 / cR² +0.463 /
+> lamp 1.102（QWK 0.750）**——比全局均值好 50%，52 测试全绿。当日增益链：响应剖面（+0.51）→
+> 180d 指数遗忘（+0.14）→ 玩家相对偏差 dev（+0.24，最大单项）→ MinaCalc MSD 轴（+0.26；
+> 裸难度有害、玩家相对化才有价值）。客户端实测分离（LR2 vs beatoraja sd 10.16pp，禁混池）、
+> 时间消融（顺序是玩家状态的主要载体）、yangtao 重定性（无失效玩家，corr(MAE, 方差)=+0.88）。
+> **推荐工具**：`recommend.py --serve` 拖入 scorelog.db 即打分——分组/通过概率/80% 区间/
+> 表×等级格子筛选；overjoy 推荐侧屏蔽；新玩家零样本可用。**Phase 4 计划见 `PHASE4_READINESS.md`。**
+> 逐次变更见 `EXPERIMENT_LOG.md`；Phase 3 报告见 `PHASE3_6_REPORT.md`。
+
 > **Phase 3.4 Transfer 完成（2026-09-05）**：17 名玩家。**Cross-player transfer 验证为真**
 > （`PHASE3_4_TRANSFER.md`）：严格 player-level holdout 下，人群预训练+个体 conditioning 的 M2
 > acc MAE 7.30，在 16/17 玩家上胜过 D-local（10.30）；few-shot 曲线显示 3-5× 样本效率
