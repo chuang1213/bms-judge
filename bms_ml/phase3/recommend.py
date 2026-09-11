@@ -58,11 +58,12 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from chart_repr import BEST_FEATURES, HISTORY_FEATURES, MSD_AXES, OBJECTIVE_STAT_COLS
-from common import HGBModel, load_samples, mae
+from common import HGBModel, HGB_KW, load_samples, mae
 from data import (HISTORY_USES_OFFTABLE, PLAYERS, ROOT, build_history_features,
                   load_firstplays, load_manifest, load_tables)
 from response_decay import MIN_HISTORY
 from response_features import axis_sd, build_table
+from uncertainty_eval import QHead
 
 OUT = ROOT / "bms_ml" / "output" / "phase3" / "recommend"
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
@@ -192,6 +193,58 @@ def build_candidates(player: str, fp_sorted: pd.DataFrame, man: pd.DataFrame,
     return out[["sha256", "title", "artist", "table", "level", "has_msd"] + FEATS], meta
 
 
+def build_uncertainty(tr: pd.DataFrame, df: pd.DataFrame, cand: pd.DataFrame
+                      ) -> dict[str, np.ndarray]:
+    """Feature-conditioned bands and pass probability for the candidates.
+
+    Quantile-HGB heads at q10/q50/q90 per target, conformalised (CQR): the correction Q
+    is the 80th percentile of the calibration nonconformity, fitted on a per-player time
+    split of the train band, never on the test band or the candidates. The variance
+    diagnostic showed per-player error is mostly that player's own behavioural variance
+    (corr +0.882), and the measured band widths track it (+0.846: reiaki ~10pp wide,
+    yangtao ~50pp) - the point prediction alone hides exactly that.
+    """
+    fit_idx, cal_idx = [], []
+    for _p, g in tr.groupby("player"):
+        g = g.sort_values("time")
+        k = max(1, int(len(g) * 0.8))
+        fit_idx.extend(g.index[:k])
+        cal_idx.extend(g.index[k:])
+    fit, cal = tr.loc[fit_idx], tr.loc[cal_idx]
+
+    def conformal(heads: dict, y_cal: np.ndarray, frame: pd.DataFrame) -> float:
+        s = np.maximum(heads[0.1].predict(frame) - y_cal,
+                       y_cal - heads[0.9].predict(frame))
+        qq = min(1.0, np.ceil((len(s) + 1) * 0.8) / len(s))
+        return float(np.quantile(s, qq))
+
+    acc_q = {q: QHead(fit, BEST_FEATURES, fit["acc"].values, q)
+             for q in (0.1, 0.5, 0.9)}
+    qa = conformal(acc_q, cal["acc"].values, cal)
+    out = {
+        "pred_acc_lo": acc_q[0.1].predict(cand) - qa,
+        "pred_acc_hi": acc_q[0.9].predict(cand) + qa,
+    }
+    bp_q = {q: QHead(fit, BEST_FEATURES, np.log1p(fit["bp"].values), q)
+            for q in (0.1, 0.9)}
+    qb = conformal(bp_q, np.log1p(cal["bp"].values), cal)
+    blo = bp_q[0.1].predict(cand) - qb
+    bhi = bp_q[0.9].predict(cand) + qb
+    out["pred_bp_lo"] = np.expm1(np.clip(blo, 0, 12))
+    out["pred_bp_hi"] = np.expm1(np.clip(bhi, 0, 12))
+
+    from sklearn.ensemble import HistGradientBoostingClassifier
+    from sklearn.impute import SimpleImputer
+    from sklearn.preprocessing import StandardScaler
+    imp = SimpleImputer(strategy="median").fit(fit[BEST_FEATURES])
+    sc = StandardScaler().fit(imp.transform(fit[BEST_FEATURES]))
+    clf = HistGradientBoostingClassifier(random_state=0, **HGB_KW)
+    clf.fit(sc.transform(imp.transform(fit[BEST_FEATURES])),
+            (fit["lamp"].values >= 4).astype(int))
+    out["p_pass"] = clf.predict_proba(sc.transform(imp.transform(cand[BEST_FEATURES])))[:, 1]
+    return out
+
+
 def expected_mae(df: pd.DataFrame, models: dict, player: str) -> float | None:
     """Out-of-sample accuracy for THIS player: their test rows were never trained on."""
     te = df[(df["player"] == player) & (df["phase"] == "test")]
@@ -210,7 +263,11 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
                 f"{r['level']:.0f}</td><td class='ti'>{e(str(r['title']))}</td>"
                 f"<td class='ar'>{e(str(r['artist'])[:40])}</td>"
                 f"<td class='lp n{r['pred_lamp']}'>{r['pred_lamp']} "
-                f"{e(r['pred_lamp_name'])}</td><td class='ac'>{r['pred_acc']:.1f}</td>"
+                f"{e(r['pred_lamp_name'])}</td>"
+                f"<td class='pp'>{100 * r['p_pass']:.0f}%</td>"
+                f"<td class='ac'>{r['pred_acc']:.1f} "
+                f"<span class='band'>[{r['pred_acc_lo']:.0f}-{r['pred_acc_hi']:.0f}]"
+                f"</span></td>"
                 f"<td class='bp'>{r['pred_bp']:.0f}</td></tr>")
         return "\n".join(out)
 
@@ -223,7 +280,8 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
         groups.append(
             f"<section><h2>{g} <span class='cnt'>{len(sub)} 张</span></h2>"
             f"<p class='desc'>{desc[g]}</p><table><thead><tr><th>表</th><th>标题</th>"
-            f"<th>作者</th><th>预测灯</th><th>预测acc</th><th>预测BP</th></tr></thead>"
+            f"<th>作者</th><th>预测灯</th><th>通过概率</th><th>预测acc (80%区间)"
+            f"</th><th>预测BP</th></tr></thead>"
             f"<tbody>{rows(sub, top)}</tbody></table></section>")
     mae_txt = f"{pmae:.2f} 分" if pmae is not None else "该玩家没有测试段样本"
     css = (":root{--bg:#0f1115;--card:#171a21;--line:#262b36;--fg:#e6e9ef;"
@@ -242,6 +300,8 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
            "border:1px solid var(--line);border-radius:10px;overflow:hidden}"
            "th,td{padding:7px 12px;text-align:left;border-top:1px solid var(--line)}"
            "th{color:var(--dim);font-weight:600;font-size:12px;background:#1b1f29}"
+           "td.pp{font-weight:600;color:#a78bfa}"
+           ".band{color:var(--dim);font-size:11px}"
            "td.lv{color:var(--acc);font-weight:600;white-space:nowrap}"
            "td.ti{max-width:420px;overflow:hidden;text-overflow:ellipsis;"
            "white-space:nowrap}td.ar{color:var(--dim);max-width:180px;overflow:hidden;"
@@ -320,6 +380,9 @@ def main() -> None:
     cand["pred_lamp_name"] = cand["pred_lamp"].map(LAMP_NAME)
     bp_cap = float(np.log1p(df["bp"].max()))
     cand["pred_bp"] = np.expm1(np.clip(models["bp"].predict(cand), 0, bp_cap))
+    print("building uncertainty bands ...")
+    for k, v in build_uncertainty(tr, df, cand).items():
+        cand[k] = v
     cand["group"] = np.where(cand["pred_lamp_raw"] >= 6.0, "冲刺区",
                              np.where(cand["pred_lamp_raw"] >= 3.5, "挑战区", "暂缓区"))
     order = {"挑战区": 0, "冲刺区": 1, "暂缓区": 2}
@@ -328,8 +391,10 @@ def main() -> None:
                             ascending=[True, False, False]).reset_index(drop=True)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    keep = ["group", "table", "level", "title", "artist", "pred_lamp", "pred_lamp_name",
-            "pred_acc", "pred_bp", "pred_lamp_raw", "has_msd", "sha256"]
+    keep = ["group", "table", "level", "title", "artist", "pred_lamp",
+            "pred_lamp_name", "p_pass", "pred_acc", "pred_acc_lo", "pred_acc_hi",
+            "pred_bp", "pred_bp_lo", "pred_bp_hi", "pred_lamp_raw", "has_msd",
+            "sha256"]
     csv_path = OUT / f"{player}.csv"
     cand[keep].to_csv(csv_path, index=False, encoding="utf-8-sig")
     html_path = OUT / f"{player}.html"

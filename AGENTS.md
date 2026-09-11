@@ -140,7 +140,10 @@ MSD 是更好的条件化基底；**yangtao 首次改善**（19.20→18.57，msd
   追加进玩家因果帧，**零重复实现**地复用 `build_history_features` + `build_table`
   （MSD 块同样走 `axes=MSD_AXES` 路径）；唯一例外 `h_knn_acc` 在此重算（内建窗口会被其他
   候选的 NaN acc 污染）。**候选缺 MSD（18.1%，序列未构建的表外文件）→ 特征插补，
-  CSV 里有 `has_msd` 列可过滤**。打分时点 = 玩家最近一次 scorelog 记录（不是墙钟，
+  CSV 里有 `has_msd` 列可过滤**。**不确定度**：分位数 HGB + CQR 共形校正（acc 区间覆盖
+  0.772，带宽异方差 corr +0.846——高方差玩家得宽区间）+ 通过概率分类器（AUC 0.892，
+  校准表近对角），输出 `pred_acc_lo/hi`、`p_pass`、`pred_bp_lo/hi`；见 `uncertainty_eval.py`。
+  打分时点 = 玩家最近一次 scorelog 记录（不是墙钟，
   避免 recency 特征出训练分布）。**注意：这不是"练了会变强"的模型** —— 无纵向数据，
   训练价值不可度量。
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
