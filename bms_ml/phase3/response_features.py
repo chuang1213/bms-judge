@@ -38,7 +38,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from chart_repr import RESPONSE_AXES, _response_cols
+try:                                    # run as a script: bms_ml/phase3 is on sys.path
+    from chart_repr import RESPONSE_AXES, _response_cols
+except ModuleNotFoundError:             # imported as bms_ml.phase3.response_features
+    from .chart_repr import RESPONSE_AXES, _response_cols
 
 
 def _cum(a: np.ndarray) -> np.ndarray:
@@ -48,10 +51,21 @@ def _cum(a: np.ndarray) -> np.ndarray:
 def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
                      window: int | None = None, rng: np.random.RandomState | None = None,
                      shrink: float = 0.0, prefix: str = "h_",
-                     clip: tuple[float, float] = (0.0, 100.0)) -> dict:
+                     clip: tuple[float, float] = (0.0, 100.0),
+                     half_life: float | None = None,
+                     t_days: np.ndarray | None = None) -> dict:
     """X: (m, n_axes) axis values, y: (m,) target, sd: axis -> global std (for slope).
 
-    `window=None` -> all prior events; `rng` given -> random truncation (training)."""
+    `window=None` -> all prior events; `rng` given -> random truncation (training).
+
+    `half_life` (days) makes the fit RECENCY-WEIGHTED: when fitting row i, event j gets
+    weight 0.5 ** ((t_i - t_j) / half_life). None = the original uniform fit over the
+    whole archive. Motivation: archives span a median of 959 days (max 2000) and
+    within-player acc drifts by +8.4pp on average (sd 11.8, >5pp on 13/18 players), yet
+    the fit was uniform - so the profile described the player's LIFETIME average response
+    while every target sits in their most recent quartile. `t_days` gives each row's time
+    in days (any origin; only differences are used).
+    """
     names = list(RESPONSE_AXES)
     m = len(y)
     out = {c: np.full(m, np.nan) for c in _response_cols(prefix)}
@@ -64,15 +78,45 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
         lo = np.minimum(min_n, cap)
         n = np.clip(lo + (rng.random_sample(m) * (cap - lo + 1)).astype(np.int64), lo, cap)
     lo_i = np.clip(idx - n, 0, None)
+
+    # Exponential forgetting: the weight of event j when fitting row i is
+    # 0.5 ** ((t_i - t_j) / half_life), i.e. exp(u_j - u_i). It factorises into a
+    # per-event factor exp(u_j) and a per-row factor exp(-u_i), so the windowed sums can
+    # still be done with prefix sums. beta and alpha are invariant to per-row rescaling
+    # (numerator and denominator both scale by the square of it), but keeping it makes
+    # `ne` an EFFECTIVE sample size in O(1) units - which is what the min_n / shrink /
+    # denom thresholds below assume. u is measured from the player's first event so
+    # u >= 0. Note the direction: exp(+u) on the event, exp(-u) on the row. Getting it
+    # backwards silently UP-WEIGHTS the distant past (a unit test catches it).
+    if half_life is None:
+        gw = np.ones(m)
+        rescale = np.ones(m)
+    else:
+        if t_days is None:
+            raise ValueError("half_life requires t_days")
+        td = np.asarray(t_days, dtype=np.float64)
+        if not np.isfinite(td).all():
+            raise ValueError("t_days must be finite for a decayed fit")
+        u = np.log(2.0) * (td - td[0]) / float(half_life)
+        gw = np.exp(u)
+        rescale = np.exp(-u)
+
     resp = np.full((len(names), m), np.nan)
     for a, name in enumerate(names):
         x = X[:, a]
         v = yv & ~np.isnan(x)
-        xv, yv2 = np.where(v, x, 0.0), np.where(v, y, 0.0)
-        P = np.stack([_cum(v.astype(float)), _cum(xv), _cum(yv2),
-                      _cum(xv * yv2), _cum(xv * xv)], axis=1)      # (m+1, 5)
-        S = P[idx] - P[lo_i]                                       # sums over the window
-        ne, sx, sy, sxy, sxx = (S[:, 0], S[:, 1], S[:, 2], S[:, 3], S[:, 4])
+        w = gw * v
+        # x and y must be NaN-free BEFORE multiplying by w: 0 * nan is nan, so a single
+        # missing axis value would propagate through cumsum and blank every later row
+        # (this made the 4 v2 axes 86% NaN until it was caught by an equivalence check
+        # against the unweighted path).
+        xv = np.where(np.isnan(x), 0.0, x)
+        yv2 = np.where(np.isnan(y), 0.0, y)
+        P = np.stack([_cum(w), _cum(w * xv), _cum(w * yv2),
+                      _cum(w * xv * yv2), _cum(w * xv * xv)], axis=1)   # (m+1, 5)
+        S = P[idx] - P[lo_i]                                            # sums over the window
+        ne, sx, sy, sxy, sxx = (S[:, 0] * rescale, S[:, 1] * rescale, S[:, 2] * rescale,
+                                S[:, 3] * rescale, S[:, 4] * rescale)
         denom = ne * sxx - sx * sx
         ok = (ne >= min_n) & (denom > 1e-9)
         beta = np.full(m, np.nan)
@@ -93,19 +137,29 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
 def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
                 window: int | None = None, rng: np.random.RandomState | None = None,
                 shrink: float = 0.0, target: str = "acc", prefix: str = "h_",
-                clip: tuple[float, float] = (0.0, 100.0)) -> pd.DataFrame:
+                clip: tuple[float, float] = (0.0, 100.0),
+                half_life: float | None = None) -> pd.DataFrame:
     """Per-player application of `response_columns`. `fp_chronological` must be sorted
-    by (player, time) — the causal prefix sums depend on it."""
+    by (player, time) — the causal prefix sums depend on it. `half_life` (days) needs a
+    `time` column and is forwarded to `response_columns`."""
     names = list(RESPONSE_AXES)
     cols = _response_cols(prefix)
     out = {c: np.full(len(fp_chronological), np.nan) for c in cols}
+    tcol = None
+    if half_life is not None:
+        tv = fp_chronological["time"].values
+        if np.issubdtype(tv.dtype, np.datetime64):
+            tv = tv.astype("datetime64[s]").astype(np.float64)
+        tcol = np.asarray(tv, dtype=np.float64) / 86400.0
     for _p, pos in fp_chronological.groupby("player", sort=False).indices.items():
         pos = np.asarray(pos)
         y = fp_chronological[target].values[pos].astype(np.float64)
         X = np.stack([fp_chronological[RESPONSE_AXES[n]].values[pos].astype(np.float64)
                       for n in names], axis=1)
         r = response_columns(X, y, sd, min_n=min_n, window=window, rng=rng,
-                             shrink=shrink, prefix=prefix, clip=clip)
+                             shrink=shrink, prefix=prefix, clip=clip,
+                             half_life=half_life,
+                             t_days=None if tcol is None else tcol[pos])
         for c in cols:
             out[c][pos] = r[c]
     return pd.DataFrame(out)

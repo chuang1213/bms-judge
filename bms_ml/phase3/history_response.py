@@ -20,6 +20,7 @@ Output: bms_ml/output/phase3/dataset/history_response.parquet, keyed (player, sh
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +33,13 @@ from response_features import axis_sd, build_table
 ROOT = Path(__file__).resolve().parents[2]
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 MIN_HISTORY = 20      # below this an OLS slope is noise; feature stays NaN (imputed)
+
+# Recency weighting (2026-09-11). The uniform fit over the whole archive is the protocol
+# default and must stay so for comparability, but it was measurably beaten: with
+# weight 0.5 ** (age_days / H), H = 180 days gives acc 6.360 vs 6.495 uniform on the
+# same configuration (paired over 6,367 test rows: +0.136, 95% CI 0.071..0.195,
+# p = 2e-5). Set P3_RESP_HALF_LIFE=180 to build the better block; see response_decay.py.
+HALF_LIFE = float(os.environ["P3_RESP_HALF_LIFE"]) if os.environ.get("P3_RESP_HALF_LIFE") else None
 
 
 def main() -> None:
@@ -48,11 +56,14 @@ def main() -> None:
     sd = axis_sd(fp)
     fp["log1p_bp"] = np.log1p(fp["bp"].values.astype(np.float64))   # project-wide BP form
     acc_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
-                          target="acc", prefix="h_", clip=(0.0, 100.0))
+                          target="acc", prefix="h_", clip=(0.0, 100.0),
+                          half_life=HALF_LIFE)
     lamp_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
-                           target="lamp", prefix="l_", clip=(1.0, 9.0))
+                           target="lamp", prefix="l_", clip=(1.0, 9.0),
+                           half_life=HALF_LIFE)
     bp_blk = build_table(fp, sd, min_n=MIN_HISTORY, window=None, rng=None,
-                         target="log1p_bp", prefix="b_", clip=(0.0, 12.0))
+                         target="log1p_bp", prefix="b_", clip=(0.0, 12.0),
+                         half_life=HALF_LIFE)
     feats = pd.concat([acc_blk, lamp_blk, bp_blk], axis=1)
     out = pd.concat([fp[["player", "sha256", "phase", "time"]], feats], axis=1)
     out.to_parquet(DS / "history_response.parquet")

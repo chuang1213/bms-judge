@@ -214,6 +214,68 @@ class TestLR2Labels(unittest.TestCase):
             lr2_clear_to_beatoraja(99)
 
 
+class TestResponseDecay(unittest.TestCase):
+    """Guards for the recency-weighted response fit (2026-09-11).
+
+    Two things must hold. (1) The decay is wired CORRECTLY: with a regime change in the
+    target, a decayed fit must follow the new regime, otherwise the half-life knob is a
+    no-op that silently reports the uniform answer. (2) It must not corrupt the fit: a
+    single NaN axis value once propagated through the cumulative sums and blanked 86% of
+    the v2 axes (0 * nan is nan), which is invisible in aggregate metrics but moved
+    B_full from 6.583 to 6.771.
+    """
+
+    def _mk(self, m: int = 120, nan_at: int | None = None):
+        rng = np.random.RandomState(0)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(m, len(names)))
+        y = 70.0 + 3.0 * X[:, 0] + rng.normal(scale=2.0, size=m)
+        if nan_at is not None:
+            X[nan_at, 0] = np.nan
+        return X, y, {n: 1.0 for n in names}, np.arange(m) * 7.0
+
+    def test_nan_axis_does_not_poison_later_rows(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, t = self._mk(nan_at=10)
+        for hl in (None, 30.0):
+            out = response_columns(X, y, sd, min_n=5, half_life=hl, t_days=t)
+            for c in ("h_resp_nps", "h_slope_nps", "h_resp_mean", "h_resp_std"):
+                later = out[c][20:]
+                self.assertTrue(np.isfinite(later).all(),
+                                f"half_life={hl}: {c} has NaN after a missing axis value")
+
+    def test_huge_half_life_equals_uniform(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, t = self._mk()
+        a = response_columns(X, y, sd, min_n=5, half_life=None)
+        b = response_columns(X, y, sd, min_n=5, half_life=1e9, t_days=t)
+        for c in ("h_resp_nps", "h_slope_nps", "h_resp_mean"):
+            np.testing.assert_allclose(a[c][10:], b[c][10:], rtol=1e-6, atol=1e-9)
+
+    def test_decay_follows_a_regime_change(self):
+        """The knob must do something: after the target jumps 50 -> 90, the decayed fit
+        at the last row must be nearer 90 than the uniform fit is."""
+        from bms_ml.phase3.response_features import response_columns
+        m = 240
+        rng = np.random.RandomState(1)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(m, len(names)))
+        y = np.concatenate([np.full(m // 2, 50.0), np.full(m // 2, 90.0)])
+        t = np.arange(m) * 3.0                      # 3 days apart -> 720 day span
+        sd = {n: 1.0 for n in names}
+        uni = response_columns(X, y, sd, min_n=5, half_life=None)
+        dec = response_columns(X, y, sd, min_n=5, half_life=30.0, t_days=t)
+        self.assertGreater(dec["h_resp_mean"][-1], uni["h_resp_mean"][-1])
+        self.assertLess(abs(dec["h_resp_mean"][-1] - 90.0),
+                        abs(uni["h_resp_mean"][-1] - 90.0))
+
+    def test_half_life_requires_t_days(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, _ = self._mk()
+        with self.assertRaises(ValueError):
+            response_columns(X, y, sd, min_n=5, half_life=30.0)
+
+
 class TestClientGuard(unittest.TestCase):
     """LR2 and beatoraja must not be pooled (user decision 2026-09-11).
 
