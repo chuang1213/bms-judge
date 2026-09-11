@@ -44,11 +44,16 @@ wall-clock now: a wall-clock gap of months would push h_days_since_active far be
 training distribution - the exact few-shot trap PHASE3_4_TRANSFER documented.
 
 Outputs: bms_ml/output/phase3/recommend/<player>.{html,csv}
+         The HTML is a self-contained INTERACTIVE report: every candidate is embedded
+         and the browser does table / level / group filtering and sorting (by pass
+         probability, table+level, pred acc / BP / lamp) locally - no server needed.
+         The CSV is the same full list, one row per candidate.
 """
 from __future__ import annotations
 
 import argparse
 import html
+import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -69,7 +74,12 @@ OUT = ROOT / "bms_ml" / "output" / "phase3" / "recommend"
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 FEATS = BEST_FEATURES                     # the fused best configuration (5.887)
 HALF_LIFE = 180.0                         # must match history_response.py's default
-TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂", "normal": "☆"}
+TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂", "normal": "☆",
+             "overjoy": "★★"}
+# levels are only comparable WITHIN a table (satellite 12 vs insane 12 are different
+# animals), so any cross-table level sort must go through this difficulty order first.
+# Priority as loaded by data.load_tables, ascending difficulty.
+TABLE_ORDER = {"normal": 0, "satellite": 1, "stella": 2, "insane": 3, "overjoy": 4}
 KNN_K = 20                                # data.build_history_features default
 LAMP_NAME = {1: "FAILED", 2: "ASSIST EZ", 3: "LIGHT ASSIST EZ", 4: "EASY", 5: "CLEAR",
              6: "HARD", 7: "EX HARD", 8: "FULL COMBO", 9: "PERFECT"}
@@ -255,34 +265,18 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
                 top: int) -> str:
     e = html.escape
 
-    def rows(sub: pd.DataFrame, limit: int) -> str:
-        out = []
-        for _, r in sub.head(limit).iterrows():
-            out.append(
-                f"<tr><td class='lv'>{TABLE_SYM.get(r['table'], r['table'])}"
-                f"{r['level']:.0f}</td><td class='ti'>{e(str(r['title']))}</td>"
-                f"<td class='ar'>{e(str(r['artist'])[:40])}</td>"
-                f"<td class='lp n{r['pred_lamp']}'>{r['pred_lamp']} "
-                f"{e(r['pred_lamp_name'])}</td>"
-                f"<td class='pp'>{100 * r['p_pass']:.0f}%</td>"
-                f"<td class='ac'>{r['pred_acc']:.1f} "
-                f"<span class='band'>[{r['pred_acc_lo']:.0f}-{r['pred_acc_hi']:.0f}]"
-                f"</span></td>"
-                f"<td class='bp'>{r['pred_bp']:.0f}</td></tr>")
-        return "\n".join(out)
+    # ---- embed ALL candidates; filtering/sorting happens client-side -------------
+    recs = []
+    for r in cand.itertuples(index=False):
+        recs.append({"t": r.table, "l": int(r.level), "ti": str(r.title),
+                     "ar": str(r.artist), "g": r.group, "pl": int(r.pred_lamp),
+                     "pn": str(r.pred_lamp_name), "pp": round(float(r.p_pass), 4),
+                     "pa": round(float(r.pred_acc), 1),
+                     "lo": round(float(r.pred_acc_lo)), "hi": round(float(r.pred_acc_hi)),
+                     "pb": round(float(r.pred_bp)), "m": bool(r.has_msd)})
+    payload = json.dumps(recs, ensure_ascii=False).replace("</", "<\\/")   # </script> guard
+    counts = cand["group"].value_counts().to_dict()
 
-    desc = {"挑战区": "预测能过、但要认真打 —— 主体推荐段",
-            "冲刺区": "预测能顺利通过、接近模型上限 —— 冲高难 / 收歌",
-            "暂缓区": "预测过不了 —— 先放一放"}
-    groups = []
-    for g in ("挑战区", "冲刺区", "暂缓区"):
-        sub = cand[cand["group"] == g]
-        groups.append(
-            f"<section><h2>{g} <span class='cnt'>{len(sub)} 张</span></h2>"
-            f"<p class='desc'>{desc[g]}</p><table><thead><tr><th>表</th><th>标题</th>"
-            f"<th>作者</th><th>预测灯</th><th>通过概率</th><th>预测acc (80%区间)"
-            f"</th><th>预测BP</th></tr></thead>"
-            f"<tbody>{rows(sub, top)}</tbody></table></section>")
     mae_txt = f"{pmae:.2f} 分" if pmae is not None else "该玩家没有测试段样本"
     css = (":root{--bg:#0f1115;--card:#171a21;--line:#262b36;--fg:#e6e9ef;"
            "--dim:#8b93a5;--acc:#5eead4;--warn:#fbbf24;--bad:#f87171}"
@@ -294,12 +288,26 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
            ".stat{background:var(--card);border:1px solid var(--line);border-radius:10px;"
            "padding:12px 18px;min-width:150px}.stat b{display:block;font-size:20px;"
            "color:var(--acc)}.stat span{color:var(--dim);font-size:12px}"
-           "h2{font-size:17px;margin:28px 0 2px}.cnt{color:var(--dim);font-size:13px;"
-           "font-weight:normal}.desc{color:var(--dim);margin:0 0 8px;font-size:13px}"
+           ".bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;"
+           "background:var(--card);border:1px solid var(--line);border-radius:10px;"
+           "padding:10px 14px;margin-bottom:14px}"
+           ".bar .lb{color:var(--dim);font-size:12px}"
+           "label.chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;"
+           "border:1px solid var(--line);border-radius:999px;padding:3px 11px;"
+           "font-size:12.5px;user-select:none}label.chip input{accent-color:#5eead4;"
+           "margin:0}label.chip.on{border-color:var(--acc);color:var(--acc)}"
+           ".bar input[type=number],.bar select,.bar input[type=search]{"
+           "background:#10131a;border:1px solid var(--line);border-radius:8px;"
+           "color:var(--fg);padding:5px 9px;font:inherit;font-size:13px}"
+           ".bar input[type=number]{width:74px}"
+           ".bar input[type=search]{width:200px}"
+           ".cnt{color:var(--dim);font-size:13px;margin:6px 2px 10px}"
+           ".cnt b{color:var(--fg)}"
            "table{width:100%;border-collapse:collapse;background:var(--card);"
            "border:1px solid var(--line);border-radius:10px;overflow:hidden}"
            "th,td{padding:7px 12px;text-align:left;border-top:1px solid var(--line)}"
-           "th{color:var(--dim);font-weight:600;font-size:12px;background:#1b1f29}"
+           "th{color:var(--dim);font-weight:600;font-size:12px;background:#1b1f29;"
+           "position:sticky;top:0}"
            "td.pp{font-weight:600;color:#a78bfa}"
            ".band{color:var(--dim);font-size:11px}"
            "td.lv{color:var(--acc);font-weight:600;white-space:nowrap}"
@@ -307,9 +315,94 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
            "white-space:nowrap}td.ar{color:var(--dim);max-width:180px;overflow:hidden;"
            "text-overflow:ellipsis;white-space:nowrap}td.ac{font-weight:600}"
            "td.bp{color:var(--dim)}.lp{font-weight:600}"
+           ".nom{color:var(--dim);font-size:11px}"
+           ".g{font-size:11px;border-radius:999px;padding:1px 9px;white-space:nowrap}"
+           ".g.挑战区{color:var(--acc);border:1px solid var(--acc)}"
+           ".g.冲刺区{color:#a78bfa;border:1px solid #a78bfa}"
+           ".g.暂缓区{color:var(--dim);border:1px solid var(--line)}"
            ".n1,.n2,.n3{color:var(--bad)}.n4,.n5{color:var(--warn)}"
            ".n6,.n7{color:var(--acc)}.n8,.n9{color:#a78bfa}"
+           "#more{display:block;margin:16px auto;background:#1b1f29;color:var(--fg);"
+           "border:1px solid var(--line);border-radius:8px;padding:8px 26px;"
+           "font:inherit;cursor:pointer}#more:hover{border-color:var(--acc)}"
            ".foot{color:var(--dim);font-size:12px;margin-top:28px;line-height:1.8}")
+    # plain template (not an f-string): the JS is full of braces
+    js = """
+const ORD=__ORD__;const SYM=__SYM__;
+const DATA=__DATA__;
+const state={tb:new Set(__TABLES__),gp:new Set(['挑战区','冲刺区','暂缓区']),
+             lo:0,hi:25,sort:'pp',q:'',shown:__SHOWN__};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const CMP={
+  pp:(a,b)=>b.pp-a.pp,
+  acc:(a,b)=>b.pa-a.pa,
+  bp:(a,b)=>a.pb-b.pb,
+  lamp:(a,b)=>b.pl-a.pl||b.pa-a.pa,
+  lvl:(a,b)=>(ORD[a.t]-ORD[b.t])||(a.l-b.l)||b.pp-a.pp,
+  lvld:(a,b)=>(ORD[b.t]-ORD[a.t])||(b.l-a.l)||b.pp-a.pp};
+function apply(){
+  const q=state.q.toLowerCase();
+  let arr=DATA.filter(r=>state.tb.has(r.t)&&state.gp.has(r.g)
+      &&r.l>=state.lo&&r.l<=state.hi
+      &&(!q||(r.ti+' '+r.ar).toLowerCase().includes(q)));
+  arr.sort(CMP[state.sort]);
+  return arr;
+}
+function row(r){
+  return '<tr><td class="lv">'+SYM[r.t]+r.l+'</td>'
+    +'<td class="ti">'+esc(r.ti)+(r.m?'':' <span class="nom" title="无 MinaCalc 数据">◇</span>')+'</td>'
+    +'<td class="ar">'+esc(r.ar)+'</td>'
+    +'<td class="lp n'+r.pl+'">'+r.pl+' '+esc(r.pn)+'</td>'
+    +'<td class="pp">'+Math.round(r.pp*100)+'%</td>'
+    +'<td class="ac">'+r.pa.toFixed(1)
+    +' <span class="band">['+r.lo+'-'+r.hi+']</span></td>'
+    +'<td class="bp">'+r.pb+'</td>'
+    +'<td><span class="g '+r.g+'">'+r.g+'</span></td></tr>';
+}
+let VIEW=[];
+function render(){
+  const tb=document.querySelector('#v tbody');
+  tb.innerHTML=VIEW.slice(0,state.shown).map(row).join('');
+  document.getElementById('cnt').innerHTML=
+    '显示 <b>'+Math.min(state.shown,VIEW.length)+'</b> / 筛选后 <b>'+VIEW.length
+    +'</b> / 全部 '+DATA.length+' 张';
+  document.getElementById('more').style.display=
+    state.shown<VIEW.length?'block':'none';
+}
+function bindChips(id,attr){
+  document.querySelectorAll('#'+id+' input').forEach(el=>{
+    el.addEventListener('change',()=>{
+      el.checked?state[attr].add(el.value):state[attr].delete(el.value);
+      el.closest('label').classList.toggle('on',el.checked);
+      state.shown=__SHOWN__;VIEW=apply();render();});});
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  bindChips('tables','tb');bindChips('groups','gp');
+  const lo=document.getElementById('lo'),hi=document.getElementById('hi');
+  const lv=()=>{state.lo=+lo.value;state.hi=+hi.value;state.shown=__SHOWN__;
+                VIEW=apply();render();};
+  lo.addEventListener('change',lv);hi.addEventListener('change',lv);
+  document.getElementById('sort').addEventListener('change',ev=>{
+    state.sort=ev.target.value;VIEW=apply();render();});
+  document.getElementById('q').addEventListener('input',ev=>{
+    state.q=ev.target.value.trim();state.shown=__SHOWN__;VIEW=apply();render();});
+  document.getElementById('more').addEventListener('click',()=>{
+    state.shown+=__SHOWN__;render();});
+  VIEW=apply();render();});
+"""
+    js = (js.replace("__ORD__", json.dumps(TABLE_ORDER))
+            .replace("__SYM__", json.dumps(TABLE_SYM, ensure_ascii=False))
+            .replace("__DATA__", payload)
+            .replace("__TABLES__", json.dumps(list(TABLE_ORDER)))
+            .replace("__SHOWN__", str(top)))
+    chips = "".join(
+        f"<label class='chip on'><input type='checkbox' checked value='{t}'>"
+        f"{TABLE_SYM[t]} {t}</label>" for t in TABLE_ORDER)
+    gchips = "".join(
+        f"<label class='chip on'><input type='checkbox' checked value='{g}'>"
+        f"{g} <span class='nom'>{counts.get(g, 0)}</span></label>"
+        for g in ("挑战区", "冲刺区", "暂缓区"))
     return (f"<!doctype html><html lang='zh'><head><meta charset='utf-8'>"
             f"<title>BMS 推荐 · {e(player)}</title><style>{css}</style></head>"
             f"<body><div class='wrap'><h1>BMS 谱面推荐 · {e(player)}</h1>"
@@ -323,15 +416,36 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
             f"<div class='stat'><b>{mae_txt}</b>"
             f"<span>模型对你的预测误差（测试段）</span></div>"
             f"<div class='stat'><b>{meta['n_no_msd']}</b>"
-            f"<span>候选缺 MSD（序列未构建，特征插补）</span></div></div>"
-            f"{''.join(groups)}"
+            f"<span>候选缺 MSD（◇ 标记）</span></div></div>"
+            f"<div class='bar'><span class='lb'>表</span><span id='tables'>{chips}</span>"
+            f"<span class='lb'>分组</span><span id='groups'>{gchips}</span></div>"
+            f"<div class='bar'><span class='lb'>等级</span>"
+            f"<input type='number' id='lo' value='0' min='0' max='25'>–"
+            f"<input type='number' id='hi' value='25' min='0' max='25'>"
+            f"<span class='lb'>排序</span>"
+            f"<select id='sort'>"
+            f"<option value='pp'>通过概率 高→低</option>"
+            f"<option value='lvl'>表等级 低→高（先按表序）</option>"
+            f"<option value='lvld'>表等级 高→低（先按表序）</option>"
+            f"<option value='acc'>预测 acc 高→低</option>"
+            f"<option value='bp'>预测 BP 低→高</option>"
+            f"<option value='lamp'>预测灯 高→低</option>"
+            f"</select>"
+            f"<input type='search' id='q' placeholder='搜索标题 / 作者…'></div>"
+            f"<p class='cnt' id='cnt'></p>"
+            f"<table><thead><tr><th>表/等级</th><th>标题</th><th>作者</th>"
+            f"<th>预测灯</th><th>通过概率</th><th>预测acc (80%区间)</th>"
+            f"<th>预测BP</th><th>分组</th></tr></thead><tbody></tbody></table>"
+            f"<button id='more'>显示更多</button>"
             f"<div class='foot'>预测含义：若现在第一次打这张谱的期望表现"
             f"（acc 0-100 / lamp 1-9 / BP 残数）。<br>"
             f"这<b>不是</b>\"练了会变强\"的模型 —— 项目没有纵向干预数据，"
             f"训练价值无法度量；分组只是把\"期望首打表现\"翻译成可读的选择。"
+            f"筛选与排序在浏览器本地完成（全量候选已内嵌本页），"
             f"完整候选清单（含全部预测值）见同目录 CSV。"
             f"特征与训练完全同源（响应块 180d 半衰期 + 玩家相对偏差），"
-            f"协议口径 acc MAE 6.117。</div></div></body></html>")
+            f"协议口径 acc MAE 6.117。</div></div>"
+            f"<script>{js}</script></body></html>")
 
 
 def main() -> None:
