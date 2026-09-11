@@ -39,7 +39,7 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
 
 from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, HISTORY_RESPONSE_COLS,
-                        OBJECTIVE_STAT_COLS, RESPONSE_AXES)
+                        MSD_AXES, OBJECTIVE_STAT_COLS, RESPONSE_AXES, _response_cols)
 from common import HGBModel, add_region, hgb_fit_predict, load_firstplays, mae
 from response_features import axis_sd, build_table, prefix_response
 
@@ -70,6 +70,11 @@ USE_PERM = os.environ.get("P3_USE_PERM", "0") == "1"
 # response_features.py. Only the few-shot curve changes: the exp-1 protocol band keeps
 # its full-causal reference untouched so the two remain comparable.
 USE_RESP = os.environ.get("P3_USE_RESP", "0") == "1"
+# which axis family the few-shot response block uses: "struct" (the 11 structural axes,
+# shipped), "msd" (the 7 MinaCalc skillsets) or "both". The MSD few-shot profile is the
+# same estimator on a different axis source - it answers whether the crowd-calibrated
+# axes also help in the sparse-prefix regime where the structural block did not.
+RESP_AXES_MODE = os.environ.get("P3_RESP_AXES", "struct")
 RESP_WIN = int(os.environ.get("P3_RESP_WINDOW", "50"))
 RESP_MIN = int(os.environ.get("P3_RESP_MIN", "5"))
 # zero-slope prior worth this many events (see response_features.response_columns).
@@ -146,6 +151,7 @@ def main() -> None:
 
     # ---- personal response profile (few-shot only; see USE_RESP above) ----
     RESP = []
+    sd_axes = sd_msd = None
     if USE_RESP:
         # four axes are v2 columns kept in a side table
         need = [c for c in set(RESPONSE_AXES.values()) if c not in fp.columns]
@@ -162,11 +168,29 @@ def main() -> None:
                               rng=np.random.RandomState(0), shrink=RESP_LAMBDA)
         for c in HISTORY_RESPONSE_COLS:
             fp[c] = tr_resp[c].values
-        RESP = list(HISTORY_RESPONSE_COLS)
+        if RESP_AXES_MODE in ("struct", "both"):
+            RESP += list(HISTORY_RESPONSE_COLS)
+            RESP_S = list(HISTORY_RESPONSE_COLS)
+        else:
+            RESP_S = []
+        if RESP_AXES_MODE in ("msd", "both"):
+            fp = fp.merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
+            sd_msd = axis_sd(fp, MSD_AXES)
+            tr_msd = build_table(fp, sd_msd, min_n=RESP_MIN, window=RESP_WIN,
+                                 rng=np.random.RandomState(1), shrink=RESP_LAMBDA,
+                                 prefix="m_", target="acc", axes=MSD_AXES)
+            msd_cols = _response_cols("m_", MSD_AXES)
+            for c in msd_cols:
+                fp[c] = tr_msd[c].values
+            RESP += msd_cols
+            RESP_M = msd_cols
+        else:
+            RESP_M = []
 
     players = sorted(fp["player"].unique())
     results: dict = {"scope_rows": len(fp), "players": players, "ks": KS,
                      "use_v2": USE_V2, "use_perm": USE_PERM, "use_resp": USE_RESP,
+                     "resp_axes": RESP_AXES_MODE if USE_RESP else None,
                      "resp_window": RESP_WIN if USE_RESP else None, "lopo": {}}
 
     for D in players:
@@ -256,10 +280,17 @@ def main() -> None:
             if RESP:
                 # prefix-only profile (see response_features.prefix_response): the
                 # curve is fitted on the prefix alone and evaluated at each target's
-                # own axis value, so no target can inform another.
-                te_k[RESP] = prefix_response(prefix, targets, sd_axes,
-                                             min_n=RESP_MIN, window=RESP_WIN,
-                                             shrink=RESP_LAMBDA)[RESP].values
+                # own axis value, so no target can inform another. Per-family calls:
+                # the structural and MSD families have different prefixes, axis
+                # sources and slope scalings.
+                if RESP_AXES_MODE in ("struct", "both"):
+                    te_k[RESP_S] = prefix_response(
+                        prefix, targets, sd_axes, min_n=RESP_MIN, window=RESP_WIN,
+                        shrink=RESP_LAMBDA)[RESP_S].values
+                if RESP_AXES_MODE in ("msd", "both"):
+                    te_k[RESP_M] = prefix_response(
+                        prefix, targets, sd_msd, min_n=RESP_MIN, window=RESP_WIN,
+                        shrink=RESP_LAMBDA, prefix="m_", axes=MSD_AXES)[RESP_M].values
 
             p0_acc = m0_acc.predict(te_k)
             p0_lamp = m0_lamp.predict(te_k)

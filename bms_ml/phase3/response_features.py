@@ -145,16 +145,124 @@ def response_columns(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
     return out
 
 
+def response_columns_mv(X: np.ndarray, y: np.ndarray, sd: dict, min_n: int = 20,
+                        prefix: str = "h_", clip: tuple[float, float] = (0.0, 100.0),
+                        half_life: float | None = None, t_days: np.ndarray | None = None,
+                        axes: dict | None = None, ridge: float = 0.1) -> dict:
+    """MULTIVARIATE ridge variant of `response_columns` (2026-09-11).
+
+    The univariate path fits 11 INDEPENDENT OLS y ~ x_axis, which suffers omitted-
+    variable bias wherever the axes correlate (density vs NPS vs chord rates all move
+    together). This variant fits ONE joint ridge y ~ alpha + sum_j b_j x_j over the same
+    causal window and emits, with the same schema so blocks stay swappable:
+
+      resp_j  = ybar + b_j * (x_ij - xbar_j)   prediction at the window mean, perturbed
+                                               by axis j's PARTIAL effect
+      slope_j = b_j * sd_j_global              scale-free partial trait
+      dev_j   = (x_ij - xbar_j) / sd_j_window  unchanged: window moments are shared
+
+    Rows enter the joint fit only when y AND every axis are valid (joint validity - the
+    univariate path handled NaN per axis; documented difference). `ridge` is in
+    correlation units (the solve runs on the window correlation matrix), so it is
+    comparable across axes with wildly different scales. With ridge -> large, b -> 0 and
+    every resp_j -> ybar: the window mean, a useful sanity anchor.
+
+    Not supported: window/rng truncation augmentation (the few-shot path stays on the
+    univariate estimator for now) and the `shrink` pseudo-count prior (the ridge penalty
+    plays that role).
+    """
+    names = list(RESPONSE_AXES if axes is None else axes)
+    A = len(names)
+    m = len(y)
+    out = {c: np.full(m, np.nan) for c in _block_cols(prefix, axes)}
+    yv = ~np.isnan(y)
+    idx = np.arange(m)
+    lo_i = np.zeros(m, dtype=np.int64)   # full causal history (no window augmentation)
+
+    if half_life is None:
+        gw = np.ones(m)
+        rescale = np.ones(m)
+    else:
+        if t_days is None:
+            raise ValueError("half_life requires t_days")
+        td = np.asarray(t_days, dtype=np.float64)
+        if not np.isfinite(td).all():
+            raise ValueError("t_days must be finite for a decayed fit")
+        u = np.log(2.0) * (td - td[0]) / float(half_life)
+        gw = np.exp(u)
+        rescale = np.exp(-u)
+
+    # joint validity: a row contributes only when y AND every axis are finite
+    valid = yv & np.isfinite(X).all(axis=1)
+    w = gw * valid
+    ysafe = np.where(np.isnan(y), 0.0, y)
+
+    SW = _cum(w)
+    SX = np.stack([_cum(w * X[:, a]) for a in range(A)], axis=1)          # (m+1, A)
+    SXX = np.stack([_cum(w * X[:, a] * X[:, b])
+                    for a in range(A) for b in range(A)], axis=1)         # (m+1, A*A)
+    SY = _cum(w * ysafe)
+    SXY = np.stack([_cum(w * X[:, a] * ysafe) for a in range(A)], axis=1)
+    SYY = _cum(w * ysafe * ysafe)
+
+    ne = (SW[idx] - SW[lo_i]) * rescale
+    ok = ne >= min_n
+    safe = np.maximum(ne, 1.0)
+    xbar = (SX[idx] - SX[lo_i]) / safe[:, None]                            # (m, A)
+    ybar = (SY[idx] - SY[lo_i]) / safe
+    C = (SXX[idx] - SXX[lo_i]).reshape(m, A, A) / safe[:, None, None]      # (m, A, A)
+    C = C - xbar[:, :, None] * xbar[:, None, :]
+    sdx = np.sqrt(np.maximum(np.einsum("mii->mi", C), 0.0))
+    sdy = np.sqrt(np.maximum((SYY[idx] - SYY[lo_i]) / safe - ybar * ybar, 0.0))
+    cxy = (SXY[idx] - SXY[lo_i]) / safe[:, None] - xbar * ybar[:, None]
+
+    sd_x = np.maximum(sdx, 1e-9)
+    R = C / (sd_x[:, :, None] * sd_x[:, None, :])
+    r = cxy / (sd_x * np.maximum(sdy, 1e-9)[:, None])
+    # zero-variance axes: force their partial slope to 0 instead of solving garbage -
+    # applied per row by zeroing r's entry and uniting R's diagonal for that axis
+    dead = sdx <= 1e-9
+    Rm = R.copy()
+    for a in range(A):
+        Rm[dead[:, a], a, :] = 0.0
+        Rm[dead[:, a], :, a] = 0.0
+        Rm[dead[:, a], a, a] = 1.0
+        r[dead[:, a], a] = 0.0
+
+    b_std = np.linalg.solve(Rm + ridge * np.eye(A), r[..., None])[..., 0]  # (m, A)
+    b = b_std * (np.maximum(sdy, 1e-9)[:, None] / sd_x)                    # (m, A)
+
+    for a, name in enumerate(names):
+        resp = ybar + b[:, a] * (X[:, a] - xbar[:, a])
+        resp = np.clip(resp, clip[0], clip[1])
+        resp[~ok] = np.nan
+        out[f"{prefix}resp_{name}"] = resp
+        sl = b[:, a] * sd[name]
+        sl[~ok] = np.nan
+        out[f"{prefix}slope_{name}"] = sl
+        dv = (X[:, a] - xbar[:, a]) / sd_x[:, a]
+        dv[~ok] = np.nan
+        out[f"{prefix}dev_{name}"] = dv
+    resp_m = np.stack([out[f"{prefix}resp_{n}"] for n in names], axis=0)
+    out[f"{prefix}resp_mean"] = np.nanmean(resp_m, axis=0)
+    with np.errstate(invalid="ignore"):
+        out[f"{prefix}resp_std"] = np.nanstd(resp_m, axis=0)
+    return out
+
+
 def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
                 window: int | None = None, rng: np.random.RandomState | None = None,
                 shrink: float = 0.0, target: str = "acc", prefix: str = "h_",
                 clip: tuple[float, float] = (0.0, 100.0),
                 half_life: float | None = None,
-                axes: dict | None = None) -> pd.DataFrame:
+                axes: dict | None = None,
+                multivariate: bool = False, ridge: float = 0.1) -> pd.DataFrame:
     """Per-player application of `response_columns`. `fp_chronological` must be sorted
     by (player, time) — the causal prefix sums depend on it. `half_life` (days) needs a
     `time` column and is forwarded to `response_columns`. `axes` (name -> source column)
-    overrides the axis set; the frame must carry those source columns."""
+    overrides the axis set; the frame must carry those source columns.
+    `multivariate=True` dispatches to the joint-ridge estimator `response_columns_mv`
+    (full-causal-history only; window/rng augmentation is univariate-only)."""
     names = list(RESPONSE_AXES if axes is None else axes)
     cols = _block_cols(prefix, axes)
     out = {c: np.full(len(fp_chronological), np.nan) for c in cols}
@@ -171,10 +279,15 @@ def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
                       if axes is None else
                       fp_chronological[axes[n]].values[pos].astype(np.float64)
                       for n in names], axis=1)
-        r = response_columns(X, y, sd, min_n=min_n, window=window, rng=rng,
-                             shrink=shrink, prefix=prefix, clip=clip,
-                             half_life=half_life, axes=axes,
-                             t_days=None if tcol is None else tcol[pos])
+        if multivariate:
+            r = response_columns_mv(X, y, sd, min_n=min_n, prefix=prefix, clip=clip,
+                                    half_life=half_life, axes=axes, ridge=ridge,
+                                    t_days=None if tcol is None else tcol[pos])
+        else:
+            r = response_columns(X, y, sd, min_n=min_n, window=window, rng=rng,
+                                 shrink=shrink, prefix=prefix, clip=clip,
+                                 half_life=half_life, axes=axes,
+                                 t_days=None if tcol is None else tcol[pos])
         for c in cols:
             out[c][pos] = r[c]
     return pd.DataFrame(out)
@@ -183,7 +296,8 @@ def build_table(fp_chronological: pd.DataFrame, sd: dict, min_n: int = 20,
 def prefix_response(prefix_df: pd.DataFrame, targets: pd.DataFrame, sd: dict,
                     min_n: int = 5, window: int = 50, shrink: float = 0.0,
                     target: str = "acc", prefix: str = "h_",
-                    clip: tuple[float, float] = (0.0, 100.0)) -> pd.DataFrame:
+                    clip: tuple[float, float] = (0.0, 100.0),
+                    axes: dict | None = None) -> pd.DataFrame:
     """Response features for `targets`, fitted on `prefix_df` ONLY.
 
     This is NOT build_table(prefix + targets): that frame lets an early target become
@@ -194,15 +308,16 @@ def prefix_response(prefix_df: pd.DataFrame, targets: pd.DataFrame, sd: dict,
     last `min(window, len(prefix))` prefix events and evaluated at each target's own
     axis value.
     """
-    names = list(RESPONSE_AXES)
+    names = list(RESPONSE_AXES if axes is None else axes)
     m = len(targets)
     n = min(window, len(prefix_df))
     pre = prefix_df.iloc[len(prefix_df) - n:] if n else prefix_df.iloc[:0]
     y = pre[target].values.astype(np.float64) if n else np.zeros(0)
     out = {}
     resp = np.full((len(names), m), np.nan)
+    src = RESPONSE_AXES if axes is None else axes
     for a, name in enumerate(names):
-        col = RESPONSE_AXES[name]
+        col = src[name]
         xt = targets[col].values.astype(np.float64)
         r = np.full(m, np.nan)
         sl = np.full(m, np.nan)
@@ -236,7 +351,7 @@ def prefix_response(prefix_df: pd.DataFrame, targets: pd.DataFrame, sd: dict,
     out[f"{prefix}resp_mean"] = np.nanmean(resp, axis=0)
     with np.errstate(invalid="ignore"):
         out[f"{prefix}resp_std"] = np.nanstd(resp, axis=0)
-    return pd.DataFrame(out, index=targets.index)[_block_cols(prefix)]
+    return pd.DataFrame(out, index=targets.index)[_block_cols(prefix, axes)]
 
 
 def axis_sd(fp: pd.DataFrame, axes: dict | None = None) -> dict:

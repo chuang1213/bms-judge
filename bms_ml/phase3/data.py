@@ -126,19 +126,31 @@ def load_manifest() -> pd.DataFrame:
 def load_tables() -> pd.DataFrame:
     """sha256 -> (table_name, level).
 
-    Priority satellite > stella > insane > normal (2026-09-11, user decision to admit
-    the 通常難易度表): the FIRST table a chart appears in wins, and normal is last so
-    every existing sl/st/insane assignment is untouched - the admission only ADDS charts
-    that were previously outside the fence, it never relabels one. Normal (☆) is the
-    entry-level table, so its charts sit below the previous difficulty range."""
+    Priority satellite > stella > insane > normal > overjoy (2026-09-11, user decisions
+    to admit the 通常☆ table and then overjoy; normal2 and ln were also parsed but are
+    WITHHELD per user decision for this batch - their loaders remain below, disabled):
+    the FIRST table a chart appears in wins, and each new table is appended last so
+    existing assignments are untouched - admissions only ADD charts, they never relabel
+    one. overjoy (★★, 超高难) is admitted per user note that its chart difficulty is
+    uneven - treat its labels dialectically. normal2's levels carry +/- fine-tuning
+    suffixes ("12+"), stripped to the base number; ln is LN-dominant and its MSD (note
+    starts only) is indicative rather than calibrated for LN - both reasons to keep them
+    out until their admission is decided deliberately."""
     md5_to_sha: dict[str, str] = {}
     with open(CORPUS / "manifest.jsonl", encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
             md5_to_sha[r["md5"]] = r["sha256"]
     out = {}
+    # normal2 / ln loaders are kept here but DISABLED (user decision 2026-09-11:
+    # withheld from this batch); flip their flags to admit them later.
+    admit = {"normal2": False, "ln": False}
     for name, fname in [("satellite", "satellite_data.json"), ("stella", "stella_data.json"),
-                        ("insane", "insane_data.json"), ("normal", "normal_data.json")]:
+                        ("insane", "insane_data.json"), ("normal", "normal_data.json"),
+                        ("overjoy", "overjoy_data.json"), ("ln", "ln_data.json"),
+                        ("normal2", "normal2_data.json")]:
+        if name in admit and not admit[name]:
+            continue
         # encoding is explicit: the table JSONs are UTF-8 and a non-UTF-8 locale
         # (cp936/gbk on zh-CN Windows) otherwise raises UnicodeDecodeError here,
         # which breaks `python data.py` — step 4 of the new-player SOP.
@@ -147,8 +159,12 @@ def load_tables() -> pd.DataFrame:
             if not sha:
                 continue
             lvl = e.get("level")
+            # normal2 carries fine-tuning suffixes ("12+"/"11-"); strip to the base
+            # number so those entries parse instead of silently dropping ~12% of the
+            # table. The +/- nuance is reporting-only (level is never a feature).
+            s = str(lvl).strip().rstrip("+-") if lvl is not None else None
             try:
-                lvl = float(lvl)
+                lvl = float(s)
             except (TypeError, ValueError):
                 continue  # '??' etc.
             if sha not in out:  # first table wins (priority order above)
