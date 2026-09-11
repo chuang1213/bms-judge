@@ -66,7 +66,14 @@ dev 配对 +0.243（CI 0.192..0.295，p=3e-19），**打乱对照 6.40-6.46 反�
   我们的 `corpus/sequences/<sha>.npy` = `(time_sec, lane, type0=普通/1=LN, dur)`，转换约 30 行。
   抽样 3000 谱：99.9% 为 8 列（7K+scratch→通用 n-key 路径）、95.6% 在 Roxy 适用域（LN≤0.18）、
   99.7% 音符数 ≥80 → **全语料可算 MSD**。用途：把 8 个 MSD 当**响应/偏差轴**（人群校准的难度语义，
-  比裸结构统计更有意义——是对"更好的轴"而非"更多的轴"的假设检验）；
+  比裸结构统计更有意义——是对"更好的轴"而非"更多的轴"的假设检验）。
+  **MSD 已落地（2026-09-11，recommend 分支）**：`msd_prep.py`（序列→行掩码 blob）→
+  `msd_compute.mjs`（Node 调 0.74.0 WASM，**非 4K 必须 0.74.0**——第一个有 n-key 管线的版本，
+  ~1300 谱/s，4562/4562 零失败）→ `msd_finalize.py`（`dataset/msd.parquet`，7 列）。
+  覆盖 = 围栏∪已打 5,570 中的 4,562（缺的 1,008 全是围栏候选序列文件缺失；已打谱面仅 0.7% 缺）。
+  **注意 Technical 在 n-key 路径恒为 0.18（4K 专属技能项），已丢弃**。
+  外部效度：MSD Overall 与表等级 Spearman = insane 0.801 / satellite 0.852 / stella 0.610，
+  **全面优于 c_avg_nps**（0.647/0.731/0.435）；最强单项 chordjack +0.883。
   ② `docs/roxy_algorithm.md`：7 条 burst/sustain 应变流 + 分位数/幂均值聚合 + **Ridge 元模型而非树**
   （树对时间戳噪声过敏感——与我们的教训同源）+ 0.5 序数网格校准（**直接适用于我们的 lamp 头**）
   + 估计器 0.4/0.6 融合降方差；③ `js/interlude/`、`js/patterns/` = Interlude RC/LN 键型检测。
