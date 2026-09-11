@@ -23,25 +23,29 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from chart_repr import feature_manifest
+from chart_repr import (BEST_FEATURES, MSD_ACC_COLS, MSD_AXES, MSD_BP_COLS,
+                        MSD_LAMP_COLS, feature_manifest)
 from common import load_samples
 from response_decay import V1, Hv, build_response
 from response_dev import DEV, SETS_DEV
 from response_eval import evaluate
-from response_features import _block_cols, axis_sd, build_table
+from response_features import axis_sd, build_table
 
 ROOT = Path(__file__).resolve().parents[2]
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 HALF_LIFE = 180.0
 MIN_HISTORY = 20
 
-MSD_AXES = {k: f"msd_{k}" for k in
-            ("overall", "stream", "jumpstream", "handstream", "stamina",
-             "jackspeed", "chordjack")}
-MSD_BLOCK = _block_cols("m_", MSD_AXES)      # acc block only; lamp/bp variants below
+MSD_AXES = dict(MSD_AXES)                    # registry copy; see chart_repr for provenance
+MSD_BLOCK = MSD_ACC_COLS
+MSD_LAMP_BLOCK = MSD_LAMP_COLS
+MSD_BP_BLOCK = MSD_BP_COLS
+MSD_ALL = MSD_BLOCK + MSD_LAMP_BLOCK + MSD_BP_BLOCK
 MSD_RAW = list(MSD_AXES.values())
 BASE = SETS_DEV["B_resp+bpresp+dev"]         # the acc best (6.117)
 STRUCT = SETS_DEV["B_resp+bpresp"]           # structural response config, for reference
+assert BEST_FEATURES == BASE + MSD_ALL, \
+    "chart_repr.BEST_FEATURES drifted from BASE + the three MSD blocks"
 
 
 def build_msd_block() -> tuple[pd.DataFrame, float]:
@@ -81,10 +85,10 @@ def main() -> None:
 
     sets = {
         "BASE": BASE,
-        "BASE+msdraw": BASE + MSD_RAW,
         "BASE+msdresp": BASE + MSD_BLOCK,
-        "BASE+msdraw+msdresp": BASE + MSD_RAW + MSD_BLOCK,
+        "BASE+msdfull": BASE + MSD_ALL,       # + lamp/BP MSD blocks
         "B_msdonly": V1 + Hv + MSD_BLOCK,
+        "B_msdfull_only": V1 + Hv + MSD_ALL,
         "STRUCT(ref)": STRUCT,
     }
     results: dict = {"half_life": HALF_LIFE, "msd_coverage": cov}
@@ -99,16 +103,16 @@ def main() -> None:
     for s in (0, 1):
         rs = np.random.RandomState(100 + s)
         sh = df.copy()
-        for c in MSD_BLOCK:
+        for c in MSD_ALL:
             sh[c] = rs.permutation(sh[c].values)
         r = evaluate(sh[sh["phase"] == "train"], sh[sh["phase"] == "test"],
-                     sets["BASE+msdresp"])
-        results[f"msdresp_shuffled_s{s}"] = r
-        print(f"{'  msdresp shuffled s' + str(s):24}{r['acc']['mae']:8.3f}"
+                     sets["BASE+msdfull"])
+        results[f"msdfull_shuffled_s{s}"] = r
+        print(f"{'  msdfull shuffled s' + str(s):24}{r['acc']['mae']:8.3f}"
               f"{r['acc']['centered_r2']:+9.3f}{r['lamp']['ord_mae']:8.3f}"
               f"{r['lamp']['qwk']:8.3f}{r['bp']['raw_mae']:9.1f}")
 
-    better = [t for t in ("BASE+msdraw", "BASE+msdresp", "BASE+msdraw+msdresp")
+    better = [t for t in ("BASE+msdresp", "BASE+msdfull")
               if results[t]["acc"]["mae"] < results["BASE"]["acc"]["mae"]]
     if better:
         from common import hgb_fit_predict

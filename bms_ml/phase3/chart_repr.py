@@ -109,6 +109,45 @@ HISTORY_RESPONSE_DEV_COLS = _dev_cols("h_")             # acc block deviation
 HISTORY_LAMP_DEV_COLS = _dev_cols("l_")
 HISTORY_BP_DEV_COLS = _dev_cols("b_")
 
+
+def _block_cols(prefix: str, axes: dict | None = None) -> list[str]:
+    """Everything one block emits: response columns + player-relative deviations."""
+    return _response_cols(prefix, axes) + _dev_cols(prefix, axes)
+
+
+# ---- MinaCalc skillset axis family (2026-09-11, recommend branch) ---------------
+# Seven Etterna MSD skillsets computed per chart by ref_repo/osumania_map_analyser-main's
+# WASM port of MinaCalc (msd_prep.py -> msd_compute.mjs -> msd_finalize.py ->
+# dataset/msd.parquet). These are CROWD-CALIBRATED difficulty axes: unlike the raw
+# structural stats, each one is regression-fitted on decades of community play. Measured
+# Spearman vs difficulty-table level: 0.80-0.85, beating c_avg_nps on every table.
+# Technical is absent: it is a 4K-only skillset and the n-key path returns a constant.
+# They enter the model ONLY through the response/dev transform - the raw ratings as
+# plain features measurably hurt (response_msd.py: 6.250 vs 6.117), which is the
+# project's interaction thesis confirmed from a new direction.
+MSD_AXES = {k: f"msd_{k}" for k in
+            ("overall", "stream", "jumpstream", "handstream", "stamina",
+             "jackspeed", "chordjack")}
+MSD_ACC_COLS = _block_cols("m_", MSD_AXES)      # acc response/dev on the MSD axes
+MSD_LAMP_COLS = _block_cols("ml_", MSD_AXES)
+MSD_BP_COLS = _block_cols("mb_", MSD_AXES)
+
+# chart-conditioned responses without the mean/std pair (the exact subsets the best
+# configuration uses for the lamp and BP targets)
+LAMP_RESP_COLS = [f"l_resp_{k}" for k in RESPONSE_AXES]
+BP_RESP_COLS = [f"b_resp_{k}" for k in RESPONSE_AXES]
+
+# The fused best configuration (2026-09-11, response_msd.py): everything B has, plus the
+# structural response blocks (acc full, lamp chart-conditioned, BP chart-conditioned),
+# the acc player-relative deviations, and the three MinaCalc MSD blocks.
+# acc 5.887 / cR2 +0.458 / lamp 1.089 / QWK 0.754 / BP 117.2  (BASE was 6.117).
+BEST_FEATURES = (OBJECTIVE_STAT_COLS + HISTORY_FEATURES
+                 + HISTORY_RESPONSE_COLS
+                 + LAMP_RESP_COLS + ["l_resp_mean", "l_resp_std"]
+                 + BP_RESP_COLS + ["b_resp_mean", "b_resp_std"]
+                 + HISTORY_RESPONSE_DEV_COLS
+                 + MSD_ACC_COLS + MSD_LAMP_COLS + MSD_BP_COLS)
+
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play
 # prefix, so their distributions are incomparable (evaluation values land beyond

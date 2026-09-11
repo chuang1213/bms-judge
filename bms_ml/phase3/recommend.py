@@ -57,17 +57,17 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from chart_repr import OBJECTIVE_STAT_COLS
+from chart_repr import BEST_FEATURES, HISTORY_FEATURES, MSD_AXES, OBJECTIVE_STAT_COLS
 from common import HGBModel, load_samples, mae
 from data import (HISTORY_USES_OFFTABLE, PLAYERS, ROOT, build_history_features,
                   load_firstplays, load_manifest, load_tables)
-from response_decay import MIN_HISTORY, build_response
-from response_dev import SETS_DEV
-from response_features import build_table
+from response_decay import MIN_HISTORY
+from response_features import axis_sd, build_table
 
 OUT = ROOT / "bms_ml" / "output" / "phase3" / "recommend"
-FEATS = SETS_DEV["B_resp+bpresp+dev"]     # the acc-best configuration (6.117)
-HALF_LIFE = 180.0                         # must match the evaluated configuration
+DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
+FEATS = BEST_FEATURES                     # the fused best configuration (5.887)
+HALF_LIFE = 180.0                         # must match history_response.py's default
 TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂"}
 KNN_K = 20                                # data.build_history_features default
 LAMP_NAME = {1: "FAILED", 2: "ASSIST EZ", 3: "LIGHT ASSIST EZ", 4: "EASY", 5: "CLEAR",
@@ -90,12 +90,16 @@ def build_player_frame() -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, list[s
     """The protocol frame: same cleaning, same scaler, same Z as data.py main()."""
     man = load_manifest()
     # the four v2 response axes live in a side table keyed on sha256, not in the
-    # manifest - without them build_table cannot even index the axis columns
+    # manifest - without them build_table cannot even index the axis columns; the MSD
+    # skillsets come from dataset/msd.parquet the same way (charts the WASM never saw
+    # keep NaN and their MSD-block features impute downstream)
     from chart_repr import RESPONSE_AXES
     v2 = pd.read_parquet(ROOT / "bms_ml" / "output" / "phase3" / "dataset"
                          / "chart_stats_v2.parquet")
     v2cols = [c for c in set(RESPONSE_AXES.values()) if c in v2.columns]
     man = man.merge(v2[["sha256"] + v2cols], on="sha256", how="left")
+    man = man.merge(pd.read_parquet(ROOT / "bms_ml" / "output" / "phase3" / "dataset"
+                                    / "msd.parquet"), on="sha256", how="left")
     tab = load_tables()
     fp = (load_firstplays()
           .merge(man, on="sha256", how="left")
@@ -115,12 +119,21 @@ def build_player_frame() -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, list[s
     scaler = StandardScaler().fit(fp[stat_cols].values)
     fp_sorted = fp.sort_values(["player", "time"]).reset_index(drop=True)
     Z = np.nan_to_num(scaler.transform(fp_sorted[stat_cols].values)).astype(np.float64)
-    return fp_sorted, man, tab, stat_cols, scaler, Z
+    # the response blocks' slope scaling must match history_response.py exactly: it
+    # computes its sd on the FULL first-play frame (before any filtering), so do the same
+    fp_full = (pd.read_parquet(DS / "firstplays.parquet")
+               .merge(v2[["sha256"] + v2cols], on="sha256", how="left")
+               .merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
+               .sort_values(["player", "time"], kind="stable").reset_index(drop=True))
+    sd_struct = axis_sd(fp_full)
+    sd_msd = axis_sd(fp_full, MSD_AXES)
+    return (fp_sorted, man, tab, stat_cols, scaler, Z, sd_struct, sd_msd)
 
 
 def build_candidates(player: str, fp_sorted: pd.DataFrame, man: pd.DataFrame,
                      tab: pd.DataFrame, stat_cols: list[str], scaler: StandardScaler,
-                     Z: np.ndarray, sd: dict, top_log) -> tuple[pd.DataFrame, dict]:
+                     Z: np.ndarray, sd: dict, sd_msd: dict,
+                     top_log) -> tuple[pd.DataFrame, dict]:
     own = fp_sorted[fp_sorted["player"] == player].reset_index(drop=True)
     if not len(own):
         raise SystemExit(f"player '{player}' has no usable archive rows")
@@ -159,15 +172,24 @@ def build_candidates(player: str, fp_sorted: pd.DataFrame, man: pd.DataFrame,
                     clip=(1.0, 9.0), half_life=HALF_LIFE),
         build_table(ext, sd, min_n=MIN_HISTORY, target="log1p_bp", prefix="b_",
                     clip=(0.0, 12.0), half_life=HALF_LIFE),
+        # the MinaCalc axis family (same axes/clips as history_response.py)
+        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="acc", prefix="m_",
+                    clip=(0.0, 100.0), half_life=HALF_LIFE, axes=MSD_AXES),
+        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="lamp", prefix="ml_",
+                    clip=(1.0, 9.0), half_life=HALF_LIFE, axes=MSD_AXES),
+        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="log1p_bp", prefix="mb_",
+                    clip=(0.0, 12.0), half_life=HALF_LIFE, axes=MSD_AXES),
     ]
     feats = pd.concat([hist] + [b.iloc[len(own):].reset_index(drop=True) for b in blocks],
                       axis=1)
     out = pd.concat([cand, feats], axis=1)
+    out["has_msd"] = out["msd_overall"].notna()
     meta = {"n_archive": int(len(own)), "n_candidates": int(len(out)),
+            "n_no_msd": int((~out["has_msd"]).sum()),
             "as_of": str(top_log)[:19],
             "acc_mean": float(np.nanmean(own["acc"].values)),
             "acc_last20": float(np.nanmean(own["acc"].values[-20:]))}
-    return out[["sha256", "title", "artist", "table", "level"] + FEATS], meta
+    return out[["sha256", "title", "artist", "table", "level", "has_msd"] + FEATS], meta
 
 
 def expected_mae(df: pd.DataFrame, models: dict, player: str) -> float | None:
@@ -239,7 +261,9 @@ def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
             f"<div class='stat'><b>{meta['acc_mean']:.1f} / {meta['acc_last20']:.1f}</b>"
             f"<span>历史 acc 均值 / 最近 20 次</span></div>"
             f"<div class='stat'><b>{mae_txt}</b>"
-            f"<span>模型对你的预测误差（测试段）</span></div></div>"
+            f"<span>模型对你的预测误差（测试段）</span></div>"
+            f"<div class='stat'><b>{meta['n_no_msd']}</b>"
+            f"<span>候选缺 MSD（序列未构建，特征插补）</span></div></div>"
             f"{''.join(groups)}"
             f"<div class='foot'>预测含义：若现在第一次打这张谱的期望表现"
             f"（acc 0-100 / lamp 1-9 / BP 残数）。<br>"
@@ -263,8 +287,19 @@ def main() -> None:
     player = args.player
 
     print("training the protocol model on the train band ...")
-    resp, sd = build_response(HALF_LIFE, return_sd=True)
-    df = load_samples().merge(resp, on=["player", "sha256"], how="left")
+    # the fused features come from the dataset artifact: samples.parquet carries the
+    # chart stats and the hand-crafted history, history_response.parquet (built at the
+    # same 180d half-life) carries every response/dev block, MSD family included
+    hr = pd.read_parquet(DS / "history_response.parquet")
+    static = OBJECTIVE_STAT_COLS + HISTORY_FEATURES
+    need = [c for c in FEATS if c not in static]
+    df = load_samples().merge(hr[["player", "sha256"] + [c for c in need
+                                         if c in hr.columns]],
+                              on=["player", "sha256"], how="left")
+    missing = [c for c in FEATS if c not in df.columns]
+    if missing:
+        raise SystemExit(f"history_response.parquet lacks {len(missing)} columns "
+                         f"(e.g. {missing[:3]}); run history_response.py")
     tr = df[df["phase"] == "train"]
     models = {"acc": HGBModel(tr, FEATS, tr["acc"].values),
               "lamp": HGBModel(tr, FEATS, tr["lamp"].values.astype(float)),
@@ -272,11 +307,12 @@ def main() -> None:
     pmae = expected_mae(df, models, player)
 
     print(f"building candidates for {player} ...")
-    fp_sorted, man, tab, stat_cols, scaler, Z = build_player_frame()
+    (fp_sorted, man, tab, stat_cols, scaler, Z, sd_struct,
+     sd_msd) = build_player_frame()
     log_counts = load_log_counts()
     top_log = log_counts.loc[log_counts["player"] == player, "time"].max()
     cand, meta = build_candidates(player, fp_sorted, man, tab, stat_cols, scaler, Z,
-                                  sd, top_log)
+                                  sd_struct, sd_msd, top_log)
 
     cand["pred_acc"] = models["acc"].predict(cand)
     cand["pred_lamp_raw"] = models["lamp"].predict(cand)
@@ -293,7 +329,7 @@ def main() -> None:
 
     OUT.mkdir(parents=True, exist_ok=True)
     keep = ["group", "table", "level", "title", "artist", "pred_lamp", "pred_lamp_name",
-            "pred_acc", "pred_bp", "pred_lamp_raw", "sha256"]
+            "pred_acc", "pred_bp", "pred_lamp_raw", "has_msd", "sha256"]
     csv_path = OUT / f"{player}.csv"
     cand[keep].to_csv(csv_path, index=False, encoding="utf-8-sig")
     html_path = OUT / f"{player}.html"

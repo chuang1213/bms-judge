@@ -27,19 +27,25 @@ import numpy as np
 import pandas as pd
 
 from chart_repr import (HISTORY_RESPONSE_BP_COLS, HISTORY_RESPONSE_COLS,
-                        HISTORY_RESPONSE_LAMP_COLS, RESPONSE_AXES)
+                        HISTORY_RESPONSE_LAMP_COLS, MSD_AXES, RESPONSE_AXES)
 from response_features import axis_sd, build_table
 
 ROOT = Path(__file__).resolve().parents[2]
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 MIN_HISTORY = 20      # below this an OLS slope is noise; feature stays NaN (imputed)
 
-# Recency weighting (2026-09-11). The uniform fit over the whole archive is the protocol
-# default and must stay so for comparability, but it was measurably beaten: with
-# weight 0.5 ** (age_days / H), H = 180 days gives acc 6.360 vs 6.495 uniform on the
-# same configuration (paired over 6,367 test rows: +0.136, 95% CI 0.071..0.195,
-# p = 2e-5). Set P3_RESP_HALF_LIFE=180 to build the better block; see response_decay.py.
-HALF_LIFE = float(os.environ["P3_RESP_HALF_LIFE"]) if os.environ.get("P3_RESP_HALF_LIFE") else None
+# Recency weighting (2026-09-11). 180 days was measurably better than the uniform fit
+# (+0.136 acc, p=2e-5, response_decay.py) and is now the DEFAULT: every fused
+# configuration that follows (MSD axes, the recommender) is evaluated on this basis, so
+# the dataset artifact and the shipped model must agree. Set P3_RESP_HALF_LIFE=uniform
+# to reproduce the legacy whole-archive fit, or a number to pick another half-life.
+_env = os.environ.get("P3_RESP_HALF_LIFE")
+if _env == "uniform":
+    HALF_LIFE = None
+elif _env:
+    HALF_LIFE = float(_env)
+else:
+    HALF_LIFE = 180.0
 
 
 def main() -> None:
@@ -65,6 +71,34 @@ def main() -> None:
                          target="log1p_bp", prefix="b_", clip=(0.0, 12.0),
                          half_life=HALF_LIFE)
     feats = pd.concat([acc_blk, lamp_blk, bp_blk], axis=1)
+
+    # ---- MinaCalc MSD axis family (2026-09-11, recommend branch) ----------------
+    # Soft dependency: dataset/msd.parquet is produced by msd_prep/compute/finalize.
+    # Without it the parquet keeps the structural blocks only and every consumer that
+    # needs MSD columns reports their absence instead of failing.
+    msd_path = DS / "msd.parquet"
+    if msd_path.exists():
+        fp = fp.merge(pd.read_parquet(msd_path), on="sha256", how="left")
+        sd_msd = axis_sd(fp, MSD_AXES)
+        feats = pd.concat([feats,
+                           build_table(fp, sd_msd, min_n=MIN_HISTORY, window=None,
+                                       rng=None, target="acc", prefix="m_",
+                                       clip=(0.0, 100.0), half_life=HALF_LIFE,
+                                       axes=MSD_AXES),
+                           build_table(fp, sd_msd, min_n=MIN_HISTORY, window=None,
+                                       rng=None, target="lamp", prefix="ml_",
+                                       clip=(1.0, 9.0), half_life=HALF_LIFE,
+                                       axes=MSD_AXES),
+                           build_table(fp, sd_msd, min_n=MIN_HISTORY, window=None,
+                                       rng=None, target="log1p_bp", prefix="mb_",
+                                       clip=(0.0, 12.0), half_life=HALF_LIFE,
+                                       axes=MSD_AXES)], axis=1)
+        print(f"msd axes: coverage "
+              f"{float(feats['m_resp_overall'].notna().mean()):.3f}")
+    else:
+        print(f"[note] {msd_path.name} missing -> MSD blocks skipped "
+              f"(run msd_prep.py / msd_compute.mjs / msd_finalize.py)")
+
     out = pd.concat([fp[["player", "sha256", "phase", "time"]], feats], axis=1)
     out.to_parquet(DS / "history_response.parquet")
     for blk, cols in (("acc", HISTORY_RESPONSE_COLS),
@@ -73,10 +107,6 @@ def main() -> None:
         # cols[-2] is <prefix>resp_mean
         print(f"{blk}: coverage {float(feats[cols[-2]].notna().mean()):.3f}")
     print(f"rows {len(out)} -> {DS / 'history_response.parquet'}")
-    print(feats[HISTORY_RESPONSE_COLS].describe().loc[["mean", "std", "min", "max"]]
-          .round(3).T.to_string())
-    print(feats[HISTORY_RESPONSE_LAMP_COLS].describe().loc[["mean", "std", "min", "max"]]
-          .round(3).T.to_string())
 
 
 if __name__ == "__main__":

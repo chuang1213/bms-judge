@@ -313,6 +313,37 @@ class TestResponseDeviation(unittest.TestCase):
         np.testing.assert_allclose(a["h_dev_nps"][15:], b["h_dev_nps"][15:], atol=1e-9)
 
 
+class TestCustomAxes(unittest.TestCase):
+    """The `axes` parameter lets a second axis family (MinaCalc MSD) reuse the response
+    machinery without touching the shared structural registry, and BEST_FEATURES in the
+    registry must match what the experiments actually evaluated."""
+
+    def test_custom_axis_columns_and_values(self):
+        from bms_ml.phase3.response_features import response_columns
+        rng = np.random.RandomState(0)
+        axes = {"foo": "a_col", "bar": "b_col"}
+        X = rng.normal(size=(60, 2))
+        y = 70.0 + rng.normal(scale=3.0, size=60)
+        out = response_columns(X, y, {"foo": 1.0, "bar": 2.0}, min_n=5, prefix="m_",
+                               axes=axes)
+        for c in ("m_resp_foo", "m_resp_bar", "m_slope_foo", "m_slope_bar",
+                  "m_resp_mean", "m_resp_std", "m_dev_foo", "m_dev_bar"):
+            self.assertIn(c, out, f"custom-axis column {c} missing")
+        self.assertTrue(np.isfinite(out["m_resp_mean"][10:]).all())
+
+    def test_best_features_registry_is_consistent(self):
+        from bms_ml.phase3 import chart_repr
+        feats = chart_repr.BEST_FEATURES
+        self.assertEqual(len(feats), len(set(feats)),
+                         "duplicate columns in BEST_FEATURES")
+        # the raw MSD ratings must NOT be members: as plain features they measurably
+        # hurt (response_msd.py 6.250 vs 6.117) - only the response/dev transform helps
+        self.assertEqual([c for c in feats if c.startswith("msd_")], [])
+        for c in (chart_repr.MSD_ACC_COLS + chart_repr.MSD_LAMP_COLS
+                  + chart_repr.MSD_BP_COLS):
+            self.assertIn(c, feats, f"MSD block column {c} missing from BEST_FEATURES")
+
+
 class TestClientGuard(unittest.TestCase):
     """LR2 and beatoraja must not be pooled (user decision 2026-09-11).
 

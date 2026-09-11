@@ -22,9 +22,10 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 
-from chart_repr import (HISTORY_FEATURES, HISTORY_RESPONSE_COLS,
-                        HISTORY_RESPONSE_LAMP_COLS, OBJECTIVE_STAT_COLS,
-                        feature_manifest)
+from chart_repr import (BEST_FEATURES, HISTORY_FEATURES, HISTORY_RESPONSE_BP_COLS,
+                        HISTORY_RESPONSE_COLS, HISTORY_RESPONSE_DEV_COLS,
+                        HISTORY_RESPONSE_LAMP_COLS, MSD_ACC_COLS, MSD_BP_COLS,
+                        MSD_LAMP_COLS, OBJECTIVE_STAT_COLS, feature_manifest)
 from common import centered_r2, hgb_fit_predict, load_samples, mae, r2
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,8 +49,11 @@ def main() -> None:
     resp_path = DS / "history_response.parquet"
     if resp_path.exists():
         hr = pd.read_parquet(resp_path)
-        df = df.merge(hr[["player", "sha256"] + HISTORY_RESPONSE_COLS
-                         + HISTORY_RESPONSE_LAMP_COLS],
+        need = (HISTORY_RESPONSE_COLS + HISTORY_RESPONSE_DEV_COLS
+                + HISTORY_RESPONSE_LAMP_COLS + HISTORY_RESPONSE_BP_COLS
+                + MSD_ACC_COLS + MSD_LAMP_COLS + MSD_BP_COLS)
+        have = [c for c in need if c in hr.columns]
+        df = df.merge(hr[["player", "sha256"] + have],
                       on=["player", "sha256"], how="left")
         lamp_resp = [c for c in HISTORY_RESPONSE_LAMP_COLS
                      if c.startswith("l_resp_")
@@ -57,6 +61,15 @@ def main() -> None:
         sets["B_resp"] = (OBJECTIVE_STAT_COLS + HISTORY_FEATURES
                           + HISTORY_RESPONSE_COLS + lamp_resp
                           + ["l_resp_mean", "l_resp_std"])
+        # B_full = the fused best configuration (chart_repr.BEST_FEATURES, 2026-09-11):
+        # B_resp's blocks + the BP block + the acc deviations + the MinaCalc MSD blocks.
+        missing = [c for c in BEST_FEATURES if c not in df.columns]
+        if missing:
+            print(f"[note] {len(missing)} BEST_FEATURES columns missing "
+                  f"(e.g. {missing[:3]}) -> B_full not reported; "
+                  f"rebuild history_response.parquet")
+        else:
+            sets["B_full"] = BEST_FEATURES
     else:
         print(f"[note] {resp_path.name} missing -> B_resp not reported "
               f"(run bms_ml/phase3/history_response.py)")

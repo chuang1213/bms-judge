@@ -21,7 +21,10 @@ MSD 配对 +0.224（CI 0.164..0.286，p=1.4e-12），打乱对照 6.14~6.18 → 
 **`B_msdonly`（62 特征，MSD 块替换全部结构响应块）5.996 / cR² +0.460 也优于原 BASE** ——
 MSD 是更好的条件化基底；**yangtao 首次改善**（19.20→18.57，msdonly 下 17.45）。
 复现：`response_decay.py`（遗忘）、`response_dev.py`（dev）、`response_msd.py`（MSD 轴）；
-半衰期开关：`P3_RESP_HALF_LIFE=180 python bms_ml/phase3/history_response.py`（**默认等权，保协议可比**））
+**半衰期已默认 180d**（`history_response.py`；`P3_RESP_HALF_LIFE=uniform` 可复现旧的整档等权，
+数字则变为 6.495/6.360 一系——引用历史数字时注意配置）；
+`compare_nolevel.py` 的 **`B_full` 行 = 融合最优配置**（从 history_response.parquet 读块），
+当前输出 **5.887**，与 `response_msd.py` 精确一致）
 次优 `B_full` = 6.583 / +0.430、`B_v2` = 6.796。**个人响应剖面是本阶段唯一有效的表示改进**
 （`history_response.py`，11 轴 × resp/slope，按目标分块；**已用"打乱配对"对照排除维度效应**）。
 **Cross-player transfer 已验证**（PHASE3_4_TRANSFER.md）：人群预训练+个体 conditioning 的 M2
@@ -129,12 +132,17 @@ MSD 是更好的条件化基底；**yangtao 首次改善**（19.20→18.57，msd
   **`h_knn_acc` 的 k 已结案**：无响应剖面时 k 影响明显（k=20 最差），有响应剖面后 k 几乎不影响
   （6.549–6.637）→ 维持 k=20，TODO 关闭
 - **推荐工具（recommend 分支，2026-09-11）**：`python bms_ml/phase3/recommend.py --player <名>`
-  → `bms_ml/output/phase3/recommend/<名>.{html,csv}`。对玩家档案外的**全部围栏谱面**给出
-  acc/lamp/BP 预测并分三组（暂缓 <3.5 / 挑战 3.5–6.0 / 冲刺 ≥6.0，阈值来自 lamp 回归的实测
-  压缩分布，非名义阶梯）。候选以"未来行"（NaN 目标）追加进玩家因果帧，**零重复实现**地复用
-  `build_history_features` + `build_table`；唯一例外 `h_knn_acc` 在此重算（内建窗口会被其他
-  候选的 NaN acc 污染）。打分时点 = 玩家最近一次 scorelog 记录（不是墙钟，避免 recency 特征
-  出训练分布）。**注意：这不是"练了会变强"的模型** —— 无纵向数据，训练价值不可度量。
+  → `bms_ml/output/phase3/recommend/<名>.{html,csv}`。**已切换到融合最优配置**
+  （`chart_repr.BEST_FEATURES`，169 特征 = 结构响应/偏差 + MSD 三块；训练帧从
+  history_response.parquet 读块，与 `compare_nolevel.py` 的 `B_full` 同源同配置）。
+  对玩家档案外的**全部围栏谱面**给出 acc/lamp/BP 预测并分三组（暂缓 <3.5 / 挑战 3.5–6.0 /
+  冲刺 ≥6.0，阈值来自 lamp 回归的实测压缩分布，非名义阶梯）。候选以"未来行"（NaN 目标）
+  追加进玩家因果帧，**零重复实现**地复用 `build_history_features` + `build_table`
+  （MSD 块同样走 `axes=MSD_AXES` 路径）；唯一例外 `h_knn_acc` 在此重算（内建窗口会被其他
+  候选的 NaN acc 污染）。**候选缺 MSD（18.1%，序列未构建的表外文件）→ 特征插补，
+  CSV 里有 `has_msd` 列可过滤**。打分时点 = 玩家最近一次 scorelog 记录（不是墙钟，
+  避免 recency 特征出训练分布）。**注意：这不是"练了会变强"的模型** —— 无纵向数据，
+  训练价值不可度量。
 - **跑批耗时纪律（2026-09-11 实测）**：瓶颈是 LOPO 的 GRU 重训，不是 HGB（单次拟合仅 ~0.4s）。
   `c0_state_hgb.py` ≈13.5 min/seed（1 头）、`c0_fewshot.py` ≈3×（3 头）；`transfer_eval.py` 已把
   恒定的 HGB 拟合移出 k 循环（8× 冗余 → 省 ~1.8 min/run，数值逐点相同）。

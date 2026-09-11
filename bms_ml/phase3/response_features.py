@@ -39,15 +39,9 @@ import numpy as np
 import pandas as pd
 
 try:                                    # run as a script: bms_ml/phase3 is on sys.path
-    from chart_repr import RESPONSE_AXES, _dev_cols, _response_cols
+    from chart_repr import RESPONSE_AXES, _block_cols, _dev_cols, _response_cols
 except ModuleNotFoundError:             # imported as bms_ml.phase3.response_features
-    from .chart_repr import RESPONSE_AXES, _dev_cols, _response_cols
-
-
-def _block_cols(prefix: str, axes: dict | None = None) -> list[str]:
-    """Everything one block emits: the response columns plus the player-relative
-    axis deviations (2026-09-11). `axes` overrides the axis set (None = RESPONSE_AXES)."""
-    return _response_cols(prefix, axes) + _dev_cols(prefix, axes)
+    from .chart_repr import RESPONSE_AXES, _block_cols, _dev_cols, _response_cols
 
 
 def _cum(a: np.ndarray) -> np.ndarray:
