@@ -82,13 +82,34 @@ def centered_r2(d: pd.DataFrame, pred, col: str = "acc") -> float:
     return float(1 - np.sum((a - b) ** 2) / den) if den > 0 else float("nan")
 
 
+class HGBModel:
+    """Fit-once / predict-many wrapper around `hgb_fit_predict`.
+
+    The few-shot k-loop varies ONLY the evaluation frame: the training frame, the
+    labels and the feature list are identical for every k, so refitting the imputer,
+    the scaler and the HGB once per k was ~8x redundant CPU work (transfer_eval,
+    c0_state_hgb). Hoisting is numerically IDENTICAL — same seed, same train data,
+    same operation order (impute -> scale -> fit) — so it changes no reported number.
+
+    Use `hgb_fit_predict` for one-shot fits; use this when the same model must be
+    evaluated against several test frames.
+    """
+
+    def __init__(self, tr: pd.DataFrame, feats, y, seed: int = 0):
+        self.feats = list(feats)
+        self.imp = Imputer()
+        X = self.imp.fit_transform(tr[self.feats])
+        self.sc = StandardScaler().fit(X)
+        self.m = HistGradientBoostingRegressor(random_state=seed, **HGB_KW)
+        self.m.fit(self.sc.transform(X), y)
+
+    def predict(self, te: pd.DataFrame) -> np.ndarray:
+        return self.m.predict(self.sc.transform(self.imp.transform(te[self.feats])))
+
+
 def hgb_fit_predict(tr: pd.DataFrame, te: pd.DataFrame, feats, y, seed: int = 0) -> np.ndarray:
     """Fit HGB on `tr[feats] -> y` (impute on train, scale on train) and predict `te`."""
-    imp = Imputer()
-    sc = StandardScaler().fit(imp.fit_transform(tr[feats]))
-    m = HistGradientBoostingRegressor(random_state=seed, **HGB_KW)
-    m.fit(sc.transform(imp.fit_transform(tr[feats])), y)
-    return m.predict(sc.transform(imp.transform(te[feats])))
+    return HGBModel(tr, feats, y, seed=seed).predict(te)
 
 
 def difficulty_region(row) -> str:

@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from bms_ml.phase3 import chart_repr
-from bms_ml.phase3.common import Imputer, centered_r2, mae, r2
+from bms_ml.phase3.common import HGBModel, Imputer, centered_r2, hgb_fit_predict, mae, r2
 
 
 class TestFeatureRegistry(unittest.TestCase):
@@ -33,11 +33,54 @@ class TestFeatureRegistry(unittest.TestCase):
         # over-predicted by 5-11pp acc (EXPERIMENT_LOG 2026-09-05).
         self.assertIn("c_jrank", chart_repr.OBJECTIVE_STAT_COLS)
 
+    def test_declared_dims_match_lists(self):
+        """Every list-backed encoder must declare its real list length.
+
+        Same failure class as the `c_jrank` drift (2026-09-07): the registry said 27
+        dims while the list had 26. perm_space (2026-09-11) joins the guard.
+        """
+        reg = chart_repr.chart_encoder_registry()
+        pairs = {
+            "objective_stats": chart_repr.OBJECTIVE_STAT_COLS,
+            "objective_stats_v2": (chart_repr.OBJECTIVE_STAT_COLS
+                                   + chart_repr.OBJECTIVE_V2_COLS),
+            "perm_space": chart_repr.OBJECTIVE_PERM_COLS,
+        }
+        for name, cols in pairs.items():
+            self.assertIn(name, reg)
+            self.assertEqual(reg[name][1], len(cols), f"{name} dim mismatch")
+
+    def test_response_profile_lists_align(self):
+        """history_response.py must emit exactly the registered columns.
+
+        Guards the 2026-09-11 personal-response-profile encoder: the writer and the
+        registry drifted apart once already for a different list (c_jrank), and a
+        silent drift here would produce an all-NaN feature block that HGB imputes
+        away without any error.
+        """
+        axes = chart_repr.RESPONSE_AXES
+        want = ([f"h_resp_{k}" for k in axes] + [f"h_slope_{k}" for k in axes]
+                + ["h_resp_mean", "h_resp_std"])
+        self.assertEqual(chart_repr.HISTORY_RESPONSE_COLS, want)
+        self.assertEqual(len(chart_repr.HISTORY_RESPONSE_COLS), 2 * len(axes) + 2)
+        # the lamp block must be the same shape under its own prefix
+        lamp = chart_repr.HISTORY_RESPONSE_LAMP_COLS
+        self.assertEqual(lamp, [c.replace("h_", "l_", 1)
+                                for c in chart_repr.HISTORY_RESPONSE_COLS])
+        self.assertEqual(len(lamp), 2 * len(axes) + 2)
+        allc = set(chart_repr.OBJECTIVE_STAT_COLS) | set(chart_repr.OBJECTIVE_V2_COLS)
+        for k, col in axes.items():
+            self.assertIn(col, allc, f"response axis {k} -> {col} is not objective")
+
     def test_no_difficulty_table_features(self):
         """PROTOCOL.md §1: table level is a fence/coordinate, never a feature."""
         banned = {"level", "table", "c_level", "c_table", "level_norm",
                   "h_level_acc", "table_satellite", "table_stella", "table_insane"}
-        allf = set(chart_repr.OBJECTIVE_STAT_COLS) | set(chart_repr.HISTORY_FEATURES)
+        allf = (set(chart_repr.OBJECTIVE_STAT_COLS)
+                | set(chart_repr.HISTORY_FEATURES)
+                | set(chart_repr.OBJECTIVE_V2_COLS)
+                | set(chart_repr.OBJECTIVE_PERM_COLS)
+                | set(chart_repr.HISTORY_RESPONSE_COLS))
         self.assertEqual(allf & banned, set())
 
     def test_few_shot_schema_is_a_subset(self):
@@ -86,6 +129,243 @@ class TestEvalPrimitives(unittest.TestCase):
             imp = Imputer().fit(pd.DataFrame({"x": [np.nan, np.nan]}))
             out = imp.transform(pd.DataFrame({"x": [np.nan]}))
         np.testing.assert_allclose(out, [[0.0]])
+
+
+class TestHGBModelHoisting(unittest.TestCase):
+    """Guard for the 2026-09-11 speedup refactor.
+
+    The few-shot k-loop varies ONLY the evaluation frame, so transfer_eval /
+    c0_state_hgb used to refit the identical HGB once per k (~8x redundant). They now
+    hoist the fit through `common.HGBModel`. That is only legitimate if it reproduces
+    the one-shot path exactly — otherwise every reported few-shot number silently
+    shifts. Data-free so it runs anywhere.
+    """
+
+    def test_hgbmodel_matches_hgb_fit_predict(self):
+        rng = np.random.RandomState(0)
+        tr = pd.DataFrame(rng.normal(size=(300, 5)), columns=list("abcde"))
+        tr.iloc[::7, 0] = np.nan                    # exercise the imputer
+        tr["y"] = rng.normal(size=300)
+        te = pd.DataFrame(rng.normal(size=(60, 5)), columns=list("abcde"))
+        te.iloc[::5, 1] = np.nan
+        np.testing.assert_array_equal(
+            hgb_fit_predict(tr, te, list("abcde"), tr["y"].values),
+            HGBModel(tr, list("abcde"), tr["y"].values).predict(te))
+
+    def test_hgbmodel_is_reusable_across_frames(self):
+        """The k-loop contract: one fit, many evaluation frames, same predictions."""
+        rng = np.random.RandomState(1)
+        tr = pd.DataFrame(rng.normal(size=(200, 4)), columns=list("abcd"))
+        tr["y"] = rng.normal(size=200)
+        m = HGBModel(tr, list("abcd"), tr["y"].values)
+        for _ in range(3):
+            te = pd.DataFrame(rng.normal(size=(20, 4)), columns=list("abcd"))
+            np.testing.assert_array_equal(
+                m.predict(te),
+                hgb_fit_predict(tr, te, list("abcd"), tr["y"].values))
+
+
+class TestLR2Labels(unittest.TestCase):
+    """LR2 archives enter the project as player state (2026-09-11, lr2_reader.py).
+
+    The label formula is the one thing that must be right before the data is usable:
+    LR2 EX score is perfect*2 + great over a max of notes*2. Verified on the real
+    archive against its own integer `rate` column.
+    """
+
+    def test_acc_formula(self):
+        from bms_ml.phase3.lr2_reader import compute_acc
+        # 1131 PG + 374 GR over 1530 notes = 2636/3060 = 86.14% (the archive stores 86)
+        self.assertAlmostEqual(float(compute_acc([1131], [374], [1530])[0]),
+                               86.1438, places=3)
+        self.assertAlmostEqual(float(compute_acc([10], [0], [10])[0]), 100.0)
+        self.assertAlmostEqual(float(compute_acc([0], [0], [10])[0]), 0.0)
+        self.assertTrue(np.isnan(compute_acc([1], [1], [0])[0]))
+
+    def test_clear_codes_are_gauge_types(self):
+        from bms_ml.phase3.lr2_reader import LR2_CLEAR
+        # the archive only carries 0..5; FC/PERFECT are declared but absent, which is
+        # exactly why mixing an LR2 lamp with a beatoraja lamp is not allowed
+        self.assertEqual(LR2_CLEAR[1], "FAILED")
+        self.assertEqual(LR2_CLEAR[5], "EXHARD")
+        self.assertEqual(LR2_CLEAR[7], "PERFECT")
+
+    def test_lr2_to_beatoraja_lamp_mapping(self):
+        """The gauge ladder is the same, beatoraja just inserts two ASSIST levels at 2,3.
+
+        Both enums are transcribed from beatoraja-master (see lr2_reader.py). This
+        mapping exists so a cross-client comparison is explicit - it does NOT make the
+        two clients interchangeable.
+        """
+        from bms_ml.phase3.lr2_reader import (BEATORAJA_CLEAR, lr2_clear_to_beatoraja)
+        self.assertEqual(BEATORAJA_CLEAR[0], "NO_PLAY")
+        self.assertEqual(BEATORAJA_CLEAR[1], "FAILED")
+        self.assertEqual(BEATORAJA_CLEAR[4], "EASY")
+        self.assertEqual(BEATORAJA_CLEAR[6], "HARD")
+        self.assertEqual(BEATORAJA_CLEAR[8], "FC")
+        # gauge ladder shifts by exactly +2
+        for lr2_v, want in [(0, 0), (1, 1), (2, 4), (3, 5), (4, 6), (5, 7),
+                            (6, 8), (7, 9), (8, 10), (9, 2), (10, 3)]:
+            self.assertEqual(lr2_clear_to_beatoraja(lr2_v), want, f"lr2 clear {lr2_v}")
+        # and the shift really does land on the same gauge name
+        self.assertEqual(BEATORAJA_CLEAR[lr2_clear_to_beatoraja(2)], "EASY")
+        self.assertEqual(BEATORAJA_CLEAR[lr2_clear_to_beatoraja(5)], "EXHARD")
+        with self.assertRaises(ValueError):
+            lr2_clear_to_beatoraja(99)
+
+
+class TestResponseDecay(unittest.TestCase):
+    """Guards for the recency-weighted response fit (2026-09-11).
+
+    Two things must hold. (1) The decay is wired CORRECTLY: with a regime change in the
+    target, a decayed fit must follow the new regime, otherwise the half-life knob is a
+    no-op that silently reports the uniform answer. (2) It must not corrupt the fit: a
+    single NaN axis value once propagated through the cumulative sums and blanked 86% of
+    the v2 axes (0 * nan is nan), which is invisible in aggregate metrics but moved
+    B_full from 6.583 to 6.771.
+    """
+
+    def _mk(self, m: int = 120, nan_at: int | None = None):
+        rng = np.random.RandomState(0)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(m, len(names)))
+        y = 70.0 + 3.0 * X[:, 0] + rng.normal(scale=2.0, size=m)
+        if nan_at is not None:
+            X[nan_at, 0] = np.nan
+        return X, y, {n: 1.0 for n in names}, np.arange(m) * 7.0
+
+    def test_nan_axis_does_not_poison_later_rows(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, t = self._mk(nan_at=10)
+        for hl in (None, 30.0):
+            out = response_columns(X, y, sd, min_n=5, half_life=hl, t_days=t)
+            for c in ("h_resp_nps", "h_slope_nps", "h_resp_mean", "h_resp_std"):
+                later = out[c][20:]
+                self.assertTrue(np.isfinite(later).all(),
+                                f"half_life={hl}: {c} has NaN after a missing axis value")
+
+    def test_huge_half_life_equals_uniform(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, t = self._mk()
+        a = response_columns(X, y, sd, min_n=5, half_life=None)
+        b = response_columns(X, y, sd, min_n=5, half_life=1e9, t_days=t)
+        for c in ("h_resp_nps", "h_slope_nps", "h_resp_mean"):
+            np.testing.assert_allclose(a[c][10:], b[c][10:], rtol=1e-6, atol=1e-9)
+
+    def test_decay_follows_a_regime_change(self):
+        """The knob must do something: after the target jumps 50 -> 90, the decayed fit
+        at the last row must be nearer 90 than the uniform fit is."""
+        from bms_ml.phase3.response_features import response_columns
+        m = 240
+        rng = np.random.RandomState(1)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(m, len(names)))
+        y = np.concatenate([np.full(m // 2, 50.0), np.full(m // 2, 90.0)])
+        t = np.arange(m) * 3.0                      # 3 days apart -> 720 day span
+        sd = {n: 1.0 for n in names}
+        uni = response_columns(X, y, sd, min_n=5, half_life=None)
+        dec = response_columns(X, y, sd, min_n=5, half_life=30.0, t_days=t)
+        self.assertGreater(dec["h_resp_mean"][-1], uni["h_resp_mean"][-1])
+        self.assertLess(abs(dec["h_resp_mean"][-1] - 90.0),
+                        abs(uni["h_resp_mean"][-1] - 90.0))
+
+    def test_half_life_requires_t_days(self):
+        from bms_ml.phase3.response_features import response_columns
+        X, y, sd, _ = self._mk()
+        with self.assertRaises(ValueError):
+            response_columns(X, y, sd, min_n=5, half_life=30.0)
+
+
+class TestResponseDeviation(unittest.TestCase):
+    """`dev_<axis>` = (x_target - mean_player_history) / sd_player_history.
+
+    Hand-checked against a tiny sequence: the last row's deviation must be the target's
+    z-score within its own causal history, and rows with fewer than min_n prior points
+    must be NaN rather than zero (zero would read as "exactly typical").
+    """
+
+    def test_dev_is_player_relative_zscore(self):
+        from bms_ml.phase3.response_features import response_columns
+        m = 6
+        names = list(chart_repr.RESPONSE_AXES)
+        X = np.zeros((m, len(names)))
+        X[:, 0] = [0.0, 1.0, 2.0, 3.0, 4.0, 10.0]
+        y = np.full(m, 70.0)
+        out = response_columns(X, y, {n: 1.0 for n in names}, min_n=3)
+        want = (10.0 - 2.0) / np.std([0.0, 1.0, 2.0, 3.0, 4.0])       # ddof=0
+        self.assertAlmostEqual(float(out["h_dev_nps"][-1]), float(want), places=6)
+        self.assertAlmostEqual(float(out["h_dev_nps"][3]),
+                               float((3.0 - 1.0) / np.std([0.0, 1.0, 2.0])), places=6)
+        for i in (0, 1, 2):                     # fewer than min_n prior points
+            self.assertTrue(np.isnan(out["h_dev_nps"][i]), f"row {i} should be NaN")
+        self.assertTrue(np.isfinite(out["h_dev_nps"][2 + 1:]).all())
+
+    def test_dev_is_scale_free_in_the_player(self):
+        """Rescaling a player's whole history must not change their deviations."""
+        from bms_ml.phase3.response_features import response_columns
+        rng = np.random.RandomState(3)
+        names = list(chart_repr.RESPONSE_AXES)
+        X = rng.normal(size=(80, len(names)))
+        y = 70 + rng.normal(scale=3.0, size=80)
+        sd = {n: 1.0 for n in names}
+        a = response_columns(X, y, sd, min_n=10)
+        b = response_columns(X * 7.0 + 50.0, y, sd, min_n=10)
+        np.testing.assert_allclose(a["h_dev_nps"][15:], b["h_dev_nps"][15:], atol=1e-9)
+
+
+class TestCustomAxes(unittest.TestCase):
+    """The `axes` parameter lets a second axis family (MinaCalc MSD) reuse the response
+    machinery without touching the shared structural registry, and BEST_FEATURES in the
+    registry must match what the experiments actually evaluated."""
+
+    def test_custom_axis_columns_and_values(self):
+        from bms_ml.phase3.response_features import response_columns
+        rng = np.random.RandomState(0)
+        axes = {"foo": "a_col", "bar": "b_col"}
+        X = rng.normal(size=(60, 2))
+        y = 70.0 + rng.normal(scale=3.0, size=60)
+        out = response_columns(X, y, {"foo": 1.0, "bar": 2.0}, min_n=5, prefix="m_",
+                               axes=axes)
+        for c in ("m_resp_foo", "m_resp_bar", "m_slope_foo", "m_slope_bar",
+                  "m_resp_mean", "m_resp_std", "m_dev_foo", "m_dev_bar"):
+            self.assertIn(c, out, f"custom-axis column {c} missing")
+        self.assertTrue(np.isfinite(out["m_resp_mean"][10:]).all())
+
+    def test_best_features_registry_is_consistent(self):
+        from bms_ml.phase3 import chart_repr
+        feats = chart_repr.BEST_FEATURES
+        self.assertEqual(len(feats), len(set(feats)),
+                         "duplicate columns in BEST_FEATURES")
+        # the raw MSD ratings must NOT be members: as plain features they measurably
+        # hurt (response_msd.py 6.250 vs 6.117) - only the response/dev transform helps
+        self.assertEqual([c for c in feats if c.startswith("msd_")], [])
+        for c in (chart_repr.MSD_ACC_COLS + chart_repr.MSD_LAMP_COLS
+                  + chart_repr.MSD_BP_COLS):
+            self.assertIn(c, feats, f"MSD block column {c} missing from BEST_FEATURES")
+
+
+class TestClientGuard(unittest.TestCase):
+    """LR2 and beatoraja must not be pooled (user decision 2026-09-11).
+
+    Measured on 4,576 charts present in both of vsoflan's archives: the acc gap has
+    sd 10.16pp and exceeds 5pp on 29.4% of charts, which is larger than the model's own
+    acc MAE. So mixing them would inject noise comparable to the signal, and the builder
+    has to refuse rather than degrade quietly.
+    """
+
+    def test_refuses_non_beatoraja(self):
+        from bms_ml.phase3.data import assert_single_client
+        with self.assertRaises(SystemExit):
+            assert_single_client({"vsoflan_lr2": {"client": "lr2"}})
+
+    def test_accepts_all_beatoraja(self):
+        from bms_ml.phase3.data import assert_single_client
+        assert_single_client({"a": {"client": "beatoraja"}, "b": {}})   # default = beatoraja
+
+    def test_default_is_beatoraja(self):
+        """A roster entry written before the client field existed must still build."""
+        from bms_ml.phase3.data import assert_single_client
+        assert_single_client({"legacy_player": {"dir": "PlayerData/beatoraja/x/player1"}})
 
 
 if __name__ == "__main__":

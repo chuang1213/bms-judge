@@ -1,49 +1,49 @@
 {
   "players": {
     "chuang": {
-      "dir": "玩家资料/chuang/player1",
+      "dir": "PlayerData/beatoraja/chuang/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "项目发起人"
     },
     "muiclac": {
-      "dir": "玩家资料/muiclac/player1",
+      "dir": "PlayerData/beatoraja/muiclac/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "数据量最大；表外谱面占比高"
     },
     "tzh": {
-      "dir": "玩家资料/tzh/player1",
+      "dir": "PlayerData/beatoraja/tzh/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "SL9-12 重度；ST4-7 覆盖薄"
     },
     "nanji": {
-      "dir": "玩家资料/南极/player1",
+      "dir": "PlayerData/beatoraja/南极/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "16 个月高密度；acc 双峰"
     },
     "buzhang": {
-      "dir": "玩家资料/局长/player2",
+      "dir": "PlayerData/beatoraja/局长/player2",
       "client": "beatoraja",
       "time": "real",
       "include": false,
       "note": "首打 <200，用户决定舍弃（2026-09-03）"
     },
     "reiaki": {
-      "dir": "玩家资料/reiaki/player1",
+      "dir": "PlayerData/beatoraja/reiaki/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-04",
       "added": "2026-09-03T06:08:42",
       "audit": {
-        "dir": "玩家资料/reiaki/player1",
+        "dir": "PlayerData/beatoraja/reiaki/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 18162,
@@ -77,14 +77,14 @@
       }
     },
     "vsoflan": {
-      "dir": "玩家资料/vsoflan/player1",
+      "dir": "PlayerData/beatoraja/vsoflan/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-04",
       "added": "2026-09-03T06:09:02",
       "audit": {
-        "dir": "玩家资料/vsoflan/player1",
+        "dir": "PlayerData/beatoraja/vsoflan/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 12021,
@@ -118,14 +118,14 @@
       }
     },
     "LED": {
-      "dir": "玩家资料/LED/player1",
+      "dir": "PlayerData/beatoraja/LED/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-04",
       "added": "2026-09-03T09:00:46",
       "audit": {
-        "dir": "玩家资料/LED",
+        "dir": "PlayerData/beatoraja/LED",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 17770,
@@ -159,14 +159,14 @@
       }
     },
     "darklord": {
-      "dir": "玩家资料/darklord/player1",
+      "dir": "PlayerData/beatoraja/darklord/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-04（db 补齐）",
       "added": "2026-09-03T09:06:09",
       "audit": {
-        "dir": "玩家资料/darklord/player1",
+        "dir": "PlayerData/beatoraja/darklord/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 13039,
@@ -200,14 +200,14 @@
       }
     },
     "hl": {
-      "dir": "玩家资料/hl/player1",
+      "dir": "PlayerData/beatoraja/hl/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05",
       "added": "2026-09-03T11:26:46",
       "audit": {
-        "dir": "玩家资料/hl/player1",
+        "dir": "PlayerData/beatoraja/hl/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 2822,
@@ -233,14 +233,14 @@
       }
     },
     "yangtao": {
-      "dir": "玩家资料/yangtao/player1",
+      "dir": "PlayerData/beatoraja/yangtao/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05",
       "added": "2026-09-03T11:26:46",
       "audit": {
-        "dir": "玩家资料/yangtao/player1",
+        "dir": "PlayerData/beatoraja/yangtao/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 2204,
@@ -274,14 +274,14 @@
       }
     },
     "MRCA": {
-      "dir": "玩家资料/MRCA/player1",
+      "dir": "PlayerData/beatoraja/MRCA/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:26",
       "audit": {
-        "dir": "玩家资料/MRCA/player1",
+        "dir": "PlayerData/beatoraja/MRCA/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 2824,
@@ -315,14 +315,14 @@
       }
     },
     "NIGHT": {
-      "dir": "玩家资料/NIGHT/player1",
+      "dir": "PlayerData/beatoraja/NIGHT/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:27",
       "audit": {
-        "dir": "玩家资料/NIGHT/player1",
+        "dir": "PlayerData/beatoraja/NIGHT/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 740,
@@ -344,14 +344,14 @@
       }
     },
     "anshi": {
-      "dir": "玩家资料/anshi/player1",
+      "dir": "PlayerData/beatoraja/anshi/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:27",
       "audit": {
-        "dir": "玩家资料/anshi/player1",
+        "dir": "PlayerData/beatoraja/anshi/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 665,
@@ -377,14 +377,14 @@
       }
     },
     "plus": {
-      "dir": "玩家资料/plus/player1",
+      "dir": "PlayerData/beatoraja/plus/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:27",
       "audit": {
-        "dir": "玩家资料/plus/player1",
+        "dir": "PlayerData/beatoraja/plus/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 1087,
@@ -418,14 +418,14 @@
       }
     },
     "stella": {
-      "dir": "玩家资料/stella/player1",
+      "dir": "PlayerData/beatoraja/stella/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:27",
       "audit": {
-        "dir": "玩家资料/stella/player1",
+        "dir": "PlayerData/beatoraja/stella/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 1706,
@@ -459,14 +459,14 @@
       }
     },
     "wufe8": {
-      "dir": "玩家资料/wufe8/player1",
+      "dir": "PlayerData/beatoraja/wufe8/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-05 批次",
       "added": "2026-09-07T03:00:27",
       "audit": {
-        "dir": "玩家资料/wufe8/player1",
+        "dir": "PlayerData/beatoraja/wufe8/player1",
         "client": "beatoraja",
         "issues": [],
         "scorelog_rows": 11392,
@@ -496,14 +496,14 @@
       }
     },
     "steve": {
-      "dir": "玩家资料/steve/player1",
+      "dir": "PlayerData/beatoraja/steve/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增 2026-09-05 批次",
       "added": "2026-09-07T03:03:47",
       "audit": {
-        "dir": "玩家资料/steve/player1",
+        "dir": "PlayerData/beatoraja/steve/player1",
         "client": "beatoraja",
         "issues": [
           "score.db missing (ok for the current pipeline; loses playcount/ghost aggregates)",
@@ -541,14 +541,14 @@
       }
     },
     "taffy": {
-      "dir": "玩家资料/taffy/player1",
+      "dir": "PlayerData/beatoraja/taffy/player1",
       "client": "beatoraja",
       "time": "real",
       "include": true,
       "note": "新增玩家 2026-09-07（Phase 3.5 接入）",
       "added": "2026-09-07T06:36:04",
       "audit": {
-        "dir": "玩家资料/taffy/player1",
+        "dir": "PlayerData/beatoraja/taffy/player1",
         "client": "beatoraja",
         "issues": [
           "score.db missing (ok for the current pipeline; loses playcount/ghost aggregates)",
@@ -583,6 +583,42 @@
             2
           ]
         ]
+      }
+    },
+    "vsoflan_lr2": {
+      "dir": "PlayerData/LunaticRave2",
+      "client": "lr2",
+      "time": "synthetic",
+      "include": false,
+      "note": "LR2 archive, same person as beatoraja vsoflan; player state only (no first plays / no timestamps)",
+      "added": "2026-09-11T07:33:53",
+      "audit": {
+        "dir": "PlayerData/LunaticRave2",
+        "client": "lr2",
+        "issues": [
+          "no FC/PERFECT (clear>=6) rows: LR2 lamp levels are NOT directly comparable to beatoraja's on a mixed roster",
+          "LR2 has no timestamps and no per-play rows -> usable as player state only, never as first-play targets"
+        ],
+        "fatal": [],
+        "db": "PlayerData\\LunaticRave2\\V_soflan.db",
+        "db_bytes": 6863872,
+        "charts": 6439,
+        "joined_to_corpus": 5424,
+        "join_rate": 0.8424,
+        "duplicate_md5": 0,
+        "has_timestamps": false,
+        "has_first_play_rows": false,
+        "clear_levels": {
+          "NO_PLAY": 38,
+          "FAILED": 1662,
+          "EASY": 968,
+          "NORMAL": 498,
+          "HARD": 3098,
+          "EXHARD": 175
+        },
+        "acc_median": 79.28,
+        "playcount_median": 2.0,
+        "playcount_max": 155
       }
     }
   }

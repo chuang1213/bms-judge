@@ -27,7 +27,9 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT / "玩家资料"
+# Archive tree was reorganised 2026-09-11: 玩家资料/<name>/player1 -> PlayerData/beatoraja/<name>/player1
+# (per-player paths live in players.json; this constant is only the tree root).
+DATA = ROOT / "PlayerData" / "beatoraja"
 CORPUS = ROOT / "bms_ml" / "output" / "corpus"
 TABLES = ROOT / "bms_ml" / "output" / "tables"
 OUT = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
@@ -39,11 +41,36 @@ def load_roster() -> tuple[dict, dict]:
     roster = json.load(open(Path(__file__).resolve().parent / "players.json",
                             encoding="utf-8"))
     active = {n: e for n, e in roster["players"].items() if e.get("include")}
+    assert_single_client(active)
     return ({n: e["dir"] for n, e in active.items()},
             {n: e.get("time", "real") for n, e in active.items()})
 
 
+def assert_single_client(active: dict) -> None:
+    """Client guard (2026-09-11). This builder only understands beatoraja: it expects
+    scorelog.db and derives first plays from it. An LR2 archive has neither first plays
+    nor timestamps, and its labels are measurably on a different scale (see lr2_reader.py:
+    sd 10pp between the two clients on 4,576 shared charts). Silently pulling one in
+    would poison every player-state feature, so refuse loudly instead. Kept as a
+    separate function so the guard itself is unit-testable."""
+    other = sorted(n for n, e in active.items() if e.get("client", "beatoraja") != "beatoraja")
+    if other:
+        raise SystemExit(
+            f"refusing to build: players {other} have client != 'beatoraja'.\n"
+            f"  LR2 archives are player-state only (no first plays, no timestamps) and\n"
+            f"  their labels are not on the beatoraja scale - see lr2_reader.py and\n"
+            f"  PROTOCOL.md. Set include=false for them, or extend this builder "
+            f"deliberately.")
+
+
 PLAYERS, TIME_MODE = load_roster()
+# Whole-timeline ablation (2026-09-11): simulate an LR2-style archive that has play
+# ORDER but no calendar. P3_TIME_MODE=synthetic re-dates every scorelog row by its true
+# play order (ordinal days); =synthetic_shuffle additionally permutes the first-play
+# ordinal days WITHIN each player, which keeps every chart's label attached to its true
+# first play but destroys the causal order the response machinery relies on. Labels are
+# identical in all three modes, so any number change is pure time information.
+TIME_MODE_OVERRIDE = os.environ.get("P3_TIME_MODE")  # None | synthetic | synthetic_shuffle
 TRAIN_Q, TEST_Q = 0.50, 0.75
 # Survival-scope experiment (user decision 2026-09-04): drop FAILED and acc<50%
 # first plays from BOTH targets and history — models only see completed,
@@ -73,12 +100,22 @@ def load_manifest() -> pd.DataFrame:
                 "sha256": r["sha256"],
                 "md5": r["md5"],
                 "title": r.get("title"),
+                "artist": r.get("artist"),
                 "notes": r["meta"]["total_notes"],
                 "features": r["features"],
                 "quarantine": r.get("quarantine"),
                 "c_jrank": r.get("rank"),  # #RANK judge window tier (parser default 2)
             })
     df = pd.DataFrame(rows)
+    # The corpus library contains the SAME chart file under 2-3 paths (e.g.
+    # BMS/gremlin_ogg/x.bms and BMS/GREMLIN/x.bms), so manifest.jsonl has 329
+    # duplicated sha256 (655 rows). Merging on sha256 without dedup duplicated
+    # first-play events: 242 rows of samples.parquet were exact key-duplicates
+    # (128 test / 114 train = 2.0% of test double-counted), and because the two
+    # copies carry the SAME timestamp, one of them had its own chart inside its
+    # strict-prior history window - a subtle self-leak in h_knn_acc. Fixed
+    # 2026-09-11 (see EXPERIMENT_LOG). Keep the manifest 1:1 on sha256.
+    df = df.drop_duplicates("sha256", keep="first").reset_index(drop=True)
     feat = pd.DataFrame(df.pop("features").tolist(),
                         columns=json.load(open(CORPUS / "analysis" / "features_schema.json",
                                                encoding="utf-8"))["names"])
@@ -87,15 +124,33 @@ def load_manifest() -> pd.DataFrame:
 
 
 def load_tables() -> pd.DataFrame:
-    """sha256 -> (table_name, level). Priority satellite > stella > insane."""
+    """sha256 -> (table_name, level).
+
+    Priority satellite > stella > insane > normal > overjoy (2026-09-11, user decisions
+    to admit the 通常☆ table and then overjoy; normal2 and ln were also parsed but are
+    WITHHELD per user decision for this batch - their loaders remain below, disabled):
+    the FIRST table a chart appears in wins, and each new table is appended last so
+    existing assignments are untouched - admissions only ADD charts, they never relabel
+    one. overjoy (★★, 超高难) is admitted per user note that its chart difficulty is
+    uneven - treat its labels dialectically. normal2's levels carry +/- fine-tuning
+    suffixes ("12+"), stripped to the base number; ln is LN-dominant and its MSD (note
+    starts only) is indicative rather than calibrated for LN - both reasons to keep them
+    out until their admission is decided deliberately."""
     md5_to_sha: dict[str, str] = {}
     with open(CORPUS / "manifest.jsonl", encoding="utf-8") as f:
         for line in f:
             r = json.loads(line)
             md5_to_sha[r["md5"]] = r["sha256"]
     out = {}
+    # normal2 / ln loaders are kept here but DISABLED (user decision 2026-09-11:
+    # withheld from this batch); flip their flags to admit them later.
+    admit = {"normal2": False, "ln": False}
     for name, fname in [("satellite", "satellite_data.json"), ("stella", "stella_data.json"),
-                        ("insane", "insane_data.json")]:
+                        ("insane", "insane_data.json"), ("normal", "normal_data.json"),
+                        ("overjoy", "overjoy_data.json"), ("ln", "ln_data.json"),
+                        ("normal2", "normal2_data.json")]:
+        if name in admit and not admit[name]:
+            continue
         # encoding is explicit: the table JSONs are UTF-8 and a non-UTF-8 locale
         # (cp936/gbk on zh-CN Windows) otherwise raises UnicodeDecodeError here,
         # which breaks `python data.py` — step 4 of the new-player SOP.
@@ -104,8 +159,12 @@ def load_tables() -> pd.DataFrame:
             if not sha:
                 continue
             lvl = e.get("level")
+            # normal2 carries fine-tuning suffixes ("12+"/"11-"); strip to the base
+            # number so those entries parse instead of silently dropping ~12% of the
+            # table. The +/- nuance is reporting-only (level is never a feature).
+            s = str(lvl).strip().rstrip("+-") if lvl is not None else None
             try:
-                lvl = float(lvl)
+                lvl = float(s)
             except (TypeError, ValueError):
                 continue  # '??' etc.
             if sha not in out:  # first table wins (priority order above)
@@ -132,7 +191,7 @@ def load_firstplays() -> pd.DataFrame:
             # lamp part of the survival filter; the acc>=50 part needs `notes`
             # from the manifest merge, applied in main()
             df = df[(df["clear"] >= 4) & (df["clear"] <= 6)]
-        if TIME_MODE.get(player) == "synthetic":
+        if TIME_MODE_OVERRIDE or TIME_MODE.get(player) == "synthetic":
             # clients without reliable timestamps (LR2): play-order ordinal days.
             # ordering preserved, absolute-time semantics lost (see PROTOCOL.md)
             df = df.sort_values(["date", "rowid"])
@@ -145,7 +204,20 @@ def load_firstplays() -> pd.DataFrame:
             "ex": df["score"].values,         # first-play EX score (= best-after on first row)
             "bp": df["minbp"].values,
         }))
-    return pd.concat(parts, ignore_index=True)
+    fp = pd.concat(parts, ignore_index=True)
+    if TIME_MODE_OVERRIDE == "synthetic_shuffle":
+        # keep every chart's true first play (labels intact) but permute WHEN it sits in
+        # the causal order - isolates how much the response machinery needs ORDER as
+        # opposed to mere content. Fixed seed: the ablation is reproducible.
+        rng = np.random.RandomState(7)
+        fp = fp.sort_values(["player", "time"], kind="stable")
+        times = fp["time"].values.copy()
+        for _p, pos in fp.groupby("player", sort=False).indices.items():
+            pos = np.asarray(pos)
+            times[pos] = times[rng.permutation(pos)]
+        fp["time"] = times
+        fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
+    return fp
 
 
 def build_history_features(fp_sorted: pd.DataFrame, log_counts: pd.DataFrame,
@@ -256,6 +328,12 @@ def main() -> None:
     # chart-side annotation
     fp = fp.merge(manifest, on="sha256", how="left")
     fp = fp.merge(tables, on="sha256", how="left")
+    # Invariant: exactly one row per (player, chart). A violated key both
+    # double-weights the row in train/test and, since the copies share a timestamp,
+    # lets a duplicate of the target chart sit inside its own strict-prior history
+    # window (self-leak in h_knn_acc). Guard against regressions of the 2026-09-11 fix.
+    assert not fp.duplicated(["player", "sha256"]).any(), \
+        "duplicate (player, sha256) first-play rows: a reference table is not 1:1 on sha256"
     fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
     # BP plausibility guard: BP counts misses, cannot exceed the note count by much
     fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
@@ -280,10 +358,17 @@ def main() -> None:
     log_rows = []
     for player, rel in PLAYERS.items():
         con = sqlite3.connect(ROOT / rel / "scorelog.db")
-        df = pd.read_sql_query("SELECT date FROM scorelog", con)
+        d = pd.read_sql_query("SELECT date, rowid FROM scorelog", con)
         con.close()
+        # synthetic mode must give the activity stream the SAME ordinal time base as the
+        # first plays - comparing ordinal first-play times against real log dates would
+        # make the two activity features pure garbage (found while building this
+        # ablation; the synthetic path had never run end-to-end before)
+        if TIME_MODE_OVERRIDE or TIME_MODE.get(player) == "synthetic":
+            d = d.sort_values(["date", "rowid"])
+            d["date"] = (np.arange(len(d), dtype=np.int64) + 1) * 86400
         log_rows.append(pd.DataFrame({"player": player,
-                                      "time": pd.to_datetime(df["date"], unit="s")}))
+                                      "time": pd.to_datetime(d["date"], unit="s")}))
     log_counts = pd.concat(log_rows, ignore_index=True)
 
     # time cutoffs per player (define the train/test split of TARGETS only;

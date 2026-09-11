@@ -38,8 +38,10 @@ import pandas as pd
 from sklearn.metrics import cohen_kappa_score
 from sklearn.preprocessing import StandardScaler
 
-from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, OBJECTIVE_STAT_COLS)
-from common import add_region, hgb_fit_predict, load_firstplays, mae
+from chart_repr import (HISTORY_FEATURES, HISTORY_FEW_FEATURES, HISTORY_RESPONSE_COLS,
+                        MSD_AXES, OBJECTIVE_STAT_COLS, RESPONSE_AXES, _response_cols)
+from common import HGBModel, add_region, hgb_fit_predict, load_firstplays, mae
+from response_features import axis_sd, build_table, prefix_response
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bms_ml" / "output" / "phase3"
@@ -55,6 +57,30 @@ HIST_FEW = HISTORY_FEW_FEATURES
 # the training h_knn_acc comes from data.py's v1 space, so mixing v2 into the
 # few-shot kNN would make the SAME feature incomparable between train and eval.
 USE_V2 = os.environ.get("P3_USE_V2", "0") == "1"
+# perm_space ablation (Phase 3.6, 2026-09-11): add the permutation-space hand-travel
+# geometry to the chart side of M0/M2. Same switch pattern as USE_V2.
+#   P3_USE_PERM=1 python transfer_eval.py
+USE_PERM = os.environ.get("P3_USE_PERM", "0") == "1"
+# personal response profile in the few-shot curve (Phase 3.6, 2026-09-11).
+#   P3_USE_RESP=1 python transfer_eval.py --tag _resp
+# The profile is windowed here (RESP_WIN) and the TRAINING rows are truncation-
+# augmented, because a few-shot row only ever has its prefix while a protocol row has
+# the whole archive - fitting "all available history" would use a different estimator
+# on the two sides (the recency-feature trap from PHASE3_4_TRANSFER). See
+# response_features.py. Only the few-shot curve changes: the exp-1 protocol band keeps
+# its full-causal reference untouched so the two remain comparable.
+USE_RESP = os.environ.get("P3_USE_RESP", "0") == "1"
+# which axis family the few-shot response block uses: "struct" (the 11 structural axes,
+# shipped), "msd" (the 7 MinaCalc skillsets) or "both". The MSD few-shot profile is the
+# same estimator on a different axis source - it answers whether the crowd-calibrated
+# axes also help in the sparse-prefix regime where the structural block did not.
+RESP_AXES_MODE = os.environ.get("P3_RESP_AXES", "struct")
+RESP_WIN = int(os.environ.get("P3_RESP_WINDOW", "50"))
+RESP_MIN = int(os.environ.get("P3_RESP_MIN", "5"))
+# zero-slope prior worth this many events (see response_features.response_columns).
+# Without it the k=5 slope is pure noise yet the truncation augmentation teaches the
+# model to trust it: measured k=5 = 20.51 vs the 17.50 baseline (worse than k=1).
+RESP_LAMBDA = float(os.environ.get("P3_RESP_LAMBDA", "20"))
 
 
 def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
@@ -102,6 +128,13 @@ def prefix_hist_features(prefix: pd.DataFrame, targets: pd.DataFrame,
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tag", default="",
+                    help="output suffix; the default writes transfer_results.json "
+                         "(the canonical protocol run). Use e.g. _v2_perm for ablations "
+                         "so an ablation can never silently replace the baseline.")
+    args = ap.parse_args()
     fp = add_region(load_firstplays().reset_index(drop=True))
     # v2 chart-side ablation: merge the distribution stats in as extra columns
     CHART = list(STAT)
@@ -110,9 +143,55 @@ def main() -> None:
         fp = fp.merge(pd.read_parquet(DS / "chart_stats_v2.parquet"),
                       on="sha256", how="left")
         CHART = CHART + OBJECTIVE_V2_COLS
+    if USE_PERM:
+        from chart_repr import OBJECTIVE_PERM_COLS
+        fp = fp.merge(pd.read_parquet(DS / "chart_perm_space.parquet"),
+                      on="sha256", how="left")
+        CHART = CHART + OBJECTIVE_PERM_COLS
+
+    # ---- personal response profile (few-shot only; see USE_RESP above) ----
+    RESP = []
+    sd_axes = sd_msd = None
+    if USE_RESP:
+        # four axes are v2 columns kept in a side table
+        need = [c for c in set(RESPONSE_AXES.values()) if c not in fp.columns]
+        if need:
+            v2tab = pd.read_parquet(DS / "chart_stats_v2.parquet")
+            fp = fp.merge(v2tab[["sha256"] + [c for c in need if c in v2tab.columns]],
+                          on="sha256", how="left")
+        fp = fp.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
+        # TRAINING columns: windowed estimator + deployment-style truncation
+        # augmentation, so the model sees every possible fill level. This depends only
+        # on each row's own past, so it is computed once for the whole roster.
+        sd_axes = axis_sd(fp)
+        tr_resp = build_table(fp, sd_axes, min_n=RESP_MIN, window=RESP_WIN,
+                              rng=np.random.RandomState(0), shrink=RESP_LAMBDA)
+        for c in HISTORY_RESPONSE_COLS:
+            fp[c] = tr_resp[c].values
+        if RESP_AXES_MODE in ("struct", "both"):
+            RESP += list(HISTORY_RESPONSE_COLS)
+            RESP_S = list(HISTORY_RESPONSE_COLS)
+        else:
+            RESP_S = []
+        if RESP_AXES_MODE in ("msd", "both"):
+            fp = fp.merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
+            sd_msd = axis_sd(fp, MSD_AXES)
+            tr_msd = build_table(fp, sd_msd, min_n=RESP_MIN, window=RESP_WIN,
+                                 rng=np.random.RandomState(1), shrink=RESP_LAMBDA,
+                                 prefix="m_", target="acc", axes=MSD_AXES)
+            msd_cols = _response_cols("m_", MSD_AXES)
+            for c in msd_cols:
+                fp[c] = tr_msd[c].values
+            RESP += msd_cols
+            RESP_M = msd_cols
+        else:
+            RESP_M = []
+
     players = sorted(fp["player"].unique())
     results: dict = {"scope_rows": len(fp), "players": players, "ks": KS,
-                     "use_v2": USE_V2, "lopo": {}}
+                     "use_v2": USE_V2, "use_perm": USE_PERM, "use_resp": USE_RESP,
+                     "resp_axes": RESP_AXES_MODE if USE_RESP else None,
+                     "resp_window": RESP_WIN if USE_RESP else None, "lopo": {}}
 
     for D in players:
         others = fp[fp["player"] != D]
@@ -168,6 +247,22 @@ def main() -> None:
         # ("player has k plays so far, predict their next charts") and keeping the
         # history-recency feature distribution consistent with training.
         W = 150
+        # The k-loop varies ONLY the evaluation frame: tr_others, the labels and the
+        # feature lists are identical for every k. Refitting imputer+scaler+HGB once
+        # per k did the same fit 8x; hoisting it is numerically identical (see
+        # common.HGBModel) and is the bulk of this script's speedup.
+        # NB: M2_bp deliberately uses CHART + HIST (all 12), not CHART + HIST_FEW as
+        # acc/lamp do — preserved as-is for continuity of the reported curve.
+        bp_cap = float(np.log1p(tr_others["bp"].max()))
+        M2F = CHART + HIST_FEW + RESP
+        M2B = CHART + HIST + RESP
+        m0_acc = HGBModel(tr_others, CHART, tr_others["acc"].values)
+        m0_lamp = HGBModel(tr_others, CHART, tr_others["lamp"].values.astype(float))
+        m2_acc = HGBModel(tr_others, M2F, tr_others["acc"].values)
+        m2_lamp = HGBModel(tr_others, M2F, tr_others["lamp"].values.astype(float))
+        m0_bp = HGBModel(tr_others, CHART, np.log1p(tr_others["bp"].values))
+        m2_bp = HGBModel(tr_others, M2B, np.log1p(tr_others["bp"].values))
+
         curve = []
         for k in KS:
             if k >= len(mine) - 1:
@@ -182,19 +277,27 @@ def main() -> None:
                 pd.DataFrame(np.nan, index=targets.index, columns=HIST)
             te_k = targets.copy()
             te_k[HIST_FEW] = hf[HIST_FEW].values
+            if RESP:
+                # prefix-only profile (see response_features.prefix_response): the
+                # curve is fitted on the prefix alone and evaluated at each target's
+                # own axis value, so no target can inform another. Per-family calls:
+                # the structural and MSD families have different prefixes, axis
+                # sources and slope scalings.
+                if RESP_AXES_MODE in ("struct", "both"):
+                    te_k[RESP_S] = prefix_response(
+                        prefix, targets, sd_axes, min_n=RESP_MIN, window=RESP_WIN,
+                        shrink=RESP_LAMBDA)[RESP_S].values
+                if RESP_AXES_MODE in ("msd", "both"):
+                    te_k[RESP_M] = prefix_response(
+                        prefix, targets, sd_msd, min_n=RESP_MIN, window=RESP_WIN,
+                        shrink=RESP_LAMBDA, prefix="m_", axes=MSD_AXES)[RESP_M].values
 
-            bp_cap = float(np.log1p(tr_others["bp"].max()))
-
-            def bp_pred(feats):
-                return np.expm1(np.clip(hgb_fit_predict(tr_others, te_k, feats,
-                                                     np.log1p(tr_others["bp"].values)),
-                                        0, bp_cap))
-
-            p0_acc = hgb_fit_predict(tr_others, te_k, CHART, tr_others["acc"].values)
-            p0_lamp = hgb_fit_predict(tr_others, te_k, CHART, tr_others["lamp"].values.astype(float))
-            p2_acc = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW, tr_others["acc"].values)
-            p2_lamp = hgb_fit_predict(tr_others, te_k, CHART + HIST_FEW,
-                                   tr_others["lamp"].values.astype(float))
+            p0_acc = m0_acc.predict(te_k)
+            p0_lamp = m0_lamp.predict(te_k)
+            p2_acc = m2_acc.predict(te_k)
+            p2_lamp = m2_lamp.predict(te_k)
+            p0_bp = np.expm1(np.clip(m0_bp.predict(te_k), 0, bp_cap))
+            p2_bp = np.expm1(np.clip(m2_bp.predict(te_k), 0, bp_cap))
             pk_acc = te_k["h_knn_acc"].values
             pk_lamp = te_k["h_acc_mean"].values / 100 * 6
             pk_bp = te_k["h_bp_mean"].values
@@ -207,9 +310,9 @@ def main() -> None:
                 "M0_lamp": round(mae(te_k["lamp"], p0_lamp), 3),
                 "M1_lamp": round(mae(te_k["lamp"], pk_lamp), 3),
                 "M2_lamp": round(mae(te_k["lamp"], p2_lamp), 3),
-                "M0_bp": round(mae(te_k["bp"], bp_pred(CHART)), 2),
+                "M0_bp": round(mae(te_k["bp"], p0_bp), 2),
                 "M1_bp": round(mae(te_k["bp"], pk_bp), 2),
-                "M2_bp": round(mae(te_k["bp"], bp_pred(CHART + HIST)), 2),
+                "M2_bp": round(mae(te_k["bp"], p2_bp), 2),
             })
         res["fewshot"] = curve
         results["lopo"][D] = res
@@ -233,7 +336,8 @@ def main() -> None:
         agg.append(entry)
     results["fewshot_aggregate"] = agg
 
-    json.dump(results, open(OUT / "transfer_results.json", "w"), indent=2, default=str)
+    json.dump(results, open(OUT / f"transfer_results{args.tag}.json", "w"),
+              indent=2, default=str)
     print("\nfew-shot aggregate (weighted):")
     for e in agg:
         print(f"  k={e['k']:3}: M0 {e['M0_acc']:.2f}  M1 {e['M1_acc']:.2f}  "

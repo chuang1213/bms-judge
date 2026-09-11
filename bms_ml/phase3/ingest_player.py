@@ -5,14 +5,21 @@ New player data should enter the pipeline ONLY through this script:
     python ingest_player.py add <name> <dir> [--client beatoraja] [--time real|synthetic]
     python ingest_player.py list
 
-It validates the raw save folder (beatoraja score.db/scorelog.db/scoredatalog.db;
-LR2 support is a stub until its parser is needed), writes a provenance entry into
-players.json (include=false until reviewed), and prints an audit summary.
+It validates the raw save folder (beatoraja score.db/scorelog.db/scoredatalog.db) or an
+LR2 archive (a single .db — see lr2_reader.py, implemented 2026-09-11 once real LR2 data
+arrived), writes a provenance entry into players.json (include=false until reviewed),
+and prints an audit summary.
 
 `--time synthetic` is for clients without reliable timestamps (e.g. LR2): the loader
 will replace dates with play-order ordinal days. Ordering is preserved, absolute time
 semantics are lost, and cross-player time features degrade — this is recorded in
 provenance, never faked as real time.
+
+⚠️ LR2 is NOT merely "a client without timestamps". Its score table holds ONE row per
+chart (best score + counters), so it has neither first plays nor any ordering at all:
+the synthetic ordinal days are then the DB's arbitrary row order, and the archive can
+serve as PLAYER STATE ONLY, never as first-play targets. Left at include=false until
+the target protocol for LR2-only players is decided.
 """
 from __future__ import annotations
 
@@ -76,8 +83,16 @@ def audit_dir(rel_dir: str, client: str) -> dict:
         info["top_modes"] = modes
         if dates[0] == 0 and dates[1] == 0:
             info["issues"].append("no usable timestamps -> use --time synthetic")
+    elif client == "lr2":
+        # 2026-09-11: real parser (was a stub). `d` may be the .db itself or a folder.
+        from lr2_reader import audit as lr2_audit
+        sub = lr2_audit(d)
+        info.update({k: v for k, v in sub.items()
+                     if k not in ("issues", "fatal", "client")})
+        info["issues"] += sub.get("issues", [])
+        info["fatal"] += sub.get("fatal", [])
     else:
-        info["fatal"].append(f"client '{client}' has no parser yet (LR2 stub)")
+        info["fatal"].append(f"unknown client '{client}' (supported: beatoraja, lr2)")
     return info
 
 
@@ -86,10 +101,16 @@ def main() -> None:
     ap.add_argument("cmd", choices=["add", "list"])
     ap.add_argument("name", nargs="?")
     ap.add_argument("dir", nargs="?")
-    ap.add_argument("--client", default="beatoraja")
+    ap.add_argument("--client", default="beatoraja", choices=["beatoraja", "lr2"])
     ap.add_argument("--time", choices=["real", "synthetic"], default="real")
     ap.add_argument("--note", default="")
     args = ap.parse_args()
+
+    if args.client == "lr2" and args.time != "synthetic":
+        print("[note] LR2 has no timestamps (and no play order); forcing --time "
+              "synthetic. The ordinal days will follow the DB's row order, which is "
+              "arbitrary - not a play sequence.")
+        args.time = "synthetic"
 
     roster = load_roster()
     if args.cmd == "list":

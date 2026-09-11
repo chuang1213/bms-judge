@@ -43,6 +43,111 @@ HISTORY_FEATURES = [
     "h_days_since_active", "h_plays_last30d", "h_days_span",
 ]
 
+# Per-axis PERSONAL RESPONSE PROFILE (2026-09-11, PHASE3_5_REVIEW §4.3 follow-up).
+# The only chart-conditioned player feature before this was `h_knn_acc`; these give
+# each player an explicit univariate response curve per chart axis, fitted on their
+# strictly-prior plays (see history_response.py). `h_resp_*` is chart-conditioned
+# (uses the target's own axis value); `h_slope_*` is a pure player trait.
+# Axis -> v1 column. Chosen to span the pressure types the framework paper names
+# (density / LN / scratch / length / chord / same-lane repetition) WITHOUT importing
+# its 7-axis vocabulary — these are plain objective columns, not skill labels.
+RESPONSE_AXES = {
+    "nps": "c_avg_nps",
+    "ln": "c_ln_ratio",
+    "scratch": "c_scratch_ratio",
+    "dur": "c_duration_sec",
+    "chord": "c_chord3plus_count",
+    "jack": "c_jack_count",
+    # v2 threshold-free axes (added 2026-09-11): same-lane speed (the window-free
+    # analogue of jack), density variability, simultaneity and lane spread.
+    "ioi": "v2_ioi_lane_p05",
+    "npsstd": "v2_nps_std",
+    "simul": "v2_simul_max",
+    "entropy": "v2_lane_entropy",
+    # judge-window tier: NOT a difficulty property but a scoring setting, and the
+    # history study showed rank1/rank2 charts are mis-scored by 5-11pp without it.
+    # A player's slope here is "how much do tight windows cost me" - a real trait.
+    "jrank": "c_jrank",
+}
+def _response_cols(prefix: str, axes: dict | None = None) -> list[str]:
+    """Column names of one response block. `h_` = the acc block (shipped 2026-09-11);
+    `l_` = the lamp block (2026-09-11 evening): lamp is the one target the acc-response
+    profile slightly hurt (B_full lamp 1.331 vs B 1.325), and a player's per-axis
+    survival profile is not the same object as their per-axis accuracy profile.
+
+    `axes` (name -> source column) overrides the axis set; None = RESPONSE_AXES. Added
+    for the MinaCart/MSD experiment: the MSD skillsets are a different axis family with
+    its own block prefix, not new members of the structural family."""
+    ax = RESPONSE_AXES if axes is None else axes
+    return ([f"{prefix}resp_{k}" for k in ax]
+            + [f"{prefix}slope_{k}" for k in ax]
+            + [f"{prefix}resp_mean", f"{prefix}resp_std"])
+
+
+HISTORY_RESPONSE_COLS = _response_cols("h_")            # acc response (protocol best)
+HISTORY_RESPONSE_LAMP_COLS = _response_cols("l_")       # lamp response
+# BP response, on log1p(bp) like every BP model in the project (skew 2.56 -> 0.15).
+# BP improved by 5.2 MAE when the lamp block was added, so the target is responsive to
+# this family of features and deserves its own block.
+HISTORY_RESPONSE_BP_COLS = _response_cols("b_")
+
+
+def _dev_cols(prefix: str, axes: dict | None = None) -> list[str]:
+    """Player-relative axis deviation: (x_target - mean_player_history) / sd_player_history.
+
+    `resp_` is the player's LINEAR prediction at this chart's axis value, so it can only
+    express a straight line. `dev_` says how far outside the player's OWN usual range the
+    chart sits; a tree splitting on it places thresholds in player-relative units, which
+    is exactly the mechanism for a saturating / cliff response that the linear profile
+    cannot represent. Same window statistics as the response block, so it is nearly free.
+    """
+    ax = RESPONSE_AXES if axes is None else axes
+    return [f"{prefix}dev_{k}" for k in ax]
+
+
+HISTORY_RESPONSE_DEV_COLS = _dev_cols("h_")             # acc block deviation
+HISTORY_LAMP_DEV_COLS = _dev_cols("l_")
+HISTORY_BP_DEV_COLS = _dev_cols("b_")
+
+
+def _block_cols(prefix: str, axes: dict | None = None) -> list[str]:
+    """Everything one block emits: response columns + player-relative deviations."""
+    return _response_cols(prefix, axes) + _dev_cols(prefix, axes)
+
+
+# ---- MinaCalc skillset axis family (2026-09-11, recommend branch) ---------------
+# Seven Etterna MSD skillsets computed per chart by ref_repo/osumania_map_analyser-main's
+# WASM port of MinaCalc (msd_prep.py -> msd_compute.mjs -> msd_finalize.py ->
+# dataset/msd.parquet). These are CROWD-CALIBRATED difficulty axes: unlike the raw
+# structural stats, each one is regression-fitted on decades of community play. Measured
+# Spearman vs difficulty-table level: 0.80-0.85, beating c_avg_nps on every table.
+# Technical is absent: it is a 4K-only skillset and the n-key path returns a constant.
+# They enter the model ONLY through the response/dev transform - the raw ratings as
+# plain features measurably hurt (response_msd.py: 6.250 vs 6.117), which is the
+# project's interaction thesis confirmed from a new direction.
+MSD_AXES = {k: f"msd_{k}" for k in
+            ("overall", "stream", "jumpstream", "handstream", "stamina",
+             "jackspeed", "chordjack")}
+MSD_ACC_COLS = _block_cols("m_", MSD_AXES)      # acc response/dev on the MSD axes
+MSD_LAMP_COLS = _block_cols("ml_", MSD_AXES)
+MSD_BP_COLS = _block_cols("mb_", MSD_AXES)
+
+# chart-conditioned responses without the mean/std pair (the exact subsets the best
+# configuration uses for the lamp and BP targets)
+LAMP_RESP_COLS = [f"l_resp_{k}" for k in RESPONSE_AXES]
+BP_RESP_COLS = [f"b_resp_{k}" for k in RESPONSE_AXES]
+
+# The fused best configuration (2026-09-11, response_msd.py): everything B has, plus the
+# structural response blocks (acc full, lamp chart-conditioned, BP chart-conditioned),
+# the acc player-relative deviations, and the three MinaCalc MSD blocks.
+# acc 5.887 / cR2 +0.458 / lamp 1.089 / QWK 0.754 / BP 117.2  (BASE was 6.117).
+BEST_FEATURES = (OBJECTIVE_STAT_COLS + HISTORY_FEATURES
+                 + HISTORY_RESPONSE_COLS
+                 + LAMP_RESP_COLS + ["l_resp_mean", "l_resp_std"]
+                 + BP_RESP_COLS + ["b_resp_mean", "b_resp_std"]
+                 + HISTORY_RESPONSE_DEV_COLS
+                 + MSD_ACC_COLS + MSD_LAMP_COLS + MSD_BP_COLS)
+
 # Recency / calendar terms. In protocol training these come from the DENSE scorelog
 # row stream; in few-shot evaluation they can only come from the SPARSE first-play
 # prefix, so their distributions are incomparable (evaluation values land beyond
@@ -80,6 +185,34 @@ OBJECTIVE_V2_COLS = [
 #   everything else     -> file-objective (LN via LNTYPE/LNOBJ, STOP via spec, lane
 #                          0 = channel 16 scratch, grid positions)
 
+# Permutation-space hand-travel geometry (2026-09-11, user prompt: "the target
+# chart's statistics are probably not the best choice ... there is no truly
+# objective BMS description, hand-craft a new representation"). Built by
+# chart_perm_space.py; inspired by Permikon (Permikon-main/), which evaluates all
+# 5040 key-lane permutations instead of pretending the written arrangement is THE
+# chart. We keep absolute cross-chart-comparable values (no Permikon min-max
+# normalisation) and summarise each metric over the whole permutation space.
+#
+# Convention dependence, declared (same spirit as the v2 audit above):
+#   lane 1..7 as a 1-D spatial coordinate -> physical 7-key layout assumption
+#     (human factor, NOT file structure) -- identical in kind to v2 hand_balance
+#   scratch anchored (not permuted)      -> follows Permikon; BMS RANDOM does
+#     remap scratch, so ps_scratch_* are the only scratch-aware terms here
+#   1/60s-agnostic: positions are exact grid timestamps (file-objective)
+#   weight = min(min_gap/gap, 1)         -> Permikon's "faster notes matter more"
+OBJECTIVE_PERM_COLS = [
+    "ps_smooth_mean", "ps_smooth_std", "ps_smooth_min", "ps_smooth_max",
+    "ps_smooth_base_pct",
+    "ps_tight_mean", "ps_tight_std", "ps_tight_min", "ps_tight_max",
+    "ps_tight_base_pct",
+    "ps_base_mean", "ps_base_std", "ps_base_min", "ps_base_max",
+    "ps_base_base_pct",
+    "ps_spread_mean", "ps_spread_std", "ps_spread_min", "ps_spread_max",
+    "ps_spread_base_pct",
+    # permutation-invariant scratch interleaving (scratch is anchored)
+    "ps_scratch_pos_frac", "ps_scratch_key_frac",
+]
+
 
 def load_phase2a(shas) -> pd.DataFrame:
     """Phase2A T1 chart representations (64-dim) for the requested sha256 set."""
@@ -93,6 +226,12 @@ def load_v2(shas) -> pd.DataFrame:
     return reps[reps["sha256"].isin(set(shas))]
 
 
+def load_perm_space(shas) -> pd.DataFrame:
+    """Permutation-space geometry stats (see OBJECTIVE_PERM_COLS) for the sha256 set."""
+    reps = pd.read_parquet(DS / "chart_perm_space.parquet")
+    return reps[reps["sha256"].isin(set(shas))]
+
+
 def chart_encoder_registry() -> dict:
     """Encoder name -> (feature builder description, dim). New encoders register here
     and are compared on the same downstream task (PROTOCOL.md section 3)."""
@@ -103,6 +242,12 @@ def chart_encoder_registry() -> dict:
                                "per-lane IOI percentiles, density variability, "
                                "simultaneity shape, lane entropy/hand balance",
                             27 + len(OBJECTIVE_V2_COLS)),
+        "perm_space": ("hand-travel geometry summarised over all 5040 key-lane "
+                       "permutations (smooth/tight/base/spread mean,std,min,max + "
+                       "written-arrangement percentile + scratch interleaving); "
+                       "lane 1..7 treated as a 1-D spatial axis (human-factor "
+                       "assumption, declared)",
+                       len(OBJECTIVE_PERM_COLS)),
         "phase2a_t1_pooled": ("64-dim mean-pooled T1 GridEncoder windows", 64),
     }
 

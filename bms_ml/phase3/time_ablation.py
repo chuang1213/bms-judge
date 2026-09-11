@@ -42,7 +42,7 @@ from common import (add_region, centered_r2, hgb_fit_predict, load_firstplays,
                     load_samples, mae, r2)
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT / "玩家资料"
+DATA = ROOT / "PlayerData" / "beatoraja"   # archive tree renamed 2026-09-11
 OUT = ROOT / "bms_ml" / "output" / "phase3"
 DS = OUT / "dataset"
 SEEDS = [0, 1, 2]

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMS 首打推荐</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111;color:#ddd;font:14px/1.6 "Segoe UI","Microsoft YaHei",sans-serif;padding:28px}
+.wrap{max-width:1060px;margin:0 auto}
+h1{font-size:17px;font-weight:600;margin:0}
+.sub{color:#888;font-size:12px;margin:2px 0 0}
+#drop{border:1px dashed #555;padding:90px 20px;text-align:center;margin-top:70px;cursor:pointer}
+#drop.over{background:#191919;border-color:#aaa}
+#drop b{display:block;font-size:15px;font-weight:600;color:#fff;margin-bottom:4px}
+#drop span{color:#888;font-size:12.5px}
+#drop input{display:none}
+#status{color:#888;margin:16px 0;min-height:20px;font-size:13px}
+#err{display:none;color:#ddd;background:#1c1414;border:1px solid #4a2626;padding:10px 14px;margin:16px 0;font-size:13px;white-space:pre-wrap}
+#result{display:none}
+.meta{color:#888;font-size:12.5px;margin:26px 0 0;line-height:1.9}
+.meta b{color:#fff;font-weight:600}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #2a2a2a;padding:12px 0 10px;margin-top:10px}
+.lb{color:#777;font-size:12px}
+label.chip{display:inline-flex;align-items:center;gap:4px;cursor:pointer;border:1px solid #333;
+  padding:2px 10px;font-size:12px;color:#999;user-select:none}
+label.chip input{accent-color:#888;margin:0}
+label.chip.on{color:#fff;border-color:#888}
+.bar input[type=number],.bar select,.bar input[type=search]{background:#161616;
+  border:1px solid #333;border-radius:0;color:#ddd;padding:4px 8px;font:inherit;font-size:12.5px}
+.bar input[type=search]{width:190px}
+#acts{display:flex;gap:10px;margin-left:auto}
+button.btn{background:none;border:1px solid #444;color:#ddd;padding:4px 14px;font:inherit;
+  font-size:12.5px;cursor:pointer}
+button.btn:hover{border-color:#fff;color:#fff}
+details.filterbox{border:1px solid #2a2a2a;margin-top:10px}
+details.filterbox summary{cursor:pointer;list-style:none;padding:8px 12px;color:#aaa;font-size:12.5px}
+details.filterbox summary::-webkit-details-marker{display:none}
+details.filterbox summary::before{content:"+ ";color:#777}
+details.filterbox[open] summary{border-bottom:1px solid #2a2a2a}
+details.filterbox[open] summary::before{content:"− "}
+#grid{padding:10px 12px}
+.grow{display:flex;align-items:flex-start;margin-bottom:6px}
+button.rl{flex:none;width:58px;height:30px;background:none;border:1px solid #444;color:#ddd;
+  font:inherit;font-size:12.5px;cursor:pointer;margin-right:8px;padding:0}
+button.rl:hover{border-color:#fff}
+.cells{display:flex;flex-wrap:wrap;gap:4px}
+button.cell{min-width:34px;height:30px;background:none;border:1px solid #333;color:#999;
+  font:inherit;font-size:12px;cursor:pointer;padding:0}
+button.cell:hover{border-color:#888;color:#ddd}
+button.cell.on{background:#ddd;color:#111;border-color:#ddd;font-weight:600}
+#cnt{color:#777;font-size:12px;margin:10px 2px 6px}
+#cnt b{color:#ddd;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{background:#161616;color:#888;font-size:11.5px;font-weight:600;text-align:left;
+  padding:6px 10px;border-bottom:1px solid #2a2a2a;position:sticky;top:0}
+td{padding:6px 10px;border-bottom:1px solid #1e1e1e;font-size:13px}
+tr:hover td{background:#181818}
+td.lv{color:#fff;font-weight:600;white-space:nowrap}
+td.ti{max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.ar{color:#888;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.pp{font-weight:700;color:#fff}
+.band{color:#777;font-size:11px}
+td.bp,td.lp{color:#bbb}
+td.g{color:#999;font-size:11.5px;white-space:nowrap}
+.nom{color:#666;font-size:11px}
+#more{display:none;margin:14px auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BMS 首打推荐</h1>
+  <p class="sub">前端只是入口：打分全部在本地服务完成，页面不保存任何数据。</p>
+
+  <div id="drop">
+    <b>拖入 scorelog.db</b>
+    <span>beatoraja 存档（scorelog 表）· 或点击选择文件 · 上传仅在 127.0.0.1 本地传输</span>
+    <input type="file" id="file">
+  </div>
+
+  <div id="status"></div>
+  <div id="err"></div>
+
+  <div id="result">
+    <p class="meta" id="meta"></p>
+    <div class="bar">
+      <span class="lb">分组</span><span id="groups"></span>
+      <span class="lb">排序</span>
+      <select id="sort">
+        <option value="pp">通过概率 高→低</option>
+        <option value="lvl">表等级 低→高（先按表序）</option>
+        <option value="lvld">表等级 高→低（先按表序）</option>
+        <option value="acc">预测 acc 高→低</option>
+        <option value="bp">预测 BP 低→高</option>
+        <option value="lamp">预测灯 高→低</option>
+      </select>
+      <input type="search" id="q" placeholder="搜索标题 / 作者">
+      <span id="acts"><button class="btn" id="csv">导出 CSV</button>
+      <button class="btn" id="reset">更换存档</button></span>
+    </div>
+    <details class="filterbox" id="fbox">
+      <summary>筛选（表 × 等级，点格子切换；行首切换整张表）</summary>
+      <div id="grid"></div>
+    </details>
+    <p id="cnt"></p>
+    <table><thead><tr>
+      <th>表/等级</th><th>标题</th><th>作者</th><th>预测灯</th>
+      <th>通过概率</th><th>预测 acc（80% 区间）</th><th>预测 BP</th><th>分组</th>
+    </tr></thead><tbody id="tb"></tbody></table>
+    <button class="btn" id="more">显示更多</button>
+  </div>
+</div>
+
+<script>
+const ORD={normal:0,satellite:1,stella:2,insane:3,overjoy:4};
+const SYM={normal:"☆",satellite:"sl",stella:"st",insane:"発狂",overjoy:"★★"};
+const GROUPS=["挑战区","冲刺区","暂缓区"];
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+                      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+let DATA=[],META=null;
+const state={sel:new Set(),gp:new Set(GROUPS),sort:"pp",q:"",shown:60};
+
+const CMP={
+  pp:(a,b)=>b.pp-a.pp,
+  acc:(a,b)=>b.pa-a.pa,
+  bp:(a,b)=>a.pb-b.pb,
+  lamp:(a,b)=>b.pl-a.pl||b.pa-a.pa,
+  lvl:(a,b)=>(ORD[a.t]-ORD[b.t])||(a.l-b.l)||b.pp-a.pp,
+  lvld:(a,b)=>(ORD[b.t]-ORD[a.t])||(b.l-a.l)||b.pp-a.pp};
+
+function apply(){
+  const q=state.q.toLowerCase();
+  const arr=DATA.filter(r=>state.sel.has(r.t+":"+r.l)&&state.gp.has(r.g)
+      &&(!q||(r.ti+" "+r.ar).toLowerCase().includes(q)));
+  arr.sort(CMP[state.sort]);
+  return arr;
+}
+function row(r){
+  return '<tr><td class="lv">'+SYM[r.t]+r.l+'</td>'
+    +'<td class="ti">'+esc(r.ti)+(r.m?'':' <span class="nom" title="无 MinaCalc 数据">◇</span>')+'</td>'
+    +'<td class="ar">'+esc(r.ar)+'</td>'
+    +'<td class="lp">'+r.pl+' '+esc(r.pn)+'</td>'
+    +'<td class="pp">'+Math.round(r.pp*100)+'%</td>'
+    +'<td>'+r.pa.toFixed(1)+' <span class="band">['+r.lo+'-'+r.hi+']</span></td>'
+    +'<td class="bp">'+r.pb+'</td>'
+    +'<td class="g">'+r.g+'</td></tr>';
+}
+let VIEW=[];
+function render(){
+  document.getElementById("tb").innerHTML=VIEW.slice(0,state.shown).map(row).join("");
+  document.getElementById("cnt").innerHTML=
+    "显示 <b>"+Math.min(state.shown,VIEW.length)+"</b> / 筛选后 <b>"+VIEW.length
+    +"</b> / 全部 "+DATA.length+" 张";
+  document.getElementById("more").style.display=
+    state.shown<VIEW.length?"block":"none";
+}
+
+/* ---- filter grid (komasan-inspired): one row per table, one cell per level;
+   row head toggles the table, 全 toggles everything, cells toggle (table,level). */
+function buildGrid(){
+  const byT={};
+  DATA.forEach(r=>{(byT[r.t]??=new Set()).add(r.l)});
+  state.sel=new Set();
+  let h='<div class="grow"><button class="rl" data-all="1">全</button><div class="cells">'
+    +'<span class="nom">未全选时点"全"补全；全选时点"全"清空。行首按钮切换整张表。</span></div></div>';
+  for(const t of Object.keys(ORD)){
+    if(!byT[t])continue;
+    const ls=[...byT[t]].sort((a,b)=>a-b);
+    ls.forEach(l=>state.sel.add(t+":"+l));
+    h+='<div class="grow"><button class="rl" data-row="'+t+'" title="切换 '+SYM[t]+' 整表">'
+      +SYM[t]+'</button><div class="cells">'
+      +ls.map(l=>'<button class="cell on" data-cell="'+t+':'+l+'">'+l+'</button>').join("")
+      +'</div></div>';
+  }
+  document.getElementById("grid").innerHTML=h;
+}
+function syncGrid(){
+  document.querySelectorAll("#grid .cell")
+    .forEach(c=>c.classList.toggle("on",state.sel.has(c.dataset.cell)));
+}
+function toggleCell(k){state.sel.has(k)?state.sel.delete(k):state.sel.add(k);
+  syncGrid();state.shown=60;VIEW=apply();render();}
+function toggleRow(t){
+  const on=DATA.some(r=>r.t===t&&state.sel.has(r.t+":"+r.l));
+  DATA.forEach(r=>{if(r.t===t){on?state.sel.delete(r.t+":"+r.l):state.sel.add(r.t+":"+r.l);}});
+  syncGrid();state.shown=60;VIEW=apply();render();}
+function toggleAll(){
+  // coverage-based, like an ALL checkbox: anything missing -> fill everything,
+  // only when every cell is already on does it clear (a size-based toggle would
+  // wipe a mixed selection, which is never what the click meant)
+  const all=DATA.every(r=>state.sel.has(r.t+":"+r.l));
+  if(all){state.sel.clear();}
+  else{DATA.forEach(r=>state.sel.add(r.t+":"+r.l));}
+  syncGrid();state.shown=60;VIEW=apply();render();}
+
+function showResult(json){
+  DATA=json.rows;META=json;
+  const gcount={};GROUPS.forEach(g=>gcount[g]=0);
+  DATA.forEach(r=>gcount[r.g]++);
+  document.getElementById("groups").innerHTML=GROUPS.map(g=>
+    '<label class="chip on"><input type="checkbox" checked value="'+g+'">'
+    +g+" <span class='nom'>"+gcount[g]+"</span></label>").join("");
+  buildGrid();
+  const m=META.meta;                       // meta fields live one level down; pmae/label
+  const who=(META.matched?("已识别为 <b>"+esc(META.label)+"</b> 的存档")
+                      :"未匹配名册，按 <b>新玩家</b> 打分");
+  const pmae=META.pmae!=null?("· 模型对你的预测误差（测试段）<b>"+META.pmae.toFixed(2)+"</b> 分"):"";
+  document.getElementById("meta").innerHTML=who
+    +" · 打分时点 "+esc(m.as_of)
+    +" · 已打 <b>"+m.n_archive+"</b> 张 · 候选 <b>"+m.n_candidates+"</b> 张"
+    +" · 历史 acc 均值 <b>"+m.acc_mean.toFixed(1)+"</b>（最近 20 次 <b>"
+    +m.acc_last20.toFixed(1)+"</b>）· 缺 MSD <b>"+m.n_no_msd+"</b>（◇）"+pmae;
+  document.getElementById("result").style.display="block";
+  document.getElementById("drop").style.display="none";
+  state.shown=60;VIEW=apply();render();
+}
+function upload(file){
+  document.getElementById("err").style.display="none";
+  document.getElementById("status").textContent=
+    "上传 "+file.name+"（"+(file.size/1048576).toFixed(1)+" MB）… 首次打分需训练模型，请稍候";
+  fetch("/score",{method:"POST",body:file})
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.ok){throw new Error(j.error||"unknown error");}
+      document.getElementById("status").textContent="";
+      showResult(j);})
+    .catch(err=>{
+      document.getElementById("status").textContent="";
+      const e=document.getElementById("err");
+      e.style.display="block";
+      e.textContent=String(err).includes("Failed to fetch")
+        ? "无法连接本地服务。请先运行：\n  python bms_ml/phase3/recommend.py --serve\n然后打开它打印的 http://127.0.0.1 地址。"
+        : "打分失败："+err;});
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const dz=document.getElementById("drop"),fi=document.getElementById("file");
+  dz.addEventListener("click",()=>fi.click());
+  fi.addEventListener("change",()=>fi.files[0]&&upload(fi.files[0]));
+  dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("over");});
+  dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+  dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("over");
+    const f=e.dataTransfer.files[0];if(f)upload(f);});
+
+  /* event DELEGATION on static containers: showResult rebuilds the chips/grid
+     innerHTML, and delegated listeners survive that - per-node listeners did not
+     (that was the bug where toggling a table chip filtered nothing). */
+  document.getElementById("groups").addEventListener("change",e=>{
+    if(!e.target.matches("input"))return;
+    state.gp=new Set([...document.querySelectorAll("#groups input:checked")]
+      .map(el=>el.value));
+    e.target.closest("label").classList.toggle("on",e.target.checked);
+    state.shown=60;VIEW=apply();render();});
+  document.getElementById("grid").addEventListener("click",e=>{
+    const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.all){toggleAll();}
+    else if(b.dataset.row){toggleRow(b.dataset.row);}
+    else if(b.dataset.cell){toggleCell(b.dataset.cell);}});
+
+  document.getElementById("sort").addEventListener("change",e=>{
+    state.sort=e.target.value;VIEW=apply();render();});
+  document.getElementById("q").addEventListener("input",e=>{
+    state.q=e.target.value.trim();state.shown=60;VIEW=apply();render();});
+  document.getElementById("more").addEventListener("click",()=>{
+    state.shown+=120;render();});
+  document.getElementById("reset").addEventListener("click",()=>{
+    document.getElementById("result").style.display="none";
+    document.getElementById("drop").style.display="block";});
+  document.getElementById("csv").addEventListener("click",()=>{
+    const head=["table","level","title","artist","group","pred_lamp","p_pass",
+                "pred_acc","acc_lo","acc_hi","pred_bp","has_msd"];
+    const lines=[head.join(",")].concat(VIEW.map(r=>[r.t,r.l,
+      '"'+String(r.ti).replace(/"/g,'""')+'"',
+      '"'+String(r.ar).replace(/"/g,'""')+'"',
+      r.g,r.pl,r.pp,r.pa,r.lo,r.hi,r.pb,r.m].join(",")));
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv"}));
+    a.download=(META.label||"recommend")+"_recommend.csv";a.click();
+    URL.revokeObjectURL(a.href);});
+});
+
+/* headless-harness hooks (no-ops in the browser) */
+globalThis.__T={showResult,
+  setSort:s=>{state.sort=s;VIEW=apply();render();},
+  setQ:q=>{state.q=q;VIEW=apply();render();},
+  cell:toggleCell,row:toggleRow,all:toggleAll,
+  sel:()=>state.sel,cnt:()=>document.getElementById("cnt").innerHTML,
+  missed:()=>DATA.filter(r=>!(state.sel.has(r.t+":"+r.l)&&state.gp.has(r.g)))};
+</script>
+</body>
+</html>
