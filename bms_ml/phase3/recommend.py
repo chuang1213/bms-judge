@@ -1,22 +1,33 @@
-"""Phase 3.6 -> first deliverable: a chart recommender for ONE player.
+"""Phase 3.6 deliverable: BMS first-play recommender with a LOCAL-SERVER architecture.
 
-    python bms_ml/phase3/recommend.py --player reiaki [--top 25]
+   python bms_ml/phase3/recommend.py --serve            # then drag scorelog.db onto the page
+   python bms_ml/phase3/recommend.py --player vsoflan   # headless: CSV only
 
-What it is
-----------
-The protocol model (the exact feature set of response_dev.B_resp+bpresp+dev, the acc
-best at 6.117) is retrained on the train band exactly as the evaluation does, then used
-to score every fence chart (sl/st/insane union) the player has NOT played yet.
+Architecture (2026-09-11, user direction)
+-----------------------------------------
+The frontend is an ENTRY ONLY: `recommend_ui.html` embeds zero data. The user drags a
+beatoraja `scorelog.db` onto the page, the browser POSTs the file to this local server
+(127.0.0.1), the server rebuilds the player's first-play frame FROM THE UPLOADED DB
+(exact replica of data.load_firstplays' per-player logic), scores every unplayed fence
+chart with the protocol model, and returns JSON for the page to render. Nothing is
+written back into the page, so the UI can never go stale the way an embedded-payload
+report does.
 
-What it is NOT
---------------
-NOT a "practising this will make you stronger" model: the project has no longitudinal /
-intervention data, so training value cannot be measured (PHASE3_3_READINESS §6). The
-score only means "what the model expects the FIRST play to look like". The grouping
-turns that into a usable reading. Thresholds follow the lamp head's ACTUAL spread, not
-the nominal ladder: the lamp regression is fitted on an ordinal with 0.5% FC examples,
-so its predictions compress toward the middle (measured on vsoflan: q05 1.7, median 4.1,
-q95 6.7, max 7.1) and a "predicted FC" group would simply never fire.
+The uploaded db is identified by md5 against the roster; a match scores as that player,
+no match scores as a NEW player - which is precisely the zero-shot deployment path the
+transfer experiments validated (features need no roster membership, only this archive).
+
+Model training is expensive (3 point heads + 3 quantile heads + a pass classifier) and
+player-independent, so it happens ONCE per server lifetime and is cached; each upload
+then costs only feature construction (seconds).
+
+What the score means
+--------------------
+NOT "practising this will make you stronger": the project has no longitudinal /
+intervention data (PHASE3_3_READINESS §6). It is "what the model expects the FIRST play
+to look like" (acc 0-100 / lamp 1-9 / BP misses), plus conformalised 80% acc bands and a
+calibrated pass probability. Grouping thresholds follow the lamp head's ACTUAL spread
+(measured: predictions compress toward the middle, so a "predicted FC" group never fires):
 
   暂缓区  pred_lamp_raw <  3.5   expected fail
   挑战区  3.5 .. 6.0             plausible pass, needs a real attempt
@@ -37,25 +48,25 @@ Zero re-implementation of the causal logic, so deployment features cannot drift 
 training features. The one exception is h_knn_acc, which build_history_features would
 pollute (a candidate's k-NN window may contain another candidate with NaN acc), so it is
 recomputed here: the KNN_K nearest of the player's REAL plays in the same standardised
-stat space, same scaler, same k.
+stat space, same scaler, same k. NOTE (bug fixed 2026-09-11): the player's own rows MUST
+carry log1p_bp - the earlier build never added it, so the whole BP response block was
+silently all-NaN (imputed downstream) in the recommender.
 
 Scoring time is "the player's last recorded session" (newest scorelog row), not
 wall-clock now: a wall-clock gap of months would push h_days_since_active far beyond the
 training distribution - the exact few-shot trap PHASE3_4_TRANSFER documented.
-
-Outputs: bms_ml/output/phase3/recommend/<player>.{html,csv}
-         The HTML is a self-contained INTERACTIVE report: every candidate is embedded
-         and the browser does table / level / group filtering and sorting (by pass
-         probability, table+level, pred acc / BP / lamp) locally - no server needed.
-         The CSV is the same full list, one row per candidate.
 """
 from __future__ import annotations
 
 import argparse
-import html
+import hashlib
 import json
 import sqlite3
+import sys
+import threading
+import webbrowser
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import numpy as np
@@ -70,8 +81,10 @@ from response_decay import MIN_HISTORY
 from response_features import axis_sd, build_table
 from uncertainty_eval import QHead
 
-OUT = ROOT / "bms_ml" / "output" / "phase3" / "recommend"
-DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
+PHASE3 = ROOT / "bms_ml" / "output" / "phase3"
+DS = PHASE3 / "dataset"
+OUT = PHASE3 / "recommend"
+UI_PATH = Path(__file__).resolve().parent / "recommend_ui.html"
 FEATS = BEST_FEATURES                     # the fused best configuration (5.887)
 HALF_LIFE = 180.0                         # must match history_response.py's default
 TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂", "normal": "☆",
@@ -83,86 +96,218 @@ TABLE_ORDER = {"normal": 0, "satellite": 1, "stella": 2, "insane": 3, "overjoy":
 KNN_K = 20                                # data.build_history_features default
 LAMP_NAME = {1: "FAILED", 2: "ASSIST EZ", 3: "LIGHT ASSIST EZ", 4: "EASY", 5: "CLEAR",
              6: "HARD", 7: "EX HARD", 8: "FULL COMBO", 9: "PERFECT"}
+UPLOAD_MAX = 200 * 1024 * 1024            # a scorelog.db is a few MB; guard anyway
 
 
-def load_log_counts() -> pd.DataFrame:
-    """All scorelog rows per player (activity features use the full row stream)."""
-    parts = []
-    for player, rel in PLAYERS.items():
-        con = sqlite3.connect(ROOT / rel / "scorelog.db")
-        d = pd.read_sql_query("SELECT date FROM scorelog", con)
-        con.close()
-        parts.append(pd.DataFrame({"player": player,
-                                   "time": pd.to_datetime(d["date"], unit="s")}))
-    return pd.concat(parts, ignore_index=True)
+# ---------------------------------------------------------------- protocol context
+_CTX: dict | None = None
+_CTX_LOCK = threading.Lock()
 
 
-def build_player_frame() -> tuple[pd.DataFrame, pd.DataFrame, np.ndarray, list[str]]:
-    """The protocol frame: same cleaning, same scaler, same Z as data.py main()."""
-    man = load_manifest()
-    # the four v2 response axes live in a side table keyed on sha256, not in the
-    # manifest - without them build_table cannot even index the axis columns; the MSD
-    # skillsets come from dataset/msd.parquet the same way (charts the WASM never saw
-    # keep NaN and their MSD-block features impute downstream)
-    from chart_repr import RESPONSE_AXES
-    v2 = pd.read_parquet(ROOT / "bms_ml" / "output" / "phase3" / "dataset"
-                         / "chart_stats_v2.parquet")
-    v2cols = [c for c in set(RESPONSE_AXES.values()) if c in v2.columns]
-    man = man.merge(v2[["sha256"] + v2cols], on="sha256", how="left")
-    man = man.merge(pd.read_parquet(ROOT / "bms_ml" / "output" / "phase3" / "dataset"
-                                    / "msd.parquet"), on="sha256", how="left")
-    tab = load_tables()
-    fp = (load_firstplays()
-          .merge(man, on="sha256", how="left")
-          .merge(tab, on="sha256", how="left"))
-    assert not fp.duplicated(["player", "sha256"]).any(), \
-        "duplicate (player, sha256): the fence is not 1:1 on sha256"
-    fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
-    fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
-    fp = fp[fp["notes"].notna() & (fp["notes"] > 0)].copy()
-    fp["is_target"] = fp["table"].notna()
-    if not HISTORY_USES_OFFTABLE:
-        fp = fp[fp["is_target"]].copy()
-    fp = fp.reset_index(drop=True)
-    fp["bp_ratio"] = fp["bp"] / fp["notes"]
-    stat_cols = [c for c in fp.columns if c.startswith("c_")]
-    assert set(stat_cols) == set(OBJECTIVE_STAT_COLS), "chart stat drift vs the registry"
-    scaler = StandardScaler().fit(fp[stat_cols].values)
-    fp_sorted = fp.sort_values(["player", "time"]).reset_index(drop=True)
-    Z = np.nan_to_num(scaler.transform(fp_sorted[stat_cols].values)).astype(np.float64)
-    # the response blocks' slope scaling must match history_response.py exactly: it
-    # computes its sd on the FULL first-play frame (before any filtering), so do the same
-    fp_full = (pd.read_parquet(DS / "firstplays.parquet")
-               .merge(v2[["sha256"] + v2cols], on="sha256", how="left")
-               .merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
-               .sort_values(["player", "time"], kind="stable").reset_index(drop=True))
-    sd_struct = axis_sd(fp_full)
-    sd_msd = axis_sd(fp_full, MSD_AXES)
-    return (fp_sorted, man, tab, stat_cols, scaler, Z, sd_struct, sd_msd)
+def protocol_context() -> dict:
+    """Everything player-independent the scorer needs: manifest (+v2 axes +MSD skillsets),
+    the difficulty tables, the chart-stat scaler fitted on the fence frame exactly as
+    data.py main() fits it, and the response blocks' global axis sd. Cached."""
+    global _CTX
+    if _CTX is not None:
+        return _CTX
+    with _CTX_LOCK:
+        if _CTX is not None:
+            return _CTX
+        man = load_manifest()
+        # the four v2 response axes live in a side table keyed on sha256, not in the
+        # manifest - without them build_table cannot even index the axis columns; the MSD
+        # skillsets come from dataset/msd.parquet the same way (charts the WASM never saw
+        # keep NaN and their MSD-block features impute downstream)
+        from chart_repr import RESPONSE_AXES
+        v2 = pd.read_parquet(DS / "chart_stats_v2.parquet")
+        v2cols = [c for c in set(RESPONSE_AXES.values()) if c in v2.columns]
+        man = man.merge(v2[["sha256"] + v2cols], on="sha256", how="left")
+        man = man.merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
+        tab = load_tables()
+
+        fp = (load_firstplays()
+              .merge(man, on="sha256", how="left")
+              .merge(tab, on="sha256", how="left"))
+        assert not fp.duplicated(["player", "sha256"]).any(), \
+            "duplicate (player, sha256): the fence is not 1:1 on sha256"
+        fp["acc"] = np.where(fp["notes"] > 0, fp["ex"] * 50.0 / fp["notes"], np.nan)
+        fp = fp[fp["bp"] <= fp["notes"] + 5].copy()
+        fp = fp[fp["notes"].notna() & (fp["notes"] > 0)].copy()
+        fp["is_target"] = fp["table"].notna()
+        if not HISTORY_USES_OFFTABLE:
+            fp = fp[fp["is_target"]].copy()
+        fp = fp.reset_index(drop=True)
+        fp["bp_ratio"] = fp["bp"] / fp["notes"]
+        stat_cols = [c for c in fp.columns if c.startswith("c_")]
+        assert set(stat_cols) == set(OBJECTIVE_STAT_COLS), "chart stat drift vs the registry"
+        scaler = StandardScaler().fit(fp[stat_cols].values)
+
+        # the response blocks' slope scaling must match history_response.py exactly: it
+        # computes its sd on the FULL first-play frame (before any filtering), so do the same
+        fp_full = (pd.read_parquet(DS / "firstplays.parquet")
+                   .merge(v2[["sha256"] + v2cols], on="sha256", how="left")
+                   .merge(pd.read_parquet(DS / "msd.parquet"), on="sha256", how="left")
+                   .sort_values(["player", "time"], kind="stable").reset_index(drop=True))
+        _CTX = {"man": man, "tab": tab, "stat_cols": stat_cols, "scaler": scaler,
+                "sd_struct": axis_sd(fp_full), "sd_msd": axis_sd(fp_full, MSD_AXES)}
+        return _CTX
 
 
-def build_candidates(player: str, fp_sorted: pd.DataFrame, man: pd.DataFrame,
-                     tab: pd.DataFrame, stat_cols: list[str], scaler: StandardScaler,
-                     Z: np.ndarray, sd: dict, sd_msd: dict,
-                     top_log) -> tuple[pd.DataFrame, dict]:
-    own = fp_sorted[fp_sorted["player"] == player].reset_index(drop=True)
+# ---------------------------------------------------------------------- uploaded db
+def firstplays_from_db(db_path: Path, player: str) -> pd.DataFrame:
+    """First-play events from ONE scorelog.db - an exact replica of the per-player logic
+    in data.load_firstplays (real-time mode): earliest row per sha256 is the first play,
+    course rows (mode>=100 / short sha) dropped, NO_PLAY(0) and score==0 rows are
+    aborted/practice plays. The uploaded archive is always treated as beatoraja/real
+    time; the P3_TIME_MODE ablation flags deliberately do NOT apply here."""
+    con = sqlite3.connect(db_path)
+    df = pd.read_sql_query(
+        "SELECT rowid, sha256, mode, clear, score, minbp, date FROM scorelog", con)
+    con.close()
+    df = df[(df["sha256"].str.len() == 64) & (df["mode"].astype(int) < 100)]
+    df = df.sort_values(["date", "rowid"]).drop_duplicates("sha256", keep="first")
+    df = df[df["clear"] != 0]
+    df = df[df["score"] > 0]
+    return pd.DataFrame({
+        "player": player,
+        "sha256": df["sha256"].values,
+        "time": pd.to_datetime(df["date"].values, unit="s"),
+        "lamp": df["clear"].values,       # first-play lamp (exact, see data.py docstring)
+        "ex": df["score"].values,
+        "bp": df["minbp"].values,
+    })
+
+
+def logrows_from_db(db_path: Path, player: str) -> pd.DataFrame:
+    """The FULL scorelog row stream (activity features need every row, not just firsts)."""
+    con = sqlite3.connect(db_path)
+    d = pd.read_sql_query("SELECT date FROM scorelog", con)
+    con.close()
+    return pd.DataFrame({"player": player,
+                         "time": pd.to_datetime(d["date"], unit="s")})
+
+
+# --------------------------------------------------------------------- model cache
+_MDL: dict | None = None
+_MDL_LOCK = threading.Lock()
+
+
+def train_models() -> dict:
+    """Train every head once per server lifetime and cache. The fused features come from
+    the dataset artifact: samples.parquet carries the chart stats and the hand-crafted
+    history, history_response.parquet (built at the same 180d half-life) carries every
+    response/dev block, MSD family included."""
+    global _MDL
+    if _MDL is not None:
+        return _MDL
+    with _MDL_LOCK:
+        if _MDL is not None:
+            return _MDL
+        print("training the protocol model on the train band ...", flush=True)
+        hr = pd.read_parquet(DS / "history_response.parquet")
+        static = OBJECTIVE_STAT_COLS + HISTORY_FEATURES
+        need = [c for c in FEATS if c not in static]
+        df = load_samples().merge(hr[["player", "sha256"] + [c for c in need
+                                                             if c in hr.columns]],
+                                  on=["player", "sha256"], how="left")
+        missing = [c for c in FEATS if c not in df.columns]
+        if missing:
+            raise SystemExit(f"history_response.parquet lacks {len(missing)} columns "
+                             f"(e.g. {missing[:3]}); run history_response.py")
+        tr = df[df["phase"] == "train"]
+        mdl: dict = {"df": df,
+                     "models": {"acc": HGBModel(tr, FEATS, tr["acc"].values),
+                                "lamp": HGBModel(tr, FEATS, tr["lamp"].values.astype(float)),
+                                "bp": HGBModel(tr, FEATS, np.log1p(tr["bp"].values))},
+                     "bp_cap": float(np.log1p(df["bp"].max()))}
+
+        # ---- uncertainty heads, fitted ONCE (feature-conditioned bands + pass prob) --
+        # Quantile-HGB heads at q10/q50/q90 per target, conformalised (CQR): the
+        # correction Q is the 80th percentile of the calibration nonconformity, fitted on
+        # a per-player time split of the train band, never on the test band or the
+        # candidates. The variance diagnostic showed per-player error is mostly that
+        # player's own behavioural variance (corr +0.882), and the measured band widths
+        # track it (+0.846: reiaki ~10pp wide, yangtao ~50pp).
+        fit_idx, cal_idx = [], []
+        for _p, g in tr.groupby("player"):
+            g = g.sort_values("time")
+            k = max(1, int(len(g) * 0.8))
+            fit_idx.extend(g.index[:k])
+            cal_idx.extend(g.index[k:])
+        fit, cal = tr.loc[fit_idx], tr.loc[cal_idx]
+
+        def conformal(heads: dict, y_cal: np.ndarray, frame: pd.DataFrame) -> float:
+            s = np.maximum(heads[0.1].predict(frame) - y_cal,
+                           y_cal - heads[0.9].predict(frame))
+            qq = min(1.0, np.ceil((len(s) + 1) * 0.8) / len(s))
+            return float(np.quantile(s, qq))
+
+        acc_q = {q: QHead(fit, FEATS, fit["acc"].values, q) for q in (0.1, 0.9)}
+        mdl["acc_q"], mdl["qa"] = acc_q, conformal(acc_q, cal["acc"].values, cal)
+        bp_q = {q: QHead(fit, FEATS, np.log1p(fit["bp"].values), q) for q in (0.1, 0.9)}
+        mdl["bp_q"], mdl["qb"] = bp_q, conformal(bp_q, np.log1p(cal["bp"].values), cal)
+
+        from sklearn.ensemble import HistGradientBoostingClassifier
+        from sklearn.impute import SimpleImputer
+        imp = SimpleImputer(strategy="median").fit(fit[FEATS])
+        sc = StandardScaler().fit(imp.transform(fit[FEATS]))
+        clf = HistGradientBoostingClassifier(random_state=0, **HGB_KW)
+        clf.fit(sc.transform(imp.transform(fit[FEATS])),
+                (fit["lamp"].values >= 4).astype(int))
+        mdl["imp"], mdl["sc"], mdl["clf"] = imp, sc, clf
+        _MDL = mdl
+        return _MDL
+
+
+def expected_mae(mdl: dict, player: str) -> float | None:
+    """Out-of-sample accuracy for THIS player: their test rows were never trained on."""
+    te = mdl["df"][(mdl["df"]["player"] == player) & (mdl["df"]["phase"] == "test")]
+    return float(mae(te["acc"], mdl["models"]["acc"].predict(te))) if len(te) else None
+
+
+# ------------------------------------------------------------------------ scoring
+def score_archive(db_path: Path, label: str, mdl: dict, ctx: dict,
+                  ) -> tuple[list[dict], dict, float | None]:
+    """Score every unplayed fence chart for the archive at db_path. `label` is the
+    matched roster name or a synthetic new-player id (features need no roster
+    membership; only pmae needs one)."""
+    man, tab = ctx["man"], ctx["tab"]
+    stat_cols, scaler = ctx["stat_cols"], ctx["scaler"]
+
+    own = (firstplays_from_db(db_path, label)
+           .merge(man, on="sha256", how="left")
+           .merge(tab, on="sha256", how="left"))
+    if own["notes"].isna().all():
+        raise ValueError("uploaded db has no charts in the corpus - wrong file?")
+    own["acc"] = np.where(own["notes"] > 0, own["ex"] * 50.0 / own["notes"], np.nan)
+    own = own[own["bp"] <= own["notes"] + 5]
+    own = own[own["notes"].notna() & (own["notes"] > 0)]
+    own = own[own["table"].notna()]                      # the fence is the target space
+    own = own.sort_values(["player", "time"], kind="stable").reset_index(drop=True)
     if not len(own):
-        raise SystemExit(f"player '{player}' has no usable archive rows")
+        raise ValueError("uploaded db has no usable fence first plays")
+    # BUG FIX 2026-09-11: the BP response block reads the `log1p_bp` column as its
+    # target; the earlier build never added it, so every b_* feature was NaN.
+    own["log1p_bp"] = np.log1p(own["bp"].values.astype(np.float64))
+
+    log_counts = logrows_from_db(db_path, label)
+    top_log = log_counts["time"].max()
+
     cand = man.merge(tab, on="sha256", how="inner")
     cand = cand[cand["notes"].notna() & (cand["notes"] > 0)]
     cand = cand[~cand["sha256"].isin(set(own["sha256"]))].reset_index(drop=True)
 
     # append as future rows; NaN targets keep them out of every causal window
     cext = cand.reindex(columns=own.columns)
-    cext["player"] = player
+    cext["player"] = label
     cext["time"] = top_log
     for c in ("acc", "lamp", "ex", "bp", "bp_ratio", "log1p_bp"):
         cext[c] = np.nan
     ext = pd.concat([own, cext], ignore_index=True)
 
-    Z_own = Z[(fp_sorted["player"] == player).values]
+    Z_own = np.nan_to_num(scaler.transform(own[stat_cols].values)).astype(np.float64)
     Z_cand = np.nan_to_num(scaler.transform(cand[stat_cols].values)).astype(np.float64)
-    log_counts = load_log_counts()
     H = build_history_features(ext, log_counts, np.vstack([Z_own, Z_cand]))
     hist = H.iloc[len(own):].reset_index(drop=True)
 
@@ -177,354 +322,193 @@ def build_candidates(player: str, fp_sorted: pd.DataFrame, man: pd.DataFrame,
     hist["h_knn_acc"] = knn
 
     blocks = [
-        build_table(ext, sd, min_n=MIN_HISTORY, target="acc", prefix="h_",
+        build_table(ext, ctx["sd_struct"], min_n=MIN_HISTORY, target="acc", prefix="h_",
                     clip=(0.0, 100.0), half_life=HALF_LIFE),
-        build_table(ext, sd, min_n=MIN_HISTORY, target="lamp", prefix="l_",
+        build_table(ext, ctx["sd_struct"], min_n=MIN_HISTORY, target="lamp", prefix="l_",
                     clip=(1.0, 9.0), half_life=HALF_LIFE),
-        build_table(ext, sd, min_n=MIN_HISTORY, target="log1p_bp", prefix="b_",
-                    clip=(0.0, 12.0), half_life=HALF_LIFE),
+        build_table(ext, ctx["sd_struct"], min_n=MIN_HISTORY, target="log1p_bp",
+                    prefix="b_", clip=(0.0, 12.0), half_life=HALF_LIFE),
         # the MinaCalc axis family (same axes/clips as history_response.py)
-        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="acc", prefix="m_",
+        build_table(ext, ctx["sd_msd"], min_n=MIN_HISTORY, target="acc", prefix="m_",
                     clip=(0.0, 100.0), half_life=HALF_LIFE, axes=MSD_AXES),
-        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="lamp", prefix="ml_",
+        build_table(ext, ctx["sd_msd"], min_n=MIN_HISTORY, target="lamp", prefix="ml_",
                     clip=(1.0, 9.0), half_life=HALF_LIFE, axes=MSD_AXES),
-        build_table(ext, sd_msd, min_n=MIN_HISTORY, target="log1p_bp", prefix="mb_",
+        build_table(ext, ctx["sd_msd"], min_n=MIN_HISTORY, target="log1p_bp", prefix="mb_",
                     clip=(0.0, 12.0), half_life=HALF_LIFE, axes=MSD_AXES),
     ]
     feats = pd.concat([hist] + [b.iloc[len(own):].reset_index(drop=True) for b in blocks],
                       axis=1)
     out = pd.concat([cand, feats], axis=1)
     out["has_msd"] = out["msd_overall"].notna()
+
+    # ---- predictions (point + uncertainty + group) --------------------------------
+    out["pred_acc"] = mdl["models"]["acc"].predict(out)
+    out["pred_lamp_raw"] = mdl["models"]["lamp"].predict(out)
+    out["pred_lamp"] = np.clip(np.round(out["pred_lamp_raw"]), 1, 9).astype(int)
+    out["pred_lamp_name"] = out["pred_lamp"].map(LAMP_NAME)
+    out["pred_bp"] = np.expm1(np.clip(mdl["models"]["bp"].predict(out), 0, mdl["bp_cap"]))
+    out["pred_acc_lo"] = mdl["acc_q"][0.1].predict(out) - mdl["qa"]
+    out["pred_acc_hi"] = mdl["acc_q"][0.9].predict(out) + mdl["qa"]
+    blo = mdl["bp_q"][0.1].predict(out) - mdl["qb"]
+    out["pred_bp_lo"] = np.expm1(np.clip(blo, 0, 12))
+    out["p_pass"] = mdl["clf"].predict_proba(
+        mdl["sc"].transform(mdl["imp"].transform(out[FEATS])))[:, 1]
+    out["group"] = np.where(out["pred_lamp_raw"] >= 6.0, "冲刺区",
+                            np.where(out["pred_lamp_raw"] >= 3.5, "挑战区", "暂缓区"))
+
+    rows = [{"t": r.table, "l": int(r.level), "ti": str(r.title), "ar": str(r.artist),
+             "g": r.group, "pl": int(r.pred_lamp), "pn": str(r.pred_lamp_name),
+             "pp": round(float(r.p_pass), 4), "pa": round(float(r.pred_acc), 1),
+             "lo": int(round(float(r.pred_acc_lo))), "hi": int(round(float(r.pred_acc_hi))),
+             "pb": int(round(float(r.pred_bp))), "m": bool(r.has_msd)}
+            for r in out.itertuples(index=False)]
     meta = {"n_archive": int(len(own)), "n_candidates": int(len(out)),
-            "n_no_msd": int((~out["has_msd"]).sum()),
-            "as_of": str(top_log)[:19],
+            "n_no_msd": int((~out["has_msd"]).sum()), "as_of": str(top_log)[:19],
             "acc_mean": float(np.nanmean(own["acc"].values)),
             "acc_last20": float(np.nanmean(own["acc"].values[-20:]))}
-    return out[["sha256", "title", "artist", "table", "level", "has_msd"] + FEATS], meta
+    return rows, meta, expected_mae(mdl, label)
 
 
-def build_uncertainty(tr: pd.DataFrame, df: pd.DataFrame, cand: pd.DataFrame
-                      ) -> dict[str, np.ndarray]:
-    """Feature-conditioned bands and pass probability for the candidates.
-
-    Quantile-HGB heads at q10/q50/q90 per target, conformalised (CQR): the correction Q
-    is the 80th percentile of the calibration nonconformity, fitted on a per-player time
-    split of the train band, never on the test band or the candidates. The variance
-    diagnostic showed per-player error is mostly that player's own behavioural variance
-    (corr +0.882), and the measured band widths track it (+0.846: reiaki ~10pp wide,
-    yangtao ~50pp) - the point prediction alone hides exactly that.
-    """
-    fit_idx, cal_idx = [], []
-    for _p, g in tr.groupby("player"):
-        g = g.sort_values("time")
-        k = max(1, int(len(g) * 0.8))
-        fit_idx.extend(g.index[:k])
-        cal_idx.extend(g.index[k:])
-    fit, cal = tr.loc[fit_idx], tr.loc[cal_idx]
-
-    def conformal(heads: dict, y_cal: np.ndarray, frame: pd.DataFrame) -> float:
-        s = np.maximum(heads[0.1].predict(frame) - y_cal,
-                       y_cal - heads[0.9].predict(frame))
-        qq = min(1.0, np.ceil((len(s) + 1) * 0.8) / len(s))
-        return float(np.quantile(s, qq))
-
-    acc_q = {q: QHead(fit, BEST_FEATURES, fit["acc"].values, q)
-             for q in (0.1, 0.5, 0.9)}
-    qa = conformal(acc_q, cal["acc"].values, cal)
-    out = {
-        "pred_acc_lo": acc_q[0.1].predict(cand) - qa,
-        "pred_acc_hi": acc_q[0.9].predict(cand) + qa,
-    }
-    bp_q = {q: QHead(fit, BEST_FEATURES, np.log1p(fit["bp"].values), q)
-            for q in (0.1, 0.9)}
-    qb = conformal(bp_q, np.log1p(cal["bp"].values), cal)
-    blo = bp_q[0.1].predict(cand) - qb
-    bhi = bp_q[0.9].predict(cand) + qb
-    out["pred_bp_lo"] = np.expm1(np.clip(blo, 0, 12))
-    out["pred_bp_hi"] = np.expm1(np.clip(bhi, 0, 12))
-
-    from sklearn.ensemble import HistGradientBoostingClassifier
-    from sklearn.impute import SimpleImputer
-    from sklearn.preprocessing import StandardScaler
-    imp = SimpleImputer(strategy="median").fit(fit[BEST_FEATURES])
-    sc = StandardScaler().fit(imp.transform(fit[BEST_FEATURES]))
-    clf = HistGradientBoostingClassifier(random_state=0, **HGB_KW)
-    clf.fit(sc.transform(imp.transform(fit[BEST_FEATURES])),
-            (fit["lamp"].values >= 4).astype(int))
-    out["p_pass"] = clf.predict_proba(sc.transform(imp.transform(cand[BEST_FEATURES])))[:, 1]
-    return out
+# ------------------------------------------------------------------- player lookup
+_ROSTER_MD5: dict[str, str] | None = None
 
 
-def expected_mae(df: pd.DataFrame, models: dict, player: str) -> float | None:
-    """Out-of-sample accuracy for THIS player: their test rows were never trained on."""
-    te = df[(df["player"] == player) & (df["phase"] == "test")]
-    return float(mae(te["acc"], models["acc"].predict(te))) if len(te) else None
+def roster_md5() -> dict[str, str]:
+    """md5 -> player for every roster scorelog.db, computed once (drag-in identification)."""
+    global _ROSTER_MD5
+    if _ROSTER_MD5 is None:
+        out = {}
+        for player, rel in PLAYERS.items():
+            p = ROOT / rel / "scorelog.db"
+            if p.exists():
+                h = hashlib.md5()
+                with open(p, "rb") as f:
+                    for chunk in iter(lambda: f.read(1 << 20), b""):
+                        h.update(chunk)
+                out[h.hexdigest()] = player
+        _ROSTER_MD5 = out
+    return _ROSTER_MD5
 
 
-def render_html(player: str, cand: pd.DataFrame, meta: dict, pmae: float | None,
-                top: int) -> str:
-    e = html.escape
-
-    # ---- embed ALL candidates; filtering/sorting happens client-side -------------
-    recs = []
-    for r in cand.itertuples(index=False):
-        recs.append({"t": r.table, "l": int(r.level), "ti": str(r.title),
-                     "ar": str(r.artist), "g": r.group, "pl": int(r.pred_lamp),
-                     "pn": str(r.pred_lamp_name), "pp": round(float(r.p_pass), 4),
-                     "pa": round(float(r.pred_acc), 1),
-                     "lo": round(float(r.pred_acc_lo)), "hi": round(float(r.pred_acc_hi)),
-                     "pb": round(float(r.pred_bp)), "m": bool(r.has_msd)})
-    payload = json.dumps(recs, ensure_ascii=False).replace("</", "<\\/")   # </script> guard
-    counts = cand["group"].value_counts().to_dict()
-
-    mae_txt = f"{pmae:.2f} 分" if pmae is not None else "该玩家没有测试段样本"
-    css = (":root{--bg:#0f1115;--card:#171a21;--line:#262b36;--fg:#e6e9ef;"
-           "--dim:#8b93a5;--acc:#5eead4;--warn:#fbbf24;--bad:#f87171}"
-           "*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);"
-           "font:14px/1.6 'Segoe UI','Microsoft YaHei',sans-serif;padding:32px}"
-           ".wrap{max-width:1080px;margin:0 auto}h1{font-size:22px;margin:0 0 4px}"
-           ".sub{color:var(--dim);margin:0 0 24px}"
-           ".stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}"
-           ".stat{background:var(--card);border:1px solid var(--line);border-radius:10px;"
-           "padding:12px 18px;min-width:150px}.stat b{display:block;font-size:20px;"
-           "color:var(--acc)}.stat span{color:var(--dim);font-size:12px}"
-           ".bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;"
-           "background:var(--card);border:1px solid var(--line);border-radius:10px;"
-           "padding:10px 14px;margin-bottom:14px}"
-           ".bar .lb{color:var(--dim);font-size:12px}"
-           "label.chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;"
-           "border:1px solid var(--line);border-radius:999px;padding:3px 11px;"
-           "font-size:12.5px;user-select:none}label.chip input{accent-color:#5eead4;"
-           "margin:0}label.chip.on{border-color:var(--acc);color:var(--acc)}"
-           ".bar input[type=number],.bar select,.bar input[type=search]{"
-           "background:#10131a;border:1px solid var(--line);border-radius:8px;"
-           "color:var(--fg);padding:5px 9px;font:inherit;font-size:13px}"
-           ".bar input[type=number]{width:74px}"
-           ".bar input[type=search]{width:200px}"
-           ".cnt{color:var(--dim);font-size:13px;margin:6px 2px 10px}"
-           ".cnt b{color:var(--fg)}"
-           "table{width:100%;border-collapse:collapse;background:var(--card);"
-           "border:1px solid var(--line);border-radius:10px;overflow:hidden}"
-           "th,td{padding:7px 12px;text-align:left;border-top:1px solid var(--line)}"
-           "th{color:var(--dim);font-weight:600;font-size:12px;background:#1b1f29;"
-           "position:sticky;top:0}"
-           "td.pp{font-weight:600;color:#a78bfa}"
-           ".band{color:var(--dim);font-size:11px}"
-           "td.lv{color:var(--acc);font-weight:600;white-space:nowrap}"
-           "td.ti{max-width:420px;overflow:hidden;text-overflow:ellipsis;"
-           "white-space:nowrap}td.ar{color:var(--dim);max-width:180px;overflow:hidden;"
-           "text-overflow:ellipsis;white-space:nowrap}td.ac{font-weight:600}"
-           "td.bp{color:var(--dim)}.lp{font-weight:600}"
-           ".nom{color:var(--dim);font-size:11px}"
-           ".g{font-size:11px;border-radius:999px;padding:1px 9px;white-space:nowrap}"
-           ".g.挑战区{color:var(--acc);border:1px solid var(--acc)}"
-           ".g.冲刺区{color:#a78bfa;border:1px solid #a78bfa}"
-           ".g.暂缓区{color:var(--dim);border:1px solid var(--line)}"
-           ".n1,.n2,.n3{color:var(--bad)}.n4,.n5{color:var(--warn)}"
-           ".n6,.n7{color:var(--acc)}.n8,.n9{color:#a78bfa}"
-           "#more{display:block;margin:16px auto;background:#1b1f29;color:var(--fg);"
-           "border:1px solid var(--line);border-radius:8px;padding:8px 26px;"
-           "font:inherit;cursor:pointer}#more:hover{border-color:var(--acc)}"
-           ".foot{color:var(--dim);font-size:12px;margin-top:28px;line-height:1.8}")
-    # plain template (not an f-string): the JS is full of braces
-    js = """
-const ORD=__ORD__;const SYM=__SYM__;
-const DATA=__DATA__;
-const state={tb:new Set(__TABLES__),gp:new Set(['挑战区','冲刺区','暂缓区']),
-             lo:0,hi:25,sort:'pp',q:'',shown:__SHOWN__};
-const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-                      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const CMP={
-  pp:(a,b)=>b.pp-a.pp,
-  acc:(a,b)=>b.pa-a.pa,
-  bp:(a,b)=>a.pb-b.pb,
-  lamp:(a,b)=>b.pl-a.pl||b.pa-a.pa,
-  lvl:(a,b)=>(ORD[a.t]-ORD[b.t])||(a.l-b.l)||b.pp-a.pp,
-  lvld:(a,b)=>(ORD[b.t]-ORD[a.t])||(b.l-a.l)||b.pp-a.pp};
-function apply(){
-  const q=state.q.toLowerCase();
-  let arr=DATA.filter(r=>state.tb.has(r.t)&&state.gp.has(r.g)
-      &&r.l>=state.lo&&r.l<=state.hi
-      &&(!q||(r.ti+' '+r.ar).toLowerCase().includes(q)));
-  arr.sort(CMP[state.sort]);
-  return arr;
-}
-function row(r){
-  return '<tr><td class="lv">'+SYM[r.t]+r.l+'</td>'
-    +'<td class="ti">'+esc(r.ti)+(r.m?'':' <span class="nom" title="无 MinaCalc 数据">◇</span>')+'</td>'
-    +'<td class="ar">'+esc(r.ar)+'</td>'
-    +'<td class="lp n'+r.pl+'">'+r.pl+' '+esc(r.pn)+'</td>'
-    +'<td class="pp">'+Math.round(r.pp*100)+'%</td>'
-    +'<td class="ac">'+r.pa.toFixed(1)
-    +' <span class="band">['+r.lo+'-'+r.hi+']</span></td>'
-    +'<td class="bp">'+r.pb+'</td>'
-    +'<td><span class="g '+r.g+'">'+r.g+'</span></td></tr>';
-}
-let VIEW=[];
-function render(){
-  const tb=document.querySelector('#v tbody');
-  tb.innerHTML=VIEW.slice(0,state.shown).map(row).join('');
-  document.getElementById('cnt').innerHTML=
-    '显示 <b>'+Math.min(state.shown,VIEW.length)+'</b> / 筛选后 <b>'+VIEW.length
-    +'</b> / 全部 '+DATA.length+' 张';
-  document.getElementById('more').style.display=
-    state.shown<VIEW.length?'block':'none';
-}
-function bindChips(id,attr){
-  document.querySelectorAll('#'+id+' input').forEach(el=>{
-    el.addEventListener('change',()=>{
-      el.checked?state[attr].add(el.value):state[attr].delete(el.value);
-      el.closest('label').classList.toggle('on',el.checked);
-      state.shown=__SHOWN__;VIEW=apply();render();});});
-}
-document.addEventListener('DOMContentLoaded',()=>{
-  bindChips('tables','tb');bindChips('groups','gp');
-  const lo=document.getElementById('lo'),hi=document.getElementById('hi');
-  const lv=()=>{state.lo=+lo.value;state.hi=+hi.value;state.shown=__SHOWN__;
-                VIEW=apply();render();};
-  lo.addEventListener('change',lv);hi.addEventListener('change',lv);
-  document.getElementById('sort').addEventListener('change',ev=>{
-    state.sort=ev.target.value;VIEW=apply();render();});
-  document.getElementById('q').addEventListener('input',ev=>{
-    state.q=ev.target.value.trim();state.shown=__SHOWN__;VIEW=apply();render();});
-  document.getElementById('more').addEventListener('click',()=>{
-    state.shown+=__SHOWN__;render();});
-  VIEW=apply();render();});
-"""
-    js = (js.replace("__ORD__", json.dumps(TABLE_ORDER))
-            .replace("__SYM__", json.dumps(TABLE_SYM, ensure_ascii=False))
-            .replace("__DATA__", payload)
-            .replace("__TABLES__", json.dumps(list(TABLE_ORDER)))
-            .replace("__SHOWN__", str(top)))
-    chips = "".join(
-        f"<label class='chip on'><input type='checkbox' checked value='{t}'>"
-        f"{TABLE_SYM[t]} {t}</label>" for t in TABLE_ORDER)
-    gchips = "".join(
-        f"<label class='chip on'><input type='checkbox' checked value='{g}'>"
-        f"{g} <span class='nom'>{counts.get(g, 0)}</span></label>"
-        for g in ("挑战区", "冲刺区", "暂缓区"))
-    return (f"<!doctype html><html lang='zh'><head><meta charset='utf-8'>"
-            f"<title>BMS 推荐 · {e(player)}</title><style>{css}</style></head>"
-            f"<body><div class='wrap'><h1>BMS 谱面推荐 · {e(player)}</h1>"
-            f"<p class='sub'>生成于 {datetime.now():%Y-%m-%d %H:%M} · "
-            f"打分时点 = 最近一次记录的游玩（{e(meta['as_of'])}）</p>"
-            f"<div class='stats'>"
-            f"<div class='stat'><b>{meta['n_archive']}</b><span>已打过的谱面</span></div>"
-            f"<div class='stat'><b>{meta['n_candidates']}</b><span>表内未打谱面</span></div>"
-            f"<div class='stat'><b>{meta['acc_mean']:.1f} / {meta['acc_last20']:.1f}</b>"
-            f"<span>历史 acc 均值 / 最近 20 次</span></div>"
-            f"<div class='stat'><b>{mae_txt}</b>"
-            f"<span>模型对你的预测误差（测试段）</span></div>"
-            f"<div class='stat'><b>{meta['n_no_msd']}</b>"
-            f"<span>候选缺 MSD（◇ 标记）</span></div></div>"
-            f"<div class='bar'><span class='lb'>表</span><span id='tables'>{chips}</span>"
-            f"<span class='lb'>分组</span><span id='groups'>{gchips}</span></div>"
-            f"<div class='bar'><span class='lb'>等级</span>"
-            f"<input type='number' id='lo' value='0' min='0' max='25'>–"
-            f"<input type='number' id='hi' value='25' min='0' max='25'>"
-            f"<span class='lb'>排序</span>"
-            f"<select id='sort'>"
-            f"<option value='pp'>通过概率 高→低</option>"
-            f"<option value='lvl'>表等级 低→高（先按表序）</option>"
-            f"<option value='lvld'>表等级 高→低（先按表序）</option>"
-            f"<option value='acc'>预测 acc 高→低</option>"
-            f"<option value='bp'>预测 BP 低→高</option>"
-            f"<option value='lamp'>预测灯 高→低</option>"
-            f"</select>"
-            f"<input type='search' id='q' placeholder='搜索标题 / 作者…'></div>"
-            f"<p class='cnt' id='cnt'></p>"
-            f"<table><thead><tr><th>表/等级</th><th>标题</th><th>作者</th>"
-            f"<th>预测灯</th><th>通过概率</th><th>预测acc (80%区间)</th>"
-            f"<th>预测BP</th><th>分组</th></tr></thead><tbody></tbody></table>"
-            f"<button id='more'>显示更多</button>"
-            f"<div class='foot'>预测含义：若现在第一次打这张谱的期望表现"
-            f"（acc 0-100 / lamp 1-9 / BP 残数）。<br>"
-            f"这<b>不是</b>\"练了会变强\"的模型 —— 项目没有纵向干预数据，"
-            f"训练价值无法度量；分组只是把\"期望首打表现\"翻译成可读的选择。"
-            f"筛选与排序在浏览器本地完成（全量候选已内嵌本页），"
-            f"完整候选清单（含全部预测值）见同目录 CSV。"
-            f"特征与训练完全同源（响应块 180d 半衰期 + 玩家相对偏差），"
-            f"协议口径 acc MAE 6.117。</div></div>"
-            f"<script>{js}</script></body></html>")
+# -------------------------------------------------------------------------- server
+def handle_upload(body: bytes) -> dict:
+    if len(body) > UPLOAD_MAX:
+        return {"ok": False, "error": f"file too large ({len(body)} bytes)"}
+    UP = OUT / "_upload.db"
+    OUT.mkdir(parents=True, exist_ok=True)
+    UP.write_bytes(body)
+    digest = hashlib.md5(body).hexdigest()
+    matched = roster_md5().get(digest)
+    label = matched or "new_player"
+    try:
+        mdl, ctx = train_models(), protocol_context()
+        rows, meta, pmae = score_archive(UP, label, mdl, ctx)
+    except Exception as exc:                      # surface as a 400, not a stack trace
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    return {"ok": True, "label": label, "matched": matched is not None,
+            "pmae": pmae, "meta": meta, "rows": rows}
 
 
-def main() -> None:
-    try:      # the Windows console is often cp936 and mangles the Chinese group names
-        import sys
+class Handler(BaseHTTPRequestHandler):
+    def _send(self, code: int, ctype: str, body: bytes) -> None:
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:
+        if self.path in ("/", "/index.html"):
+            self._send(200, "text/html; charset=utf-8",
+                       UI_PATH.read_bytes())
+        else:
+            self._send(404, "text/plain; charset=utf-8", b"not found")
+
+    def do_POST(self) -> None:
+        if self.path != "/score":
+            self._send(404, "text/plain; charset=utf-8", b"not found")
+            return
+        n = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(n)
+        result = handle_upload(body)
+        resp = json.dumps(result, ensure_ascii=False).encode("utf-8")
+        self._send(200, "application/json; charset=utf-8", resp)
+
+    def log_message(self, fmt: str, *args) -> None:
+        pass                    # quiet: the handler prints its own one-line notes
+
+
+def serve(port: int, open_browser: bool = True) -> None:
+    try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
-    ap = argparse.ArgumentParser(description="score unplayed fence charts for one player")
-    ap.add_argument("--player", required=True, choices=sorted(PLAYERS))
-    ap.add_argument("--top", type=int, default=25, help="rows shown per group in the HTML")
-    args = ap.parse_args()
-    player = args.player
+    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    url = f"http://127.0.0.1:{port}"
+    print(f"serving on {url}  (Ctrl+C to stop)\n"
+          f"  drag a beatoraja scorelog.db onto the page that just opened", flush=True)
+    if open_browser:
+        webbrowser.open(url)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
 
-    print("training the protocol model on the train band ...")
-    # the fused features come from the dataset artifact: samples.parquet carries the
-    # chart stats and the hand-crafted history, history_response.parquet (built at the
-    # same 180d half-life) carries every response/dev block, MSD family included
-    hr = pd.read_parquet(DS / "history_response.parquet")
-    static = OBJECTIVE_STAT_COLS + HISTORY_FEATURES
-    need = [c for c in FEATS if c not in static]
-    df = load_samples().merge(hr[["player", "sha256"] + [c for c in need
-                                         if c in hr.columns]],
-                              on=["player", "sha256"], how="left")
-    missing = [c for c in FEATS if c not in df.columns]
-    if missing:
-        raise SystemExit(f"history_response.parquet lacks {len(missing)} columns "
-                         f"(e.g. {missing[:3]}); run history_response.py")
-    tr = df[df["phase"] == "train"]
-    models = {"acc": HGBModel(tr, FEATS, tr["acc"].values),
-              "lamp": HGBModel(tr, FEATS, tr["lamp"].values.astype(float)),
-              "bp": HGBModel(tr, FEATS, np.log1p(tr["bp"].values))}
-    pmae = expected_mae(df, models, player)
 
-    print(f"building candidates for {player} ...")
-    (fp_sorted, man, tab, stat_cols, scaler, Z, sd_struct,
-     sd_msd) = build_player_frame()
-    log_counts = load_log_counts()
-    top_log = log_counts.loc[log_counts["player"] == player, "time"].max()
-    cand, meta = build_candidates(player, fp_sorted, man, tab, stat_cols, scaler, Z,
-                                  sd_struct, sd_msd, top_log)
-
-    cand["pred_acc"] = models["acc"].predict(cand)
-    cand["pred_lamp_raw"] = models["lamp"].predict(cand)
-    cand["pred_lamp"] = np.clip(np.round(cand["pred_lamp_raw"]), 1, 9).astype(int)
-    cand["pred_lamp_name"] = cand["pred_lamp"].map(LAMP_NAME)
-    bp_cap = float(np.log1p(df["bp"].max()))
-    cand["pred_bp"] = np.expm1(np.clip(models["bp"].predict(cand), 0, bp_cap))
-    print("building uncertainty bands ...")
-    for k, v in build_uncertainty(tr, df, cand).items():
-        cand[k] = v
-    cand["group"] = np.where(cand["pred_lamp_raw"] >= 6.0, "冲刺区",
-                             np.where(cand["pred_lamp_raw"] >= 3.5, "挑战区", "暂缓区"))
-    order = {"挑战区": 0, "冲刺区": 1, "暂缓区": 2}
-    cand["_o"] = cand["group"].map(order)
-    cand = cand.sort_values(["_o", "pred_lamp_raw", "pred_acc"],
-                            ascending=[True, False, False]).reset_index(drop=True)
-
+# ----------------------------------------------------------------------- headless
+def run_cli(player: str, top: int) -> None:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+    mdl, ctx = train_models(), protocol_context()
+    db_path = ROOT / PLAYERS[player] / "scorelog.db"
+    print(f"scoring for {player} ({db_path}) ...")
+    rows, meta, pmae = score_archive(db_path, player, mdl, ctx)
+    rows.sort(key=lambda r: ({"挑战区": 0, "冲刺区": 1, "暂缓区": 2}[r["g"]],
+                             -r["pp"]))
     OUT.mkdir(parents=True, exist_ok=True)
-    keep = ["group", "table", "level", "title", "artist", "pred_lamp",
-            "pred_lamp_name", "p_pass", "pred_acc", "pred_acc_lo", "pred_acc_hi",
-            "pred_bp", "pred_bp_lo", "pred_bp_hi", "pred_lamp_raw", "has_msd",
-            "sha256"]
     csv_path = OUT / f"{player}.csv"
-    cand[keep].to_csv(csv_path, index=False, encoding="utf-8-sig")
-    html_path = OUT / f"{player}.html"
-    html_path.write_text(render_html(player, cand, meta, pmae, args.top), encoding="utf-8")
-
+    head = ["group", "table", "level", "title", "artist", "pred_lamp", "p_pass",
+            "pred_acc", "acc_lo", "acc_hi", "pred_bp", "has_msd"]
+    lines = [",".join(head)]
+    for r in rows:
+        lines.append(",".join([r["g"], r["t"], str(r["l"]),
+                               '"' + str(r["ti"]).replace('"', '""') + '"',
+                               '"' + str(r["ar"]).replace('"', '""') + '"',
+                               str(r["pl"]), str(r["pp"]), str(r["pa"]),
+                               str(r["lo"]), str(r["hi"]), str(r["pb"]), str(r["m"])]))
+    csv_path.write_text("\ufeff" + "\n".join(lines), encoding="utf-8")
     print(f"archive {meta['n_archive']} | candidates {meta['n_candidates']} "
           f"| as of {meta['as_of']} | your out-of-sample acc MAE "
           f"{pmae if pmae is not None else float('nan'):.2f}")
     for g in ("挑战区", "冲刺区", "暂缓区"):
-        sub = cand[cand["group"] == g]
+        sub = [r for r in rows if r["g"] == g]
         print(f"\n== {g}  ({len(sub)} charts) ==")
-        for _, r in sub.head(8).iterrows():
-            print(f"  {TABLE_SYM.get(r['table'], r['table']):>3}{r['level']:<4.0f}"
-                  f" lamp~{r['pred_lamp']}({r['pred_lamp_name']:<10})"
-                  f" acc~{r['pred_acc']:5.1f} bp~{r['pred_bp']:6.1f}  {str(r['title'])[:44]}")
-    print(f"\nsaved -> {csv_path}\nsaved -> {html_path}")
+        for r in sub[:top]:
+            print(f"  {TABLE_SYM.get(r['t'], r['t']):>3}{r['l']:<4}"
+                  f" lamp~{r['pl']}({r['pn']:<10}) pass~{r['pp']:5.0%}"
+                  f" acc~{r['pa']:5.1f} bp~{r['pb']:5}  {r['ti'][:44]}")
+    print(f"\nsaved -> {csv_path}")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description="BMS first-play recommender")
+    ap.add_argument("--serve", action="store_true",
+                    help="start the local server (drag scorelog.db onto the page)")
+    ap.add_argument("--port", type=int, default=8932)
+    ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--player", choices=sorted(PLAYERS),
+                    help="headless mode: score this roster player, write CSV")
+    ap.add_argument("--top", type=int, default=25,
+                    help="rows printed per group in headless mode")
+    args = ap.parse_args()
+    if args.serve:
+        serve(args.port, open_browser=not args.no_browser)
+    elif args.player:
+        run_cli(args.player, args.top)
+    else:
+        ap.error("choose --serve or --player")
 
 
 if __name__ == "__main__":
