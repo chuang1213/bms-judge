@@ -69,7 +69,7 @@ OUT = ROOT / "bms_ml" / "output" / "phase3" / "recommend"
 DS = ROOT / "bms_ml" / "output" / "phase3" / "dataset"
 FEATS = BEST_FEATURES                     # the fused best configuration (5.887)
 HALF_LIFE = 180.0                         # must match history_response.py's default
-TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂"}
+TABLE_SYM = {"satellite": "sl", "stella": "st", "insane": "発狂", "normal": "☆"}
 KNN_K = 20                                # data.build_history_features default
 LAMP_NAME = {1: "FAILED", 2: "ASSIST EZ", 3: "LIGHT ASSIST EZ", 4: "EASY", 5: "CLEAR",
              6: "HARD", 7: "EX HARD", 8: "FULL COMBO", 9: "PERFECT"}

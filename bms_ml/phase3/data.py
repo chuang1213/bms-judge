@@ -117,7 +117,13 @@ def load_manifest() -> pd.DataFrame:
 
 
 def load_tables() -> pd.DataFrame:
-    """sha256 -> (table_name, level). Priority satellite > stella > insane."""
+    """sha256 -> (table_name, level).
+
+    Priority satellite > stella > insane > normal (2026-09-11, user decision to admit
+    the 通常難易度表): the FIRST table a chart appears in wins, and normal is last so
+    every existing sl/st/insane assignment is untouched - the admission only ADDS charts
+    that were previously outside the fence, it never relabels one. Normal (☆) is the
+    entry-level table, so its charts sit below the previous difficulty range."""
     md5_to_sha: dict[str, str] = {}
     with open(CORPUS / "manifest.jsonl", encoding="utf-8") as f:
         for line in f:
@@ -125,7 +131,7 @@ def load_tables() -> pd.DataFrame:
             md5_to_sha[r["md5"]] = r["sha256"]
     out = {}
     for name, fname in [("satellite", "satellite_data.json"), ("stella", "stella_data.json"),
-                        ("insane", "insane_data.json")]:
+                        ("insane", "insane_data.json"), ("normal", "normal_data.json")]:
         # encoding is explicit: the table JSONs are UTF-8 and a non-UTF-8 locale
         # (cp936/gbk on zh-CN Windows) otherwise raises UnicodeDecodeError here,
         # which breaks `python data.py` — step 4 of the new-player SOP.
