@@ -58,7 +58,18 @@ dev 配对 +0.243（CI 0.192..0.295，p=3e-19），**打乱对照 6.40-6.46 反�
 - `PlayerData/beatoraja/<name>/player1/` — beatoraja 原始存档（gitignore，**唯一副本，改动前提醒用户备份**）；
   `PlayerData/LunaticRave2/<id>.db` — LR2 存档（**只有最佳成绩，无时间戳、无逐局**，见下）
 - `ref_repo/` — **只读参考项目**（gitignore）：`beatoraja-master`/`lampghost`（schema 语义权威）、
-  `Permikon-main`（排列分析）、`BmsReplayViewer`、`AlphaOSU-main`（osu! 推荐器：ALS 矩阵分解 + pass 模型）
+  `Permikon-main`（排列分析）、`BmsReplayViewer`、`AlphaOSU-main`（osu! 推荐器：ALS 矩阵分解 + pass 模型）、
+  `osumania_map_analyser-main`（osu!mania 分析器，2026-09-11 加入）。**后者三个可搬的点**：
+  ① `js/ett/versions/minaclac-*.wasm` = **MinaCalc 移植**（6 个版本），FFI 只需
+  `(keycount, musicRate, scoreGoal, 行掩码 u32[], 行秒 f32[], 行数) → 8 个 MSD 技巧项`，
+  键数支持 4–18（4/6/7 官方、其余通用 n-key），`js/ett/calc.js` 有现成 Node 调用路径（本机 node v22）；
+  我们的 `corpus/sequences/<sha>.npy` = `(time_sec, lane, type0=普通/1=LN, dur)`，转换约 30 行。
+  抽样 3000 谱：99.9% 为 8 列（7K+scratch→通用 n-key 路径）、95.6% 在 Roxy 适用域（LN≤0.18）、
+  99.7% 音符数 ≥80 → **全语料可算 MSD**。用途：把 8 个 MSD 当**响应/偏差轴**（人群校准的难度语义，
+  比裸结构统计更有意义——是对"更好的轴"而非"更多的轴"的假设检验）；
+  ② `docs/roxy_algorithm.md`：7 条 burst/sustain 应变流 + 分位数/幂均值聚合 + **Ridge 元模型而非树**
+  （树对时间戳噪声过敏感——与我们的教训同源）+ 0.5 序数网格校准（**直接适用于我们的 lamp 头**）
+  + 估计器 0.4/0.6 融合降方差；③ `js/interlude/`、`js/patterns/` = Interlude RC/LN 键型检测。
 - `docs/` — Phase 1/2A 归档文档；`docs/reference/` — framework paper、hastie15a（fast ALS）、recommend
 
 ## 环境与命令
