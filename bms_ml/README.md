@@ -3,6 +3,16 @@
 目标：从 BMS 谱面预测难度，第一阶段先建立
 「解析 → 中间表示 → 特征 → Dataset → baseline → 训练/验证」的可验证闭环。
 
+## Phase 2A（进行中）
+
+目标与设计：`docs/phase2a/PHASE2A.md`；四轮实验报告见 `docs/phase2a/PHASE2A_REPORT.md` /
+`docs/phase2a/PHASE2A_INTERVENTION_REPORT.md` / `docs/phase2a/PHASE2A_TASK_COMPARISON_REPORT.md` /
+`docs/phase2a/PHASE2A_POOLED_ONLY_REPORT.md`；进度归档见 `docs/reports/PROJECT_ARCHIVE.md` §11。
+Phase 1 封存记录：`docs/phase1/PHASE1.md`。Phase 3（player–chart performance prediction）
+审计见 `docs/reports/PHASE3_AUDIT.md`，代码见 `bms_ml/phase3/`。
+
+代码：`bms_ml/phase2a/`（网格表示、T1/T2、统计受控干预、Task A、pooled-only 实验）。
+
 ## 项目结构
 
 ```

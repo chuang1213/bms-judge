@@ -1,8 +1,23 @@
-# BMS 难度研究项目 - Python 环境依赖
-# 安装方式（CUDA 版，RTX 4060 已验证）:
-#   .venv\Scripts\python.exe -m pip install -r requirements.txt
-#   若官方源慢，可加: --index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu128
+# BMS player–chart performance prediction —— 依赖
+#
+# 安装（纯 CPU 即可跑 Phase 3/4 的全部基线与实验）：
+#   python -m venv .venv
+#   .venv/Scripts/python.exe -m pip install -r requirements.txt
+#
+# 只有 Phase 2A 的序列编码器实验与 Phase 3 的 C 阶梯需要 PyTorch/GPU。
 
-torch==2.11.0+cu128
-torchvision==0.26.0+cu128
-numpy==2.4.6
+# ---- 核心（必需）----
+numpy>=2.0
+pandas>=2.2
+scikit-learn>=1.5
+scipy>=1.13            # time_ablation: spearmanr
+pyarrow>=16            # parquet 读写（samples / firstplays / cross_section / msd）
+matplotlib>=3.9        # 各实验 PNG（Agg 后端，无需 GUI）
+
+# ---- 可选：深度学习 / GPU（CUDA 12.8 轮子，RTX 4060 已验证）----
+# 装法：.venv\Scripts\python.exe -m pip install torch==2.11.0+cu128 torchvision==0.26.0+cu128
+# 国内镜像慢时可加：--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu128
+# torch==2.11.0+cu128
+# torchvision==0.26.0+cu128
+
+# ---- 可选：Node.js >= 18（仅用于 MinaCalc MSD 轴，见 bms_ml/phase3/msd_compute.mjs）----
