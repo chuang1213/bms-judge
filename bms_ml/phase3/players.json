@@ -587,6 +587,7 @@
     },
     "vsoflan_lr2": {
       "dir": "PlayerData/LunaticRave2",
+      "db": "V_soflan.db",
       "client": "lr2",
       "time": "synthetic",
       "include": false,
@@ -619,6 +620,36 @@
         "acc_median": 79.28,
         "playcount_median": 2.0,
         "playcount_max": 155
+      }
+    },
+    "mengye_lr2": {
+      "dir": "PlayerData/LunaticRave2",
+      "db": "mengye.db",
+      "client": "lr2",
+      "time": "synthetic",
+      "include": false,
+      "note": "Second LR2 archive. CORRECTION 2026-09-12: the first Phase 4 session treated this file as 'somebody else's archive' and excluded it; the user confirmed LR2 archives are named [name].db, so this is a second player. In-archive player name is 'Caiwla', not 'mengye' (the filename does not match the account name). It is a DIFFERENT person from vsoflan.",
+      "added": "2026-09-12T00:00:00",
+      "audit": {
+        "dir": "PlayerData/LunaticRave2",
+        "client": "lr2",
+        "db": "PlayerData\\LunaticRave2\\mengye.db",
+        "db_bytes": 1560576,
+        "player_id_in_db": "Caiwla",
+        "charts_scored": 1457,
+        "clear_levels": {
+          "NO_PLAY": 70,
+          "FAILED": 483,
+          "EASY": 208,
+          "NORMAL": 204,
+          "HARD": 453,
+          "EXHARD": 39
+        },
+        "acc_median": 79.04,
+        "issues": [
+          "no FC/PERFECT (clear>=6) rows in this archive either; LR2 lamp levels remain non-comparable to beatoraja's",
+          "small archive (1,457 scored charts) - any LR2 matrix is very thin"
+        ]
       }
     }
   }
