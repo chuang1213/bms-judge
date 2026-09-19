@@ -1,29 +1,74 @@
-# Python
+# ============================================================================
+# BMS player–chart performance prediction —— 忽略规则
+#
+# 原则：
+#   1) 任何「个人数据 / 第三方版权物 / 大体积可再生数据」一律不进版本控制；
+#   2) 代码、协议、报告、可复现的小体积结果（JSON / PNG）才提交。
+# 详见 README.md「数据可得性」一节。
+# ============================================================================
+
+# ---------------------------------------------------------------- 环境 / 缓存
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
 
-# 虚拟环境
-.venv/
-
-# 原始/可再生成数据（不提交）
-testbms/
-回放收集/
-# 玩家原始存档：2026-09-11 重命名为 PlayerData/{beatoraja,LunaticRave2}
+# ------------------------------------------------------- 私有数据（绝不提交）
+# 玩家原始存档（scorelog.db / score.db / *.db），包含真实账号与游玩历史
 PlayerData/
-bms_ml/output/corpus/sequences/
-bms_ml/output/sequences/
-bms_ml/output/corpus/manifest.jsonl
-bms_ml/output/tables/
-bms_ml/output/phase2a/
-bms_ml/output/phase3/
+# 玩家回放文件
+回放收集/
+# 早期只用于打通流程的小样本集
+testbms/
 
-# 运行时状态目录
+# ------------------------------------------------- 第三方版权物（不随仓库分发）
+# 参考论文 PDF（framework paper / hastie15a / recommend）
+docs/reference/
+# 第三方参考项目克隆（beatoraja-master、osumania_map_analyser 等）
+ref_repo/
+BmsReplayViewer/
+bms-skills/
+
+# ------------------------------------------------------------ 个人 / 非公开材料
+# 博客草稿（个人作品集，不随开源仓库发布）
+blog/
+# 已过期的 agent 工作指南（内容已被 README + PROTOCOL 吸收）
+AGENTS_OUTDATE.md
+# 个人学习沙盒
+learn_pytorch/
+# 旧的 session handoff / 头脑风暴 / 临时表
+docs/archive/
+
+# ------------------------------------------------------------ 会话 / 工具状态
+.codebuddy/
 .agents/
 .codex/
 
-# 独立 git 仓库（不嵌套提交）
-bms-skills/
-BmsReplayViewer/
+# ------------------------------------------- 数据与运行产物（本地可再生，不提交）
+# 谱面序列（36k+ 个 .npy）与语料清单
+bms_ml/output/corpus/sequences/
+bms_ml/output/sequences/
+bms_ml/output/corpus/manifest.jsonl
+bms_ml/output/manifest.jsonl
+bms_ml/output/corpus/charts.txt
+# MB 级语料审计产物（可由 171GB 语料重算，单文件 1.4–4.1MB）
+bms_ml/output/corpus/quarantine_report.json
+bms_ml/output/corpus/audit_report.json
+bms_ml/output/corpus/analysis/sequence_quantities.json
+# 难度表（外部分发，含版权约定）
+bms_ml/output/tables/
+# 各阶段的数据集与结果全集（dataset/*.parquet、features_build/*.wasm 等）
+bms_ml/output/phase2a/
+bms_ml/output/phase3/
+bms_ml/output/phase4/
+# 训练产物与抽样可视化
+bms_ml/output/runs/
+bms_ml/output/sanity/
+# 权重文件与网页抓取日志
+bms_ml/output/**/*.pt
+bms_ml/output/_pages.*
 
-# 只读参考项目（2026-09-11 起统一收纳到 ref_repo/；勿改动勿提交）
-ref_repo/
+# 注：bms_ml/output/corpus/analysis/ 下的小体积结果（*.json / *.png）是
+# Phase 1–2A 的已发表证据，因原始语料无法分发而保留在仓库中。
